@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CommissionTier extends Model
 {
     protected $fillable = [
-        'region_id',
         'min_amount',
         'max_amount',
         'commission_type',
@@ -21,9 +20,4 @@ class CommissionTier extends Model
         'max_amount' => 'decimal:3',
         'commission_value' => 'decimal:3',
     ];
-
-    public function region(): BelongsTo
-    {
-        return $this->belongsTo(Region::class);
-    }
 }

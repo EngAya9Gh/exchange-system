@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin;
 
-use App\Models\Branch;
 use App\Models\CommissionTier;
 use App\Models\ExchangeRate;
-use App\Models\Region;
 use App\Models\Transfer;
 use App\Models\TransferRequest;
 use App\Services\CommissionCalculator;
@@ -29,19 +27,20 @@ class AdminDashboard extends Component
     public string $activeTab = 'dashboard'; // dashboard | new_transfer | ledger | rates | requests
 
     // Manual form state
-    public string $sender_name = '';
-    public string $sender_phone = '';
-    public string $recipient_name = '';
-    public string $recipient_phone = '';
-    public float $amount = 0;
-    public string $source_currency = 'TRY';
-    public string $target_currency = 'EGP';
-    public ?int $region_id = null;
-    public ?int $branch_id = null;
-    public float $exchange_rate = 0.0;
-    public float $commission = 0.0;
-    public float $received_amount = 0.0;
-    public float $total_to_pay = 0.0;
+    public $sender_name = '';
+    public $sender_phone = '';
+    public $destination = 'جميع المحافظات - فودافون مباشر';
+    public $address = '';
+    public $notes = '';
+    public $recipient_name = '';
+    public $recipient_phone = '';
+    public $amount = 0;
+    public $source_currency = 'TRY';
+    public $target_currency = 'EGP';
+    public $exchange_rate = 0.0;
+    public $commission = 0.0;
+    public $received_amount = 0.0;
+    public $total_to_pay = 0.0;
 
     // Search and filter in ledger
     public string $searchQuery = '';
@@ -55,30 +54,10 @@ class AdminDashboard extends Component
     public bool $showReceiptModal = false;
     public string $receiptPdfUrl = '';
 
-    // Action models
-    public array $regions = [];
-    public array $branches = [];
-
     public function mount(): void
     {
-        $this->regions = Region::where('status', 'active')->get()->toArray();
-        if (count($this->regions) > 0) {
-            $this->region_id = (int) $this->regions[0]['id'];
-            $this->updatedRegionId();
-        }
         $this->calculateTotals();
         $this->loadRates();
-    }
-
-    public function updatedRegionId(): void
-    {
-        $this->branches = Branch::where('region_id', $this->region_id)
-            ->where('status', 'active')
-            ->get()
-            ->toArray();
-            
-        $this->branch_id = count($this->branches) > 0 ? (int) $this->branches[0]['id'] : null;
-        $this->calculateTotals();
     }
 
     public function updatedAmount(): void
@@ -93,7 +72,7 @@ class AdminDashboard extends Component
 
     public function calculateTotals(): void
     {
-        if ($this->amount <= 0) {
+        if (empty($this->amount) || !is_numeric($this->amount) || $this->amount <= 0) {
             $this->exchange_rate = 0.0;
             $this->commission = 0.0;
             $this->received_amount = 0.0;
@@ -104,11 +83,11 @@ class AdminDashboard extends Component
         $rateService = app(ExchangeRateService::class);
         $commissionService = app(CommissionCalculator::class);
 
-        $this->exchange_rate = $rateService->getRate($this->source_currency, $this->target_currency, $this->region_id);
-        $this->commission = $commissionService->calculate($this->amount, $this->region_id);
+        $this->exchange_rate = $rateService->getRate($this->source_currency, $this->target_currency);
+        $this->commission = $commissionService->calculate((float)$this->amount);
         
-        $this->received_amount = $this->amount * $this->exchange_rate;
-        $this->total_to_pay = $this->amount + $this->commission;
+        $this->received_amount = (float)$this->amount * $this->exchange_rate;
+        $this->total_to_pay = (float)$this->amount + $this->commission;
     }
 
     // Load exchange rates for edit
@@ -132,19 +111,28 @@ class AdminDashboard extends Component
         }
     }
 
+    // Sync all rates from API
+    public function syncExchangeRates(): void
+    {
+        $rateService = app(ExchangeRateService::class);
+        $rateService->syncAllRates();
+        
+        $this->loadRates();
+        session()->flash('rate_success', 'تم جلب وتحديث أحدث أسعار الصرف من السوق العالمي (ExchangeRate-API) بنجاح.');
+    }
+
     // Submit a manual transfer
     public function submitManualTransfer(): void
     {
         $this->validate([
-            'sender_name' => 'required|string|max:255',
-            'sender_phone' => 'required|string|max:20',
             'recipient_name' => 'required|string|max:255',
             'recipient_phone' => 'required|string|max:20',
+            'destination' => 'required|string|max:255',
+            'address' => 'nullable|string',
+            'notes' => 'nullable|string',
             'amount' => 'required|numeric|min:10',
             'source_currency' => 'required|string|in:TRY,USD,EUR',
             'target_currency' => 'required|string|in:EGP,TRY',
-            'region_id' => 'required|exists:regions,id',
-            'branch_id' => 'required|exists:branches,id',
         ]);
 
         $codeGen = app(SecretCodeGenerator::class);
@@ -154,10 +142,13 @@ class AdminDashboard extends Component
 
         $transfer = Transfer::create([
             'transfer_number' => $transferNumber,
-            'sender_name' => $this->sender_name,
-            'sender_phone' => $this->sender_phone,
+            'sender_name' => $this->sender_name ?: null,
+            'sender_phone' => $this->sender_phone ?: null,
             'recipient_name' => $this->recipient_name,
             'recipient_phone' => $this->recipient_phone,
+            'destination' => $this->destination,
+            'address' => $this->address,
+            'notes' => $this->notes,
             'source_amount' => $this->amount,
             'source_currency' => $this->source_currency,
             'target_currency' => $this->target_currency,
@@ -168,8 +159,6 @@ class AdminDashboard extends Component
             'secret_code' => $secretCode,
             'status' => 'pending',
             'created_by' => auth()->id(),
-            'region_id' => $this->region_id,
-            'branch_id' => $this->branch_id,
             'transferred_at' => Carbon::now(),
         ]);
 
@@ -184,7 +173,7 @@ class AdminDashboard extends Component
         $this->viewReceipt($transfer->id);
 
         // Reset fields
-        $this->reset(['sender_name', 'sender_phone', 'recipient_name', 'recipient_phone', 'amount']);
+        $this->reset(['sender_name', 'sender_phone', 'recipient_name', 'recipient_phone', 'destination', 'address', 'notes', 'amount']);
         $this->calculateTotals();
 
         session()->flash('transfer_success', 'تم إنشاء الحوالة رقم ' . $transferNumber . ' بنجاح.');
@@ -194,21 +183,11 @@ class AdminDashboard extends Component
     public function approveRequest(int $id): void
     {
         $request = TransferRequest::findOrFail($id);
-        
-        // Find default branch for this request user region or first branch
-        $userRegion = $request->user->region_id ?? Region::first()->id;
-        $branch = Branch::where('region_id', $userRegion)->first() ?? Branch::first();
-
-        if (!$branch) {
-            session()->flash('request_error', 'لا يمكن قبول الطلب لعدم وجود فروع استلام معرفة.');
-            return;
-        }
-
         $rateService = app(ExchangeRateService::class);
         $commissionService = app(CommissionCalculator::class);
 
-        $rate = $rateService->getRate($request->currency, 'EGP', $userRegion);
-        $commission = $commissionService->calculate($request->amount, $userRegion);
+        $rate = $rateService->getRate($request->currency, 'EGP');
+        $commission = $commissionService->calculate($request->amount);
         $received = $request->amount * $rate;
 
         $codeGen = app(SecretCodeGenerator::class);
@@ -222,6 +201,9 @@ class AdminDashboard extends Component
             'sender_phone' => $request->sender_phone,
             'recipient_name' => $request->recipient_name,
             'recipient_phone' => $request->recipient_phone,
+            'destination' => $request->destination ?? 'جميع المحافظات - فودافون مباشر',
+            'address' => $request->address,
+            'notes' => $request->notes,
             'source_amount' => $request->amount,
             'source_currency' => $request->currency,
             'target_currency' => 'EGP',
@@ -232,8 +214,6 @@ class AdminDashboard extends Component
             'secret_code' => $secretCode,
             'status' => 'pending',
             'created_by' => auth()->id(),
-            'region_id' => $userRegion,
-            'branch_id' => $branch->id,
             'transferred_at' => Carbon::now(),
         ]);
 
@@ -288,7 +268,7 @@ class AdminDashboard extends Component
     // View Receipt Modal
     public function viewReceipt(int $id): void
     {
-        $this->selectedTransfer = Transfer::with(['region', 'branch'])->findOrFail($id);
+        $this->selectedTransfer = Transfer::findOrFail($id);
         $receiptService = app(ReceiptService::class);
         $this->receiptPdfUrl = $receiptService->generatePdf($this->selectedTransfer);
         $this->showReceiptModal = true;
@@ -309,7 +289,7 @@ class AdminDashboard extends Component
         $incomingRequests = TransferRequest::with('user')->where('status', 'pending')->latest()->get();
 
         // Ledger list with filters
-        $ledgerQuery = Transfer::with(['region', 'branch', 'creator']);
+        $ledgerQuery = Transfer::with(['creator']);
 
         if (!empty($this->searchQuery)) {
             $q = '%' . $this->searchQuery . '%';
@@ -328,7 +308,7 @@ class AdminDashboard extends Component
         $transfers = $ledgerQuery->latest()->paginate(10);
 
         // Exchange Rates
-        $exchangeRates = ExchangeRate::with('region')->get();
+        $exchangeRates = ExchangeRate::all();
 
         return view('livewire.admin.admin-dashboard', compact(
             'totalTrySent',

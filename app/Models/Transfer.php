@@ -14,6 +14,9 @@ class Transfer extends Model
         'sender_phone',
         'recipient_name',
         'recipient_phone',
+        'destination',
+        'address',
+        'notes',
         'source_amount',
         'source_currency',
         'target_currency',
@@ -25,8 +28,6 @@ class Transfer extends Model
         'status',
         'created_by',
         'paid_by',
-        'region_id',
-        'branch_id',
         'transferred_at',
         'delivered_at'
     ];
@@ -51,18 +52,8 @@ class Transfer extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function payer(): BelongsTo
+    public function paidBy()
     {
         return $this->belongsTo(User::class, 'paid_by');
-    }
-
-    public function region(): BelongsTo
-    {
-        return $this->belongsTo(Region::class);
-    }
-
-    public function branch(): BelongsTo
-    {
-        return $this->belongsTo(Branch::class);
     }
 }

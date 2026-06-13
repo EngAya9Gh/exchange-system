@@ -32,8 +32,6 @@ class User extends Authenticatable
         'two_factor_enabled',
         'is_active',
         'language',
-        'region_id',
-        'branch_id',
     ];
 
     /**
@@ -60,16 +58,6 @@ class User extends Authenticatable
             'two_factor_enabled' => 'boolean',
             'is_active' => 'boolean',
         ];
-    }
-
-    public function region(): BelongsTo
-    {
-        return $this->belongsTo(Region::class);
-    }
-
-    public function branch(): BelongsTo
-    {
-        return $this->belongsTo(Branch::class);
     }
 
     public function transferRequests(): HasMany

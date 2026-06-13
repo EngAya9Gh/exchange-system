@@ -52,6 +52,6 @@ class ReceiptService
         $fileName = 'receipts/' . $transfer->transfer_number . '.pdf';
         Storage::disk('public')->put($fileName, $pdf->output());
 
-        return Storage::url($fileName);
+        return route('receipt.download', ['number' => $transfer->transfer_number]);
     }
 }

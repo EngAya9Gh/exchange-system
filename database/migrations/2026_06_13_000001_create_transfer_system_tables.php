@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('commission_tiers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('region_id')->nullable()->constrained('regions')->onDelete('cascade');
             $table->decimal('min_amount', 15, 3);
             $table->decimal('max_amount', 15, 3);
             $table->enum('commission_type', ['fixed', 'percentage'])->default('fixed');
@@ -24,7 +23,6 @@ return new class extends Migration
 
         Schema::create('exchange_rates', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('region_id')->nullable()->constrained('regions')->onDelete('cascade');
             $table->string('from_currency', 3);
             $table->string('to_currency', 3);
             $table->decimal('rate', 15, 5);
@@ -65,8 +63,6 @@ return new class extends Migration
             $table->enum('status', ['pending', 'paid', 'cancelled'])->default('pending');
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->foreignId('paid_by')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('region_id')->constrained('regions')->onDelete('cascade');
-            $table->foreignId('branch_id')->nullable()->constrained('branches')->onDelete('set null');
             $table->timestamp('transferred_at')->nullable();
             $table->timestamp('delivered_at')->nullable();
             $table->timestamps();

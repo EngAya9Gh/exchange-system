@@ -28,19 +28,10 @@ class ExchangeRateService
             return 1.0;
         }
 
-        // 1. Try to find the rate in the database (supporting region-specific rates)
+        // 1. Try to find the rate in the database
         $dbRate = ExchangeRate::where('from_currency', $from)
             ->where('to_currency', $to)
-            ->where('region_id', $regionId)
             ->first();
-
-        // If no region-specific rate, look for global rate (region_id null)
-        if (!$dbRate && $regionId !== null) {
-            $dbRate = ExchangeRate::where('from_currency', $from)
-                ->where('to_currency', $to)
-                ->whereNull('region_id')
-                ->first();
-        }
 
         if ($dbRate) {
             // Check if the rate is cached and not older than 1 hour (unless it's manually set/modified)
@@ -57,7 +48,7 @@ class ExchangeRateService
             if ($rate > 0) {
                 // Update or create in DB
                 ExchangeRate::updateOrCreate(
-                    ['from_currency' => $from, 'to_currency' => $to, 'region_id' => $regionId],
+                    ['from_currency' => $from, 'to_currency' => $to],
                     ['rate' => $rate, 'last_fetched_at' => Carbon::now()]
                 );
                 return $rate;
@@ -81,8 +72,7 @@ class ExchangeRateService
         return ExchangeRate::updateOrCreate(
             [
                 'from_currency' => strtoupper($from),
-                'to_currency' => strtoupper($to),
-                'region_id' => $regionId
+                'to_currency' => strtoupper($to)
             ],
             [
                 'rate' => $rate,
@@ -111,6 +101,70 @@ class ExchangeRateService
         }
 
         return 0.0;
+    }
+
+    /**
+     * Sync all main currencies directly against USD and calculate cross rates.
+     */
+    public function syncAllRates(): void
+    {
+        if (!$this->hasApiKey()) {
+            return;
+        }
+
+        $apiKey = config('services.exchangerate.api_key');
+        try {
+            $response = Http::get("https://v6.exchangerate-api.com/v6/{$apiKey}/latest/USD");
+            
+            if ($response->successful() && $response->json()['result'] === 'success') {
+                $rates = $response->json()['conversion_rates'];
+
+                $targets = ['TRY', 'EUR', 'EGP'];
+                
+                foreach ($targets as $currency) {
+                    if (isset($rates[$currency])) {
+                        // USD to Currency
+                        ExchangeRate::updateOrCreate(
+                            ['from_currency' => 'USD', 'to_currency' => $currency],
+                            ['rate' => $rates[$currency], 'last_fetched_at' => Carbon::now()]
+                        );
+                        // Currency to USD
+                        ExchangeRate::updateOrCreate(
+                            ['from_currency' => $currency, 'to_currency' => 'USD'],
+                            ['rate' => 1 / $rates[$currency], 'last_fetched_at' => Carbon::now()]
+                        );
+                    }
+                }
+
+                if (isset($rates['EUR'], $rates['TRY'], $rates['EGP'])) {
+                    // EUR to TRY
+                    ExchangeRate::updateOrCreate(
+                        ['from_currency' => 'EUR', 'to_currency' => 'TRY'],
+                        ['rate' => $rates['TRY'] / $rates['EUR'], 'last_fetched_at' => Carbon::now()]
+                    );
+                    // TRY to EUR
+                    ExchangeRate::updateOrCreate(
+                        ['from_currency' => 'TRY', 'to_currency' => 'EUR'],
+                        ['rate' => $rates['EUR'] / $rates['TRY'], 'last_fetched_at' => Carbon::now()]
+                    );
+                    
+                    // EUR to EGP
+                    ExchangeRate::updateOrCreate(
+                        ['from_currency' => 'EUR', 'to_currency' => 'EGP'],
+                        ['rate' => $rates['EGP'] / $rates['EUR'], 'last_fetched_at' => Carbon::now()]
+                    );
+                    // TRY to EGP
+                    ExchangeRate::updateOrCreate(
+                        ['from_currency' => 'TRY', 'to_currency' => 'EGP'],
+                        ['rate' => $rates['EGP'] / $rates['TRY'], 'last_fetched_at' => Carbon::now()]
+                    );
+                }
+
+                Log::info("All exchange rates synced successfully.");
+            }
+        } catch (\Exception $e) {
+            Log::error("ExchangeRate API Sync Exception: " . $e->getMessage());
+        }
     }
 
     /**

@@ -1,9 +1,9 @@
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-    <h3 class="text-lg font-bold text-gray-800 border-b border-gray-50 pb-3 mb-6">طلب تحويل مالي جديد</h3>
+<div class="bg-white rounded-[28px] shadow-soft border border-slate-50 p-8">
+    <h3 class="text-xl font-bold text-slate-800 border-b border-slate-50 pb-4 mb-6">طلب تحويل مالي جديد</h3>
 
     @if (session()->has('success'))
-        <div class="mb-6 p-4 bg-emerald-50 text-emerald-800 text-sm rounded-xl border border-emerald-100 flex items-center">
-            <svg class="w-5 h-5 me-2" fill="currentColor" viewBox="0 0 20 20">
+        <div class="mb-8 p-4 bg-emerald-50 text-emerald-800 font-bold rounded-2xl flex items-center">
+            <svg class="w-5 h-5 ml-2 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
             {{ session('success') }}
@@ -12,124 +12,107 @@
 
     <form wire:submit="submitRequest" class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Sender Info -->
-            <div class="space-y-4">
-                <h4 class="text-sm font-semibold text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg">بيانات المرسل</h4>
+            <!-- Additional Info -->
+            <div class="bg-slate-50/50 p-6 rounded-[24px] space-y-5">
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">بيانات الوجهة والملاحظات</h4>
                 
                 <div>
-                    <x-input-label for="sender_name" value="اسم المرسل الكامل" class="text-right" />
-                    <x-text-input wire:model="sender_name" id="sender_name" type="text" class="mt-1 block w-full" required />
-                    <x-input-error :messages="$errors->get('sender_name')" class="mt-1 text-right" />
+                    <label for="destination" class="block text-xs font-bold text-slate-700 mb-2">الجهة</label>
+                    <select wire:model="destination" id="destination" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition">
+                        <option value="جميع المحافظات - فودافون مباشر">جميع المحافظات - فودافون مباشر</option>
+                    </select>
+                    <x-input-error :messages="$errors->get('destination')" class="mt-2 text-rose-500 text-xs" />
                 </div>
 
                 <div>
-                    <x-input-label for="sender_phone" value="رقم هاتف المرسل (واتساب)" class="text-right" />
-                    <x-text-input wire:model="sender_phone" id="sender_phone" type="text" class="mt-1 block w-full" placeholder="+90..." required />
-                    <x-input-error :messages="$errors->get('sender_phone')" class="mt-1 text-right" />
+                    <label for="address" class="block text-xs font-bold text-slate-700 mb-2">العنوان</label>
+                    <input wire:model="address" id="address" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="مثال: القاهرة، مدينة نصر..." />
+                    <x-input-error :messages="$errors->get('address')" class="mt-2 text-rose-500 text-xs" />
+                </div>
+
+                <div>
+                    <label for="notes" class="block text-xs font-bold text-slate-700 mb-2">ملاحظات</label>
+                    <input wire:model="notes" id="notes" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="ملاحظات إضافية..." />
+                    <x-input-error :messages="$errors->get('notes')" class="mt-2 text-rose-500 text-xs" />
                 </div>
             </div>
 
             <!-- Recipient Info -->
-            <div class="space-y-4">
-                <h4 class="text-sm font-semibold text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg">بيانات المستفيد</h4>
+            <div class="bg-slate-50/50 p-6 rounded-[24px] space-y-5">
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">المستفيد المستهدف</h4>
                 
                 <div>
-                    <x-input-label for="recipient_name" value="اسم المستفيد الكامل" class="text-right" />
-                    <x-text-input wire:model="recipient_name" id="recipient_name" type="text" class="mt-1 block w-full" required />
-                    <x-input-error :messages="$errors->get('recipient_name')" class="mt-1 text-right" />
+                    <label for="recipient_name" class="block text-xs font-bold text-slate-700 mb-2">اسم المستفيد الكامل</label>
+                    <input wire:model="recipient_name" id="recipient_name" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" required />
+                    <x-input-error :messages="$errors->get('recipient_name')" class="mt-2 text-rose-500 text-xs" />
                 </div>
 
                 <div>
-                    <x-input-label for="recipient_phone" value="رقم هاتف المستفيد" class="text-right" />
-                    <x-text-input wire:model="recipient_phone" id="recipient_phone" type="text" class="mt-1 block w-full" placeholder="+20..." required />
-                    <x-input-error :messages="$errors->get('recipient_phone')" class="mt-1 text-right" />
+                    <label for="recipient_phone" class="block text-xs font-bold text-slate-700 mb-2">رقم هاتف المستفيد</label>
+                    <input wire:model="recipient_phone" id="recipient_phone" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="+20..." required />
+                    <x-input-error :messages="$errors->get('recipient_phone')" class="mt-2 text-rose-500 text-xs" />
                 </div>
             </div>
         </div>
 
-        <hr class="border-gray-100">
+        <hr class="border-slate-50 my-2">
 
         <!-- Financial Section -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- Region & Branch -->
-            <div class="space-y-4 md:col-span-2">
-                <h4 class="text-sm font-semibold text-gray-700 bg-gray-50 px-3 py-1.5 rounded-lg">المنطقة والفرع المستهدف</h4>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <x-input-label for="region_id" value="المنطقة" class="text-right" />
-                        <select wire:model.live="region_id" id="region_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm py-2">
-                            @foreach($regions as $region)
-                                <option value="{{ $region['id'] }}">{{ $region['name'] }}</option>
-                            @endforeach
-                        </select>
-                        <x-input-error :messages="$errors->get('region_id')" class="mt-1 text-right" />
-                    </div>
-
-                    <div>
-                        <x-input-label for="branch_id" value="فرع الاستلام" class="text-right" />
-                        <select wire:model="branch_id" id="branch_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm py-2">
-                            @if(count($branches) === 0)
-                                <option value="">لا توجد فروع متاحة</option>
-                            @endif
-                            @foreach($branches as $branch)
-                                <option value="{{ $branch['id'] }}">{{ $branch['name'] }}</option>
-                            @endforeach
-                        </select>
-                        <x-input-error :messages="$errors->get('branch_id')" class="mt-1 text-right" />
-                    </div>
-                </div>
-
+            <div class="md:col-span-2">
                 <!-- Amount Inputs -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                <div class="bg-slate-50/50 p-6 rounded-[24px] grid grid-cols-1 sm:grid-cols-3 gap-5">
                     <div class="sm:col-span-2">
-                        <x-input-label for="amount" value="مبلغ التحويل" class="text-right" />
-                        <x-text-input wire:model.live="amount" id="amount" type="number" step="0.01" class="mt-1 block w-full font-bold text-lg" required />
-                        <x-input-error :messages="$errors->get('amount')" class="mt-1 text-right" />
+                        <label for="amount" class="block text-xs font-bold text-slate-700 mb-2">مبلغ التحويل المرغوب</label>
+                        <input wire:model.live="amount" id="amount" type="number" step="0.01" class="w-full bg-white border-none text-primary-600 font-black text-2xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition" required />
+                        <x-input-error :messages="$errors->get('amount')" class="mt-2 text-rose-500 text-xs" />
                     </div>
 
                     <div>
-                        <x-input-label for="currency" value="العملة" class="text-right" />
-                        <select wire:model.live="currency" id="currency" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm py-2 font-bold">
+                        <label for="currency" class="block text-xs font-bold text-slate-700 mb-2">العملة</label>
+                        <select wire:model.live="currency" id="currency" class="w-full bg-white border-none text-slate-800 font-bold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition">
                             <option value="TRY">TRY (ليرة)</option>
                             <option value="USD">USD (دولار)</option>
                             <option value="EUR">EUR (يورو)</option>
                         </select>
-                        <x-input-error :messages="$errors->get('currency')" class="mt-1 text-right" />
+                        <x-input-error :messages="$errors->get('currency')" class="mt-2 text-rose-500 text-xs" />
                     </div>
                 </div>
             </div>
 
             <!-- Summary Box -->
-            <div class="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col justify-between space-y-4">
-                <div class="space-y-3">
-                    <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">تفاصيل الحسبة التقديرية</h4>
+            <div class="bg-gradient-to-br from-primary-50 to-indigo-50 border border-primary-100/50 rounded-[24px] p-6 flex flex-col justify-between shadow-sm relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/40 blur-xl"></div>
+                
+                <div class="space-y-4 relative z-10">
+                    <h4 class="text-[11px] font-bold text-primary-500 uppercase tracking-widest border-b border-primary-200/50 pb-2 mb-2">تفاصيل الحسبة التقديرية</h4>
                     
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">سعر الصرف (إلى EGP):</span>
-                        <span class="font-bold text-gray-800">{{ number_format($exchange_rate, 4) }}</span>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-500 font-bold">سعر الصرف (EGP)</span>
+                        <span class="font-black text-slate-800">{{ number_format($exchange_rate, 4) }}</span>
                     </div>
 
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-500">العمولة المقتطعة:</span>
-                        <span class="font-bold text-gray-800">{{ number_format($commission, 2) }} {{ $currency }}</span>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-500 font-bold">العمولة المقدرة</span>
+                        <span class="font-black text-rose-500">{{ number_format($commission, 2) }} {{ $currency }}</span>
                     </div>
 
-                    <div class="flex justify-between text-sm pt-2 border-t border-slate-200">
-                        <span class="text-gray-500 font-medium">الصافي للمستفيد:</span>
-                        <span class="font-black text-emerald-600 text-lg">{{ number_format($received_amount, 2) }} EGP</span>
+                    <div class="flex justify-between items-center pt-3 border-t border-primary-200/50">
+                        <span class="text-slate-500 font-bold">الصافي المتوقع وصوله</span>
+                        <span class="font-black text-emerald-600 text-xl">{{ number_format($received_amount, 2) }} <span class="text-xs">EGP</span></span>
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-slate-200">
-                    <div class="flex justify-between text-base font-bold text-slate-800 mb-3">
-                        <span>إجمالي المطلوب دفعه:</span>
-                        <span>{{ number_format($total_to_pay, 2) }} {{ $currency }}</span>
+                <div class="pt-6 relative z-10">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-xs font-bold text-slate-500">إجمالي التكلفة عليك</span>
+                        <span class="font-black text-slate-800 text-2xl">{{ number_format($total_to_pay, 2) }} <span class="text-sm text-slate-500">{{ $currency }}</span></span>
                     </div>
 
-                    <x-primary-button class="w-full justify-center bg-red-600 hover:bg-red-700 active:bg-red-800 focus:ring-red-500 py-2.5">
-                        إرسال الطلب الآن
-                    </x-primary-button>
+                    <button type="submit" class="w-full py-4 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white rounded-xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1">
+                        إرسال الطلب للمراجعة
+                    </button>
                 </div>
             </div>
         </div>

@@ -4,224 +4,225 @@
     <meta charset="utf-8">
     <title>إيصال حوالة - {{ $transfer->transfer_number }}</title>
     <style>
-        @font-face {
-            font-family: 'Cairo';
-            font-style: normal;
-            font-weight: 400;
-            src: url('https://fonts.gstatic.com/s/cairo/v20/SLXQ1O5wj4oSE1ciQg.ttf') format('truetype');
-        }
         body {
-            font-family: 'Cairo', 'DejaVu Sans', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             direction: rtl;
             text-align: right;
-            padding: 10px;
-            font-size: 12px;
-            color: #333;
-            background-color: #fff;
+            padding: 0;
+            margin: 0;
+            background-color: #f8f9fa;
         }
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #3b82f6;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
+        .receipt-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fffaf5; /* Warm slight pinkish/orange tint from the image */
+            position: relative;
+            min-height: 500px;
+            box-sizing: border-box;
+            border: 1px solid #eee;
         }
-        .logo {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1e3a8a;
-            margin-bottom: 5px;
-        }
-        .title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #4b5563;
-        }
-        .receipt-info {
-            margin-bottom: 15px;
-            background-color: #f3f4f6;
-            padding: 8px;
-            border-radius: 4px;
-        }
-        .info-row {
+
+        /* Top Header Grid */
+        .top-section {
+            padding: 30px 40px 10px;
             display: table;
             width: 100%;
-            margin-bottom: 6px;
+            table-layout: fixed;
+            box-sizing: border-box;
         }
-        .info-label {
+
+        .top-col {
             display: table-cell;
+            text-align: center;
+            vertical-align: top;
+        }
+
+        /* Adjust individual columns */
+        .col-source { width: 15%; text-align: right; }
+        .col-dest { width: 25%; }
+        .col-date { width: 25%; }
+        .col-number { width: 20%; text-align: left;}
+        .col-logo { width: 15%; text-align: left; }
+
+        .header-label {
+            font-size: 14px;
             font-weight: bold;
-            color: #4b5563;
-            width: 40%;
+            color: #333;
+            margin-bottom: 5px;
         }
-        .info-value {
-            display: table-cell;
-            color: #111827;
-            text-align: left;
+
+        .header-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #000;
         }
-        .details-table {
+
+        .text-blue { color: #0000ff; }
+
+        .logo-circle {
+            width: 80px;
+            height: 80px;
+            background-color: #000;
+            border-radius: 50%;
+            display: inline-block;
+            border: 3px solid #d4af37; /* Gold border */
+            position: relative;
+        }
+        .logo-text {
+            color: #d4af37;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 80px;
+        }
+
+        /* Middle Gray Section */
+        .middle-gray-section {
+            background-color: #e5e5e5;
+            padding: 20px 40px;
+            margin-top: 10px;
+            border-top: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .gray-table {
             width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
+            table-layout: fixed;
         }
-        .details-table th, .details-table td {
-            border: 1px solid #e5e7eb;
-            padding: 8px;
-            text-align: right;
-        }
-        .details-table th {
-            background-color: #f9fafb;
-            font-weight: bold;
-            color: #374151;
-        }
-        .amount-section {
-            background-color: #eff6ff;
-            border: 1px solid #bfdbfe;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 15px;
+
+        .gray-col {
             text-align: center;
         }
-        .amount-val {
+
+        .gray-col-right { text-align: right; }
+        .gray-col-left { text-align: left; }
+
+        .text-red {
+            color: #ff0000;
+        }
+
+        .amount-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .amount-number {
             font-size: 18px;
             font-weight: bold;
-            color: #1d4ed8;
-            margin-bottom: 4px;
+            color: #ff0000;
+            margin-bottom: 5px;
         }
+
         .amount-words {
-            font-size: 11px;
-            color: #1e40af;
-            font-style: italic;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
         }
-        .secret-code-section {
-            border: 2px dashed #10b981;
-            background-color: #ecfdf5;
-            padding: 8px;
-            border-radius: 4px;
+
+        /* Bottom Section */
+        .bottom-section {
+            padding: 20px 40px;
+        }
+
+        .delivery-address {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .divider {
+            border-top: 2px dashed #333;
+            margin: 20px 0;
+        }
+
+        .important-notes {
             text-align: center;
-            margin-bottom: 15px;
         }
-        .secret-code-label {
-            font-size: 11px;
-            color: #065f46;
+        
+        .important-notes .notes-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .important-notes .note-item {
+            font-size: 13px;
+            margin-bottom: 5px;
             font-weight: bold;
         }
-        .secret-code-val {
-            font-size: 22px;
-            font-weight: bold;
-            color: #047857;
-            letter-spacing: 4px;
-            margin-top: 2px;
-        }
-        .qr-section {
-            text-align: center;
-            margin-top: 10px;
-        }
-        .qr-image {
-            width: 90px;
-            height: 90px;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 15px;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 8px;
-            font-size: 10px;
-            color: #9ca3af;
-        }
+
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="logo">فودافون حوالات</div>
-        <div class="title">إيصال تحويل مالي رسمي</div>
-    </div>
-
-    <div class="receipt-info">
-        <div class="info-row">
-            <span class="info-label">رقم الحوالة:</span>
-            <span class="info-value" style="font-family: monospace; font-weight: bold;">{{ $transfer->transfer_number }}</span>
+    <div class="receipt-container">
+        
+        <div class="top-section">
+            <div class="top-col col-source">
+                <div class="header-label">المصدر</div>
+                <div class="header-value">{{ $transfer->user_id ?? '543' }}</div>
+            </div>
+            
+            <div class="top-col col-dest">
+                <div class="header-label">الوجهه</div>
+                <div class="header-value">{{ $transfer->destination ?? '149 - جميع المحافظات' }}</div>
+            </div>
+            
+            <div class="top-col col-date">
+                <div class="header-label">التاريخ</div>
+                <div class="header-value">{{ $transfer->created_at->format('H:i:s Y-m-d') }}</div>
+            </div>
+            
+            <div class="top-col col-number">
+                <div class="header-label">رقم الاشعار</div>
+                <div class="header-value text-blue">{{ $transfer->transfer_number }}</div>
+            </div>
+            
+            <div class="top-col col-logo">
+                <div class="logo-circle">
+                    <div class="logo-text">شعار بردى</div>
+                </div>
+            </div>
         </div>
-        <div class="info-row">
-            <span class="info-label">تاريخ التحويل:</span>
-            <span class="info-value">{{ $transfer->created_at->format('Y-m-d H:i') }}</span>
+
+        <div class="middle-gray-section">
+            <table class="gray-table">
+                <tr>
+                    <td class="gray-col gray-col-right">
+                        <div class="header-label">المستفيد</div>
+                        <div class="header-value">{{ $transfer->recipient_name ?: '0' }}</div>
+                    </td>
+                    <td class="gray-col">
+                        <div class="header-label">الجوال</div>
+                        <div class="header-value">{{ $transfer->recipient_phone }}</div>
+                    </td>
+                    <td class="gray-col gray-col-left">
+                        <div class="header-label">الرقم السري</div>
+                        <div class="header-value text-red">{{ $transfer->secret_code }}</div>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="amount-section">
+                <div class="amount-number">{{ number_format((float)$transfer->received_amount, 0) }} {{ $transfer->target_currency == 'EGP' ? 'جنيه' : $transfer->target_currency }}</div>
+                <div class="amount-words">{{ $amountInWords }}</div>
+            </div>
         </div>
-        <div class="info-row">
-            <span class="info-label">حالة الحوالة:</span>
-            <span class="info-value">
-                @if($transfer->status === 'paid')
-                    <span style="color: #047857; font-weight: bold;">تم التسليم</span>
-                @elseif($transfer->status === 'pending')
-                    <span style="color: #d97706; font-weight: bold;">قيد الانتظار</span>
-                @else
-                    <span style="color: #dc2626; font-weight: bold;">ملغاة</span>
-                @endif
-            </span>
+
+        <div class="bottom-section">
+            <div class="delivery-address">
+                <div class="header-label">عنوان التسليم</div>
+                <div class="header-value">{{ $transfer->destination }} - {{ $transfer->address ?: 'عنوان' }} - {{ $transfer->recipient_phone }}</div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="important-notes">
+                <div class="notes-title">ملاحظات هامة</div>
+                <div class="note-item">- يتم تسليم الحوالة بيد المستلم حصراً بعد التأكد من الهوية الأصلية ولا تقبل الصورة.</div>
+                <div class="note-item">- لا تشارك هذا الإيصال الا مع المستلم حرصا على سلامة أموالك.</div>
+            </div>
         </div>
-    </div>
 
-    <table class="details-table">
-        <thead>
-            <tr>
-                <th colspan="2">تفاصيل أطراف الحركة</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>المرسل:</strong></td>
-                <td>{{ $transfer->sender_name }} ({{ $transfer->sender_phone }})</td>
-            </tr>
-            <tr>
-                <td><strong>المستفيد:</strong></td>
-                <td>{{ $transfer->recipient_name }} ({{ $transfer->recipient_phone }})</td>
-            </tr>
-            <tr>
-                <td><strong>الفرع المستلم:</strong></td>
-                <td>{{ $transfer->branch ? $transfer->branch->name : 'غير محدد' }}</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <table class="details-table">
-        <thead>
-            <tr>
-                <th colspan="2">العمليات المالية</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>المبلغ المرسل:</td>
-                <td style="text-align: left;">{{ number_format((float)$transfer->source_amount, 2) }} {{ $transfer->source_currency }}</td>
-            </tr>
-            <tr>
-                <td>سعر الصرف:</td>
-                <td style="text-align: left;">{{ number_format((float)$transfer->exchange_rate, 4) }}</td>
-            </tr>
-            <tr>
-                <td>العمولة المقتطعة:</td>
-                <td style="text-align: left;">{{ number_format((float)$transfer->commission, 2) }} {{ $transfer->source_currency }}</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="amount-section">
-        <div style="font-size: 11px; color: #4b5563;">المبلغ الصافي المستحق للاستلام:</div>
-        <div class="amount-val">{{ number_format((float)$transfer->received_amount, 2) }} {{ $transfer->target_currency }}</div>
-        <div class="amount-words">فقط {{ $amountInWords }} لا غير</div>
-    </div>
-
-    <div class="secret-code-section">
-        <div class="secret-code-label">الرمز السري للاستلام (سري للغاية)</div>
-        <div class="secret-code-val">{{ $transfer->secret_code }}</div>
-    </div>
-
-    <div class="qr-section">
-        <img class="qr-image" src="{{ $qrCodeUrl }}" alt="QR Code">
-        <div style="font-size: 9px; color: #6b7280; margin-top: 4px;">امسح الرمز للتحقق من صحة الإيصال</div>
-    </div>
-
-    <div class="footer">
-        نشكركم على اختيار خدماتنا. يرجى الاحتفاظ بهذا الإيصال.<br>
-        سعر الصرف متطابق مع أسعار الصرف الرسمية المعتمدة في الإدارة.
     </div>
 </body>
 </html>

@@ -17,21 +17,11 @@ class CommissionCalculator
      */
     public function calculate(float $amount, ?int $regionId = null): float
     {
-        // 1. Try to find a region-specific active tier
+        // 1. Try to find an active tier for the amount
         $tier = CommissionTier::where('status', 'active')
-            ->where('region_id', $regionId)
             ->where('min_amount', '<=', $amount)
             ->where('max_amount', '>=', $amount)
             ->first();
-
-        // 2. If no region-specific tier, find a global active tier
-        if (!$tier && $regionId !== null) {
-            $tier = CommissionTier::where('status', 'active')
-                ->whereNull('region_id')
-                ->where('min_amount', '<=', $amount)
-                ->where('max_amount', '>=', $amount)
-                ->first();
-        }
 
         if ($tier) {
             if ($tier->commission_type === 'percentage') {

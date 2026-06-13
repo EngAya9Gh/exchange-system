@@ -15,21 +15,19 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased bg-gray-50 text-gray-900" style="font-family: 'Cairo', sans-serif;">
-        <div class="min-h-screen bg-gray-50">
-            <livewire:layout.navigation />
-
-            <!-- Page Heading -->
-            @if (isset($header))
-                <header class="bg-white shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endif
+    <body class="font-sans antialiased text-gray-900 bg-slate-50 min-h-screen" style="font-family: 'Cairo', sans-serif;">
+        <div class="min-h-screen flex flex-col md:flex-row">
+            
+            <!-- We will rely on the page components to render the sidebar, or we can keep navigation here.
+                 Since this is a full dashboard overhaul, we will let the slot manage its own sidebar for the dashboard, 
+                 or we include a global sidebar here if needed. 
+                 Wait, standard Laravel Breeze puts navigation here. We will keep it for now but the dashboard will override it or use it. -->
+            <div class="hidden">
+                <livewire:layout.navigation />
+            </div>
 
             <!-- Page Content -->
-            <main>
+            <main class="flex-1 min-w-0">
                 {{ $slot }}
             </main>
         </div>

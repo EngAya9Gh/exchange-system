@@ -18,7 +18,7 @@ class AutoLogoutOnIdle
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check()) {
+        if (Auth::check() && !Auth::viaRemember()) {
             $lastActivity = session('last_activity_timestamp');
             $idleTimeout = 15 * 60; // 15 minutes in seconds
 

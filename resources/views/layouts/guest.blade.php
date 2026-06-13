@@ -15,15 +15,26 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-gray-900 antialiased bg-gray-50" style="font-family: 'Cairo', sans-serif;">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-50">
+    <body class="font-sans text-slate-900 antialiased bg-[#f8f9fc] min-h-screen" style="font-family: 'Cairo', sans-serif;">
+        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 relative overflow-hidden">
+            
+            <!-- Decorative Background Elements from the modern look -->
+            <div class="absolute inset-0 overflow-hidden pointer-events-none opacity-40 -z-10">
+                <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-primary-400 to-indigo-500 blur-[100px] animate-pulse" style="animation-duration: 8s;"></div>
+                <div class="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] rounded-full bg-gradient-to-br from-pink-400 to-orange-400 blur-[80px]"></div>
+                <!-- Triangles -->
+                <div class="absolute top-20 left-20 text-primary-300 transform rotate-45 text-2xl">▲</div>
+                <div class="absolute bottom-32 right-32 text-pink-300 transform -rotate-12 text-3xl">▲</div>
+            </div>
+
             <div>
-                <a href="/" wire:navigate>
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
+                <a href="/" wire:navigate class="flex items-center space-x-3 space-x-reverse mb-8">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-2xl shadow-soft">Sx</div>
+                    <span class="font-black text-4xl text-slate-800 tracking-tight">SxDx</span>
                 </a>
             </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+            <div class="w-full sm:max-w-md mt-2 px-10 py-10 bg-white shadow-soft-xl border border-slate-50 sm:rounded-[32px] relative z-10">
                 {{ $slot }}
             </div>
         </div>

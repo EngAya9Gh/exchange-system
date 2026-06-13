@@ -15,23 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Seed Regions
-        $region1 = \App\Models\Region::create(['name' => 'المنطقة الشرقية', 'status' => 'active']);
-        $region2 = \App\Models\Region::create(['name' => 'البوكمال', 'status' => 'active']);
-
-        // 2. Seed Branches
-        $branch1 = \App\Models\Branch::create([
-            'region_id' => $region1->id,
-            'name' => 'فرع الشرقية الرئيسي',
-            'status' => 'active'
-        ]);
-        $branch2 = \App\Models\Branch::create([
-            'region_id' => $region2->id,
-            'name' => 'فرع البوكمال',
-            'status' => 'active'
-        ]);
-
-        // 3. Seed Users
+        // 1. Seed Users
         // Admin
         User::create([
             'name' => 'مدير النظام',
@@ -46,16 +30,14 @@ class DatabaseSeeder extends Seeder
 
         // Agent
         User::create([
-            'name' => 'عميل الشرقية',
+            'name' => 'وكيل افتراضي',
             'email' => 'agent@app.com',
             'password' => bcrypt('password'),
             'role' => 'agent',
             'two_factor_enabled' => true,
             'phone' => '+201234567891',
             'is_active' => true,
-            'language' => 'ar',
-            'region_id' => $region1->id,
-            'branch_id' => $branch1->id
+            'language' => 'ar'
         ]);
 
         // Customer
@@ -70,9 +52,8 @@ class DatabaseSeeder extends Seeder
             'language' => 'ar'
         ]);
 
-        // 4. Seed Commission Tiers
+        // 2. Seed Commission Tiers
         \App\Models\CommissionTier::create([
-            'region_id' => $region1->id,
             'min_amount' => 0,
             'max_amount' => 1000,
             'commission_type' => 'fixed',
@@ -81,7 +62,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
         \App\Models\CommissionTier::create([
-            'region_id' => $region1->id,
             'min_amount' => 1000,
             'max_amount' => 5000,
             'commission_type' => 'percentage',
@@ -89,25 +69,14 @@ class DatabaseSeeder extends Seeder
             'status' => 'active'
         ]);
 
-        // 5. Seed Exchange Rates
-        // Region 1 specific
+        // 3. Seed Exchange Rates
         \App\Models\ExchangeRate::create([
-            'region_id' => $region1->id,
-            'from_currency' => 'TRY',
-            'to_currency' => 'EGP',
-            'rate' => 1.520
-        ]);
-
-        // Global default
-        \App\Models\ExchangeRate::create([
-            'region_id' => null,
             'from_currency' => 'TRY',
             'to_currency' => 'EGP',
             'rate' => 1.500
         ]);
         
         \App\Models\ExchangeRate::create([
-            'region_id' => null,
             'from_currency' => 'USD',
             'to_currency' => 'EGP',
             'rate' => 48.000

@@ -1,0 +1,153 @@
+<div>
+    <div class="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <h2 class="text-xl font-bold text-gray-800 font-cairo">إدارة المستخدمين</h2>
+        <x-primary-button wire:click="createNewUser" class="bg-primary-600 hover:bg-primary-700 w-full sm:w-auto">
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            إضافة مستخدم
+        </x-primary-button>
+    </div>
+
+    <!-- Filters -->
+    <x-card class="mb-6 p-4">
+        <div class="flex flex-col sm:flex-row gap-4">
+            <x-text-input wire:model.live="searchQuery" placeholder="بحث بالاسم، الإيميل، رقم الهاتف..." class="w-full sm:w-1/2" />
+            <select wire:model.live="roleFilter" class="bg-white/50 backdrop-blur-md border-white/60 focus:bg-white focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm w-full sm:w-1/4 py-2 transition-all duration-300">
+                <option value="all">كل الأدوار</option>
+                <option value="admin">مدير (Admin)</option>
+                <option value="agent">وكيل (Agent)</option>
+                <option value="customer">عميل (Customer)</option>
+            </select>
+        </div>
+    </x-card>
+
+    <!-- Session Messages -->
+    @if(session('success'))
+        <div class="mb-4 bg-success-50 text-success-700 p-4 rounded-lg border border-success-200">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="mb-4 bg-danger-50 text-danger-700 p-4 rounded-lg border border-danger-200">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <!-- Users Table -->
+    <x-card class="overflow-x-auto">
+        <table class="w-full text-sm text-right text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-white/50 backdrop-blur-sm border-b border-white/40">
+                <tr>
+                    <th class="px-6 py-3">الاسم</th>
+                    <th class="px-6 py-3">البريد الإلكتروني</th>
+                    <th class="px-6 py-3">رقم الهاتف</th>
+                    <th class="px-6 py-3">الدور</th>
+                    <th class="px-6 py-3">الحالة</th>
+                    <th class="px-6 py-3 text-center">العمليات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($users as $user)
+                    <tr class="bg-white/30 border-b border-white/30 hover:bg-white/60 transition-colors">
+                        <td class="px-6 py-4 font-bold text-gray-900">{{ $user->name }}</td>
+                        <td class="px-6 py-4">{{ $user->email }}</td>
+                        <td class="px-6 py-4" dir="ltr">{{ $user->phone ?? '-' }}</td>
+                        <td class="px-6 py-4">
+                            @if($user->role === 'admin')
+                                <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full">مدير</span>
+                            @elseif($user->role === 'agent')
+                                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">وكيل</span>
+                            @else
+                                <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">عميل</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4">
+                            @if($user->is_active)
+                                <span class="bg-success-100 text-success-800 text-xs font-medium px-2.5 py-0.5 rounded-full">نشط</span>
+                            @else
+                                <span class="bg-danger-100 text-danger-800 text-xs font-medium px-2.5 py-0.5 rounded-full">موقوف</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 flex justify-center gap-2">
+                            <button wire:click="editUser({{ $user->id }})" class="text-primary-600 hover:text-primary-800">
+                                تعديل
+                            </button>
+                            |
+                            <button wire:click="toggleStatus({{ $user->id }})" class="{{ $user->is_active ? 'text-danger-600 hover:text-danger-800' : 'text-success-600 hover:text-success-800' }}">
+                                {{ $user->is_active ? 'إيقاف' : 'تفعيل' }}
+                            </button>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-400">
+                            لا يوجد مستخدمين.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+        <div class="px-6 py-4 border-t">
+            {{ $users->links() }}
+        </div>
+    </x-card>
+
+    <!-- Create / Edit Modal -->
+    @if($showFormModal)
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="$set('showFormModal', false)"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-right overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
+                        {{ $editingUserId ? 'تعديل المستخدم' : 'إضافة مستخدم جديد' }}
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <x-input-label value="الاسم" />
+                            <x-text-input wire:model="name" type="text" class="mt-1 block w-full" />
+                            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label value="البريد الإلكتروني" />
+                            <x-text-input wire:model="email" type="email" class="mt-1 block w-full" dir="ltr" />
+                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label value="رقم الهاتف" />
+                            <x-text-input wire:model="phone" type="text" class="mt-1 block w-full" dir="ltr" placeholder="+201..." />
+                            <x-input-error :messages="$errors->get('phone')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label value="كلمة المرور {{ $editingUserId ? '(اتركه فارغاً لعدم التغيير)' : '' }}" />
+                            <x-password-input wire:model="password" class="mt-1 block w-full" />
+                            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                        </div>
+                        <div>
+                            <x-input-label value="الدور" />
+                            <select wire:model="role" class="mt-1 block w-full bg-white/50 backdrop-blur-md border-white/60 focus:bg-white focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm py-2 transition-all duration-300">
+                                <option value="customer">عميل (Customer)</option>
+                                <option value="agent">وكيل (Agent)</option>
+                                <option value="admin">مدير (Admin)</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('role')" class="mt-2" />
+                        </div>
+                        <div class="flex items-center mt-4">
+                            <input wire:model="is_active" id="is_active" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-500">
+                            <label for="is_active" class="mr-2 text-sm text-gray-600">حساب نشط</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 flex flex-row-reverse gap-2">
+                    <x-primary-button wire:click="saveUser" class="bg-primary-600 hover:bg-primary-700">
+                        حفظ
+                    </x-primary-button>
+                    <button wire:click="$set('showFormModal', false)" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        إلغاء
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+</div>

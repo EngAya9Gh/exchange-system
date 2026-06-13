@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Models\Transfer;
 
-Route::view('/', 'welcome');
+Route::redirect('/', '/login');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Customer routes
@@ -21,5 +21,14 @@ Route::get('transfers/verify/{number}', function ($number) {
     $transfer = Transfer::with(['region', 'branch'])->where('transfer_number', $number)->firstOrFail();
     return view('transfers.verify', compact('transfer'));
 })->name('transfers.verify');
+
+// Public route to view/download receipt PDF directly
+Route::get('receipts/{number}', function ($number) {
+    $path = 'receipts/' . $number . '.pdf';
+    if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+        abort(404);
+    }
+    return \Illuminate\Support\Facades\Storage::disk('public')->response($path);
+})->name('receipt.download');
 
 require __DIR__.'/auth.php';

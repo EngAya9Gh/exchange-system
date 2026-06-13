@@ -11,21 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('regions', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('status')->default('active');
-            $table->timestamps();
-        });
-
-        Schema::create('branches', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('region_id')->constrained('regions')->onDelete('cascade');
-            $table->string('name');
-            $table->string('status')->default('active');
-            $table->timestamps();
-        });
-
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -38,8 +23,6 @@ return new class extends Migration
             $table->boolean('two_factor_enabled')->default(false);
             $table->boolean('is_active')->default(true);
             $table->string('language', 5)->default('ar');
-            $table->foreignId('region_id')->nullable()->constrained('regions')->onDelete('set null');
-            $table->foreignId('branch_id')->nullable()->constrained('branches')->onDelete('set null');
             $table->rememberToken();
             $table->timestamps();
         });
@@ -66,8 +49,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
-        Schema::dropIfExists('branches');
-        Schema::dropIfExists('regions');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }
