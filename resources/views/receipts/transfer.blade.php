@@ -4,13 +4,25 @@
     <meta charset="utf-8">
     <title>إيصال حوالة - {{ $transfer->transfer_number }}</title>
     <style>
+        @font-face {
+            font-family: 'Cairo';
+            font-style: normal;
+            font-weight: 400;
+            src: url('https://fonts.gstatic.com/s/cairo/v20/SLXQ1O5wj4oSE1ciQg.ttf') format('truetype');
+        }
+        @font-face {
+            font-family: 'Cairo';
+            font-style: normal;
+            font-weight: 700;
+            src: url('https://fonts.gstatic.com/s/cairo/v20/SLXW1O5wj4oSE1CjeQn8.ttf') format('truetype');
+        }
         body {
-            font-family: 'DejaVu Sans', sans-serif;
+            font-family: 'Cairo', sans-serif;
             direction: rtl;
             text-align: right;
-            padding: 0;
+            padding: 40px 20px;
             margin: 0;
-            background-color: #f8f9fa;
+            background-color: #f3f4f6;
         }
         .receipt-container {
             width: 100%;
@@ -20,7 +32,10 @@
             position: relative;
             min-height: 500px;
             box-sizing: border-box;
-            border: 1px solid #eee;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            overflow: hidden;
         }
 
         /* Top Header Grid */
@@ -151,6 +166,82 @@
             font-weight: bold;
         }
 
+        .actions-container {
+            max-width: 800px;
+            margin: 20px auto 0;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 900;
+            font-family: 'Cairo', sans-serif;
+            font-size: 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn svg { width: 18px; height: 18px; margin-left: 8px; }
+
+        .btn-blue { background-color: #3b82f6; color: white; }
+        .btn-blue:hover { background-color: #2563eb; }
+
+        .btn-red { background-color: #ef4444; color: white; }
+        .btn-red:hover { background-color: #dc2626; }
+
+        .btn-white { background-color: white; color: #374151; border-color: #d1d5db; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); }
+        .btn-white:hover { background-color: #f9fafb; border-color: #9ca3af; }
+
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #10b981;
+            color: #fff;
+            text-align: center;
+            border-radius: 50px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1000;
+            left: 50%;
+            bottom: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            font-family: 'Cairo', sans-serif;
+            transform: translateX(-50%) translateY(20px);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media print {
+            body { padding: 0; background-color: white; }
+            .receipt-container { border: none; max-width: 100%; box-shadow: none; border-radius: 0; overflow: visible; }
+            .actions-container, #toast { display: none !important; }
+        }
+
     </style>
 </head>
 <body>
@@ -222,7 +313,46 @@
                 <div class="note-item">- لا تشارك هذا الإيصال الا مع المستلم حرصا على سلامة أموالك.</div>
             </div>
         </div>
-
     </div>
+
+    <!-- Actions Footer -->
+    <div class="actions-container">
+        <button class="btn btn-blue" onclick="window.print()">
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            طباعة الإيصال
+        </button>
+        <button class="btn btn-red" onclick="window.print()">
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            حفظ كـ PDF
+        </button>
+        <button class="btn btn-white" onclick="copyTransferNumber()">
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            نسخ رقم الحوالة
+        </button>
+        <a href="?theme=2" class="btn" style="background-color: #10b981; color: white; text-decoration: none;">
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            التصميم الجديد
+        </a>
+        <button class="btn btn-white" onclick="window.close()" style="margin-right: auto; color: #6b7280;">
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            إغلاق الصفحة
+        </button>
+    </div>
+
+    <!-- Toast Element -->
+    <div id="toast">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+        تم نسخ الرقم السري بنجاح!
+    </div>
+
+    <script>
+        function copyTransferNumber() {
+            navigator.clipboard.writeText('{{ $transfer->transfer_number }}').then(function() {
+                var toast = document.getElementById("toast");
+                toast.className = "show";
+                setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+            });
+        }
+    </script>
 </body>
 </html>

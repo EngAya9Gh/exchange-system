@@ -1,5 +1,5 @@
-<div class="bg-white rounded-[28px] shadow-soft border border-slate-50 p-8">
-    <h3 class="text-xl font-bold text-slate-800 border-b border-slate-50 pb-4 mb-6">طلب تحويل مالي جديد</h3>
+<div class="bg-white rounded-[28px] shadow-soft border border-slate-50 p-8" wire:init="autoSyncRates">
+    <h3 class="text-xl font-bold text-slate-800 border-b border-slate-50 pb-4 mb-6">{{ __('messages.new_financial_transfer_request') }}</h3>
 
     @if (session()->has('success'))
         <div class="mb-8 p-4 bg-emerald-50 text-emerald-800 font-bold rounded-2xl flex items-center">
@@ -14,41 +14,41 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Additional Info -->
             <div class="bg-slate-50/50 p-6 rounded-[24px] space-y-5">
-                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">بيانات الوجهة والملاحظات</h4>
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{{ __('messages.destination_and_notes_data') }}</h4>
                 
                 <div>
-                    <label for="destination" class="block text-xs font-bold text-slate-700 mb-2">الجهة</label>
-                    <select wire:model="destination" id="destination" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition">
+                    <label for="destination" class="block text-sm font-bold text-slate-700 mb-2">الجهة</label>
+                    <select wire:model="destination" id="destination" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 pr-4 pl-10 py-3.5 shadow-sm transition bg-left">
                         <option value="جميع المحافظات - فودافون مباشر">جميع المحافظات - فودافون مباشر</option>
                     </select>
                     <x-input-error :messages="$errors->get('destination')" class="mt-2 text-rose-500 text-xs" />
                 </div>
 
                 <div>
-                    <label for="address" class="block text-xs font-bold text-slate-700 mb-2">العنوان</label>
+                    <label for="address" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.address') }}</label>
                     <input wire:model="address" id="address" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="مثال: القاهرة، مدينة نصر..." />
                     <x-input-error :messages="$errors->get('address')" class="mt-2 text-rose-500 text-xs" />
                 </div>
 
                 <div>
-                    <label for="notes" class="block text-xs font-bold text-slate-700 mb-2">ملاحظات</label>
-                    <input wire:model="notes" id="notes" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="ملاحظات إضافية..." />
+                    <label for="notes" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.notes') }}</label>
+                    <input wire:model="notes" id="notes" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="{{ __('messages.notes') }} إضافية..." />
                     <x-input-error :messages="$errors->get('notes')" class="mt-2 text-rose-500 text-xs" />
                 </div>
             </div>
 
             <!-- Recipient Info -->
             <div class="bg-slate-50/50 p-6 rounded-[24px] space-y-5">
-                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">المستفيد المستهدف</h4>
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{{ __('messages.target_recipient') }}</h4>
                 
                 <div>
-                    <label for="recipient_name" class="block text-xs font-bold text-slate-700 mb-2">اسم المستفيد الكامل</label>
+                    <label for="recipient_name" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.full_recipient_name') }}</label>
                     <input wire:model="recipient_name" id="recipient_name" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" required />
                     <x-input-error :messages="$errors->get('recipient_name')" class="mt-2 text-rose-500 text-xs" />
                 </div>
 
                 <div>
-                    <label for="recipient_phone" class="block text-xs font-bold text-slate-700 mb-2">رقم هاتف المستفيد</label>
+                    <label for="recipient_phone" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.recipient_phone_number') }}</label>
                     <input wire:model="recipient_phone" id="recipient_phone" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="+20..." required />
                     <x-input-error :messages="$errors->get('recipient_phone')" class="mt-2 text-rose-500 text-xs" />
                 </div>
@@ -64,17 +64,17 @@
                 <!-- Amount Inputs -->
                 <div class="bg-slate-50/50 p-6 rounded-[24px] grid grid-cols-1 sm:grid-cols-3 gap-5">
                     <div class="sm:col-span-2">
-                        <label for="amount" class="block text-xs font-bold text-slate-700 mb-2">مبلغ التحويل المرغوب</label>
+                        <label for="amount" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.desired_transfer_amount') }}</label>
                         <input wire:model.live="amount" id="amount" type="number" step="0.01" class="w-full bg-white border-none text-primary-600 font-black text-2xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition" required />
                         <x-input-error :messages="$errors->get('amount')" class="mt-2 text-rose-500 text-xs" />
                     </div>
 
                     <div>
-                        <label for="currency" class="block text-xs font-bold text-slate-700 mb-2">العملة</label>
-                        <select wire:model.live="currency" id="currency" class="w-full bg-white border-none text-slate-800 font-bold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition">
-                            <option value="TRY">TRY (ليرة)</option>
-                            <option value="USD">USD (دولار)</option>
-                            <option value="EUR">EUR (يورو)</option>
+                        <label for="currency" class="block text-sm font-bold text-slate-700 mb-2">العملة</label>
+                        <select wire:model.live="currency" id="currency" class="w-full bg-white border-none text-slate-800 font-bold rounded-xl focus:ring-2 focus:ring-primary-500 pr-4 pl-10 py-3 shadow-sm transition bg-left">
+                            <option value="TRY">{{ __('messages.try_lira') }}</option>
+                            <option value="USD">{{ __('messages.usd_dollar') }}</option>
+                            <option value="EUR">{{ __('messages.eur_euro') }}</option>
                         </select>
                         <x-input-error :messages="$errors->get('currency')" class="mt-2 text-rose-500 text-xs" />
                     </div>
@@ -86,32 +86,32 @@
                 <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/40 blur-xl"></div>
                 
                 <div class="space-y-4 relative z-10">
-                    <h4 class="text-[11px] font-bold text-primary-500 uppercase tracking-widest border-b border-primary-200/50 pb-2 mb-2">تفاصيل الحسبة التقديرية</h4>
+                    <h4 class="text-[11px] font-bold text-primary-500 uppercase tracking-widest border-b border-primary-200/50 pb-2 mb-2">{{ __('messages.estimated_calculation_details') }}</h4>
                     
                     <div class="flex justify-between items-center text-sm">
-                        <span class="text-slate-500 font-bold">سعر الصرف (EGP)</span>
+                        <span class="text-slate-500 font-bold">{{ __('messages.exchange_rate_egp') }}</span>
                         <span class="font-black text-slate-800">{{ number_format($exchange_rate, 4) }}</span>
                     </div>
 
                     <div class="flex justify-between items-center text-sm">
-                        <span class="text-slate-500 font-bold">العمولة المقدرة</span>
+                        <span class="text-slate-500 font-bold">{{ __('messages.estimated_commission') }}</span>
                         <span class="font-black text-rose-500">{{ number_format($commission, 2) }} {{ $currency }}</span>
                     </div>
 
                     <div class="flex justify-between items-center pt-3 border-t border-primary-200/50">
-                        <span class="text-slate-500 font-bold">الصافي المتوقع وصوله</span>
+                        <span class="text-slate-500 font-bold">{{ __('messages.expected_net_received') }}</span>
                         <span class="font-black text-emerald-600 text-xl">{{ number_format($received_amount, 2) }} <span class="text-xs">EGP</span></span>
                     </div>
                 </div>
 
                 <div class="pt-6 relative z-10">
                     <div class="flex justify-between items-center mb-4">
-                        <span class="text-xs font-bold text-slate-500">إجمالي التكلفة عليك</span>
+                        <span class="text-xs font-bold text-slate-500">{{ __('messages.total_cost_on_you') }}</span>
                         <span class="font-black text-slate-800 text-2xl">{{ number_format($total_to_pay, 2) }} <span class="text-sm text-slate-500">{{ $currency }}</span></span>
                     </div>
 
                     <button type="submit" class="w-full py-4 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white rounded-xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1">
-                        إرسال الطلب للمراجعة
+                        {{ __('messages.send_request_for_review') }}
                     </button>
                 </div>
             </div>

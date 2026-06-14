@@ -34,33 +34,10 @@ class ExchangeRateService
             ->first();
 
         if ($dbRate) {
-            // Check if the rate is cached and not older than 1 hour (unless it's manually set/modified)
-            $isStale = $dbRate->updated_at->diffInHours(Carbon::now()) > 1;
-            
-            if (!$isStale || !$this->hasApiKey()) {
-                return (float) $dbRate->rate;
-            }
-        }
-
-        // 2. Fetch from External API if stale or missing, and API key exists
-        if ($this->hasApiKey()) {
-            $rate = $this->fetchFromApi($from, $to);
-            if ($rate > 0) {
-                // Update or create in DB
-                ExchangeRate::updateOrCreate(
-                    ['from_currency' => $from, 'to_currency' => $to],
-                    ['rate' => $rate, 'last_fetched_at' => Carbon::now()]
-                );
-                return $rate;
-            }
-        }
-
-        // 3. Fallback to database stale rate if we couldn't fetch a new one
-        if ($dbRate) {
             return (float) $dbRate->rate;
         }
 
-        // 4. Hardcoded Fallbacks
+        // 2. Hardcoded Fallbacks
         return $this->getFallbackRate($from, $to);
     }
 
@@ -89,7 +66,7 @@ class ExchangeRateService
         $apiKey = config('services.exchangerate.api_key');
         
         try {
-            $response = Http::get("https://v6.exchangerate-api.com/v6/{$apiKey}/pair/{$from}/{$to}");
+            $response = Http::timeout(15)->get("https://v6.exchangerate-api.com/v6/{$apiKey}/pair/{$from}/{$to}");
             
             if ($response->successful() && isset($response->json()['conversion_rate'])) {
                 return (float) $response->json()['conversion_rate'];
@@ -114,7 +91,7 @@ class ExchangeRateService
 
         $apiKey = config('services.exchangerate.api_key');
         try {
-            $response = Http::get("https://v6.exchangerate-api.com/v6/{$apiKey}/latest/USD");
+            $response = Http::timeout(15)->get("https://v6.exchangerate-api.com/v6/{$apiKey}/latest/USD");
             
             if ($response->successful() && $response->json()['result'] === 'success') {
                 $rates = $response->json()['conversion_rates'];

@@ -28,7 +28,42 @@ class TransferStatusNotification extends Notification
      */
     public function via(mixed $notifiable): array
     {
-        return [WhatsAppChannel::class];
+        return ['database', WhatsAppChannel::class];
+    }
+
+    /**
+     * Get the array representation of the notification.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(mixed $notifiable): array
+    {
+        $title = '';
+        $message = '';
+        $icon = '';
+
+        if ($this->statusType === 'created') {
+            $title = 'حوالة مالية جديدة';
+            $message = "تم تسجيل حوالة جديدة برقم {$this->transfer->transfer_number}.";
+            $icon = 'M12 6v6m0 0v6m0-6h6m-6 0H6'; // Plus icon
+        } elseif ($this->statusType === 'paid') {
+            $title = 'تم تسليم الحوالة';
+            $message = "تم تسليم الحوالة رقم {$this->transfer->transfer_number} للمستفيد.";
+            $icon = 'M5 13l4 4L19 7'; // Check icon
+        } elseif ($this->statusType === 'cancelled') {
+            $title = 'إلغاء حوالة';
+            $message = "تم إلغاء الحوالة رقم {$this->transfer->transfer_number}.";
+            $icon = 'M6 18L18 6M6 6l12 12'; // X icon
+        }
+
+        return [
+            'title' => $title,
+            'message' => $message,
+            'transfer_id' => $this->transfer->id,
+            'transfer_number' => $this->transfer->transfer_number,
+            'status' => $this->statusType,
+            'icon' => $icon,
+        ];
     }
 
     /**

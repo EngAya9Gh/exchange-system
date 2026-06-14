@@ -30,7 +30,10 @@ class CommissionCalculator
             return (float) $tier->commission_value;
         }
 
-        // 3. Default fallback commission: 2% of the amount if no tiers configured
-        return $amount * 0.02;
+        // 3. Default fallback commission: from Settings
+        $defaultSetting = \App\Models\Setting::where('key', 'default_commission_percentage')->first();
+        $defaultPercentage = $defaultSetting ? (float) $defaultSetting->value : 2.0;
+
+        return $amount * ($defaultPercentage / 100);
     }
 }

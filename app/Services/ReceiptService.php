@@ -12,46 +12,13 @@ use Illuminate\Support\Facades\Storage;
 class ReceiptService
 {
     /**
-     * Generate PDF receipt for a transfer and return its public URL.
+     * Return the public URL of the receipt web view.
      *
      * @param Transfer $transfer
-     * @return string Publicly accessible URL of the receipt PDF
+     * @return string Publicly accessible URL of the receipt
      */
     public function generatePdf(Transfer $transfer): string
     {
-        $currencyName = 'عملة';
-        switch (strtoupper($transfer->target_currency)) {
-            case 'EGP':
-                $currencyName = 'جنيه مصري';
-                break;
-            case 'TRY':
-                $currencyName = 'ليرة تركية';
-                break;
-            case 'USD':
-                $currencyName = 'دولار أمريكي';
-                break;
-            case 'EUR':
-                $currencyName = 'يورو';
-                break;
-        }
-
-        $amountInWords = ArabicNumberToWords::convert((float) $transfer->received_amount, $currencyName);
-
-        // Generate QR code using Google Charts API (fast, reliable, requires no extra dependencies)
-        $qrData = route('transfers.verify', ['number' => $transfer->transfer_number]);
-        $qrCodeUrl = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=" . urlencode($qrData);
-
-        $pdf = Pdf::loadView('receipts.transfer', compact('transfer', 'amountInWords', 'qrCodeUrl'))
-            ->setPaper('a6', 'portrait');
-
-        // Ensure directories exist
-        if (!Storage::disk('public')->exists('receipts')) {
-            Storage::disk('public')->makeDirectory('receipts');
-        }
-
-        $fileName = 'receipts/' . $transfer->transfer_number . '.pdf';
-        Storage::disk('public')->put($fileName, $pdf->output());
-
-        return route('receipt.download', ['number' => $transfer->transfer_number]);
+        return route('receipt.view', ['number' => $transfer->transfer_number]);
     }
 }

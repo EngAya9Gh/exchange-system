@@ -30,8 +30,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('transfer_requests', function (Blueprint $table) {
+        Schema::create('transfers', function (Blueprint $table) {
             $table->id();
+            $table->string('transfer_number')->unique();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('sender_name');
             $table->string('sender_phone');
@@ -39,29 +40,15 @@ return new class extends Migration
             $table->string('recipient_phone');
             $table->decimal('amount', 15, 3);
             $table->string('currency', 3)->default('TRY');
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->text('admin_notes')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('transfers', function (Blueprint $table) {
-            $table->id();
-            $table->string('transfer_number')->unique();
-            $table->foreignId('request_id')->nullable()->constrained('transfer_requests')->onDelete('set null');
-            $table->string('sender_name');
-            $table->string('sender_phone');
-            $table->string('recipient_name');
-            $table->string('recipient_phone');
-            $table->decimal('source_amount', 15, 3);
-            $table->string('source_currency', 3)->default('TRY');
             $table->string('target_currency', 3)->default('EGP');
-            $table->decimal('exchange_rate', 15, 5);
-            $table->decimal('received_amount', 15, 3);
-            $table->decimal('commission', 15, 3);
-            $table->decimal('net_amount', 15, 3);
-            $table->string('secret_code', 5);
-            $table->enum('status', ['pending', 'paid', 'cancelled'])->default('pending');
-            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            $table->decimal('exchange_rate', 15, 5)->nullable();
+            $table->decimal('received_amount', 15, 3)->nullable();
+            $table->decimal('commission', 15, 3)->nullable();
+            $table->decimal('net_amount', 15, 3)->nullable();
+            $table->string('secret_code', 5)->nullable();
+            $table->enum('status', ['new', 'pending', 'received', 'rejected'])->default('new');
+            $table->text('admin_notes')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('paid_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('transferred_at')->nullable();
             $table->timestamp('delivered_at')->nullable();
@@ -96,7 +83,6 @@ return new class extends Migration
         Schema::dropIfExists('activity_logs');
         Schema::dropIfExists('otp_codes');
         Schema::dropIfExists('transfers');
-        Schema::dropIfExists('transfer_requests');
         Schema::dropIfExists('exchange_rates');
         Schema::dropIfExists('commission_tiers');
     }

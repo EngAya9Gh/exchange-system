@@ -21,10 +21,14 @@ class EnsureTwoFactorVerified
         if (Auth::check()) {
             $user = Auth::user();
 
-            // Check if user has 2FA enabled and has not verified in the current session
-            if ($user->two_factor_enabled && !session()->has('2fa_verified')) {
-                // Allow request to OTP verification page and logout
-                if (!$request->routeIs('otp.verify') && !$request->routeIs('logout') && !$request->is('livewire/*')) {
+            // Check if user has 2FA enabled, has not verified in the current session, and didn't use Remember Me
+            if ($user->two_factor_enabled && !session()->has('2fa_verified') && !Auth::viaRemember()) {
+                // Allow request to OTP verification page, logout, livewire, and public receipt/transfer routes
+                if (!$request->routeIs('otp.verify') && 
+                    !$request->routeIs('logout') && 
+                    !$request->is('livewire/*') &&
+                    !$request->routeIs('receipt.*') &&
+                    !$request->routeIs('transfers.*')) {
                     return redirect()->route('otp.verify');
                 }
             }

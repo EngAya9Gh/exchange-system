@@ -9,7 +9,7 @@ class Transfer extends Model
 {
     protected $fillable = [
         'transfer_number',
-        'request_id',
+        'user_id',
         'sender_name',
         'sender_phone',
         'recipient_name',
@@ -17,8 +17,8 @@ class Transfer extends Model
         'destination',
         'address',
         'notes',
-        'source_amount',
-        'source_currency',
+        'amount',
+        'currency',
         'target_currency',
         'exchange_rate',
         'received_amount',
@@ -26,6 +26,7 @@ class Transfer extends Model
         'net_amount',
         'secret_code',
         'status',
+        'admin_notes',
         'created_by',
         'paid_by',
         'transferred_at',
@@ -33,7 +34,7 @@ class Transfer extends Model
     ];
 
     protected $casts = [
-        'source_amount' => 'decimal:3',
+        'amount' => 'decimal:3',
         'exchange_rate' => 'decimal:5',
         'received_amount' => 'decimal:3',
         'commission' => 'decimal:3',
@@ -42,9 +43,9 @@ class Transfer extends Model
         'delivered_at' => 'datetime',
     ];
 
-    public function request(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(TransferRequest::class, 'request_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function creator(): BelongsTo
@@ -52,7 +53,7 @@ class Transfer extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function paidBy()
+    public function paidBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'paid_by');
     }

@@ -55,10 +55,24 @@ new #[Layout('layouts.guest')] class extends Component
         try {
             $user->notify(new SendOtpNotification($otp));
             $this->message = 'تم إرسال رمز التحقق إلى رقم واتساب الخاص بك بنجاح.';
+            if (app()->environment('local')) {
+                $this->message .= ' (الرمز المحلي للتطوير: ' . $otp . ')';
+            }
         } catch (\Exception $e) {
-            Log::error("Failed to send OTP to user {$user->id}: " . $e->getMessage());
-            $this->message = 'حدث خطأ أثناء إرسال الرمز. يرجى المحاولة مرة أخرى.';
+            \Illuminate\Support\Facades\Log::error("Failed to send OTP to user {$user->id}: " . $e->getMessage());
+            $this->message = 'حدث خطأ أثناء إرسال الرمز.';
+            if (app()->environment('local')) {
+                $this->message .= ' (الرمز للتطوير: ' . $otp . ')';
+            }
         }
+    }
+
+    public function logout(): void
+    {
+        auth()->logout();
+        session()->invalidate();
+        session()->regenerateToken();
+        $this->redirect(route('login'));
     }
 
     public function verify(): void
@@ -142,6 +156,12 @@ new #[Layout('layouts.guest')] class extends Component
                 <span x-show="timer > 0" class="text-xs text-gray-500 block mt-1">
                     يمكنك إعادة الإرسال بعد <span x-text="timer"></span> ثانية
                 </span>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-gray-100 text-center">
+                <button type="button" wire:click="logout" class="text-sm font-bold text-rose-600 hover:text-rose-800 transition">
+                    تسجيل الخروج والعودة
+                </button>
             </div>
         </div>
     </form>

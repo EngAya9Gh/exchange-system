@@ -60,9 +60,9 @@ class User extends Authenticatable
         ];
     }
 
-    public function transferRequests(): HasMany
+    public function transfers(): HasMany
     {
-        return $this->hasMany(TransferRequest::class);
+        return $this->hasMany(Transfer::class, 'user_id');
     }
 
     public function createdTransfers(): HasMany

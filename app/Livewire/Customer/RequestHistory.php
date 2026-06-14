@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Customer;
 
-use App\Models\TransferRequest;
+use App\Models\Transfer;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -16,7 +16,7 @@ class RequestHistory extends Component
 
     public function render()
     {
-        $requests = TransferRequest::where('user_id', auth()->id())
+        $requests = Transfer::where('user_id', auth()->id())
             ->latest()
             ->paginate(5);
 

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Customer;
 
-use App\Models\TransferRequest;
+use App\Models\Transfer;
+use App\Models\User;
+use App\Notifications\NewTransferRequestNotification;
 use App\Services\CommissionCalculator;
 use App\Services\ExchangeRateService;
 use Livewire\Component;
@@ -32,6 +34,16 @@ class NewTransferRequest extends Component
         $this->calculateTotals();
     }
 
+    public function autoSyncRates(): void
+    {
+        $dbRate = \App\Models\ExchangeRate::first();
+        if (!$dbRate || $dbRate->updated_at->diffInHours(\Carbon\Carbon::now()) >= 1) {
+            $rateService = app(ExchangeRateService::class);
+            $rateService->syncAllRates();
+            $this->calculateTotals();
+        }
+    }
+
     public function updatedAmount(): void
     {
         $this->calculateTotals();
@@ -44,18 +56,18 @@ class NewTransferRequest extends Component
 
     public function calculateTotals(): void
     {
+        $rateService = app(ExchangeRateService::class);
+        $commissionService = app(CommissionCalculator::class);
+
+        $this->exchange_rate = $rateService->getRate($this->currency, 'EGP');
+
         if (empty($this->amount) || !is_numeric($this->amount) || $this->amount <= 0) {
-            $this->exchange_rate = 0.0;
             $this->commission = 0.0;
             $this->received_amount = 0.0;
             $this->total_to_pay = 0.0;
             return;
         }
 
-        $rateService = app(ExchangeRateService::class);
-        $commissionService = app(CommissionCalculator::class);
-
-        $this->exchange_rate = $rateService->getRate($this->currency, 'EGP');
         $this->commission = $commissionService->calculate((float)$this->amount);
         
         $this->received_amount = (float)$this->amount * $this->exchange_rate;
@@ -78,7 +90,9 @@ class NewTransferRequest extends Component
             'amount.min' => 'يجب ألا يقل مبلغ التحويل عن 10.',
         ]);
 
-        TransferRequest::create([
+        $transferNumber = 'RD' . time() . rand(100, 999);
+        $transfer = Transfer::create([
+            'transfer_number' => $transferNumber,
             'user_id' => auth()->id(),
             'sender_name' => $this->sender_name ?: null,
             'sender_phone' => $this->sender_phone ?: null,
@@ -91,6 +105,12 @@ class NewTransferRequest extends Component
             'currency' => $this->currency,
             'status' => 'pending',
         ]);
+
+        // Notify all admins
+        $admins = User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new NewTransferRequestNotification($transfer));
+        }
 
         $this->reset(['sender_name', 'sender_phone', 'recipient_name', 'recipient_phone', 'destination', 'address', 'notes', 'amount']);
         $this->calculateTotals();
