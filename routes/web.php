@@ -18,6 +18,7 @@ Route::group([
         // Admin routes
         Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
             Route::view('dashboard', 'admin.dashboard')->name('dashboard');
+            Route::get('deliver/{number}', \App\Livewire\Admin\DeliverTransfer::class)->name('transfers.deliver');
         });
     });
 
@@ -50,5 +51,12 @@ Route::get('receipts/{number}', function ($number) {
 
     return view('receipts.transfer', compact('transfer', 'amountInWords'));
 })->name('receipt.view');
+
+use App\Http\Controllers\TelegramWebhookController;
+
+// Telegram Webhook
+Route::post('/webhook/telegram', [TelegramWebhookController::class, 'handle'])
+    ->name('webhook.telegram')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
 require __DIR__.'/auth.php';
