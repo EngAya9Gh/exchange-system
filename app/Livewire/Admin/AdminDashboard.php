@@ -19,12 +19,14 @@ use App\Livewire\Actions\Logout;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 
 class AdminDashboard extends Component
 {
     use WithPagination;
 
     // Tabs state
+    #[Url(history: true)]
     public string $activeTab = 'dashboard'; // dashboard | new_transfer | ledger | rates | requests | commissions
 
     // Manual form state
@@ -276,13 +278,17 @@ class AdminDashboard extends Component
             'delivered_at' => Carbon::now(),
         ]);
 
-        // Notify client
+        // Notify client and admin
         try {
             if ($transfer->user_id) {
                 $transfer->user->notify(new TransferStatusNotification($transfer, 'paid'));
             }
+            // Notify the admin who processed the payment
+            if (auth()->check()) {
+                auth()->user()->notify(new TransferStatusNotification($transfer, 'paid'));
+            }
         } catch (\Exception $e) {
-            Log::error("Failed to notify user on transfer pay: " . $e->getMessage());
+            Log::error("Failed to notify on transfer pay: " . $e->getMessage());
         }
 
         $this->dispatch('transfer-paid');

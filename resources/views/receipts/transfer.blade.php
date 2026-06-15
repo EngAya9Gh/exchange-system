@@ -269,9 +269,7 @@
             </div>
             
             <div class="top-col col-logo">
-                <div class="logo-circle">
-                    <div class="logo-text">شعار بردى</div>
-                </div>
+                <img src="{{ asset('logo.png') }}" alt="Logo" style="max-width: 80px; max-height: 80px; display: inline-block; object-fit: contain;">
             </div>
         </div>
 
@@ -299,18 +297,23 @@
             </div>
         </div>
 
-        <div class="bottom-section">
-            <div class="delivery-address">
-                <div class="header-label">عنوان التسليم</div>
-                <div class="header-value">{{ $transfer->destination }} - {{ $transfer->address ?: 'عنوان' }} - {{ $transfer->recipient_phone }}</div>
+        <div class="bottom-section" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1;">
+                <div class="delivery-address" style="text-align: right;">
+                    <div class="header-label">عنوان التسليم</div>
+                    <div class="header-value">{{ $transfer->destination }} - {{ $transfer->address ?: 'عنوان' }} - {{ $transfer->recipient_phone }}</div>
+                </div>
+
+                <div class="important-notes" style="text-align: right; margin-top: 20px;">
+                    <div class="notes-title" style="color: #ef4444;">ملاحظات هامة</div>
+                    <div class="note-item">- يتم تسليم الحوالة بيد المستلم حصراً بعد التأكد من الهوية الأصلية ولا تقبل الصورة.</div>
+                    <div class="note-item">- لا تشارك هذا الإيصال الا مع المستلم حرصا على سلامة أموالك.</div>
+                </div>
             </div>
-
-            <div class="divider"></div>
-
-            <div class="important-notes">
-                <div class="notes-title">ملاحظات هامة</div>
-                <div class="note-item">- يتم تسليم الحوالة بيد المستلم حصراً بعد التأكد من الهوية الأصلية ولا تقبل الصورة.</div>
-                <div class="note-item">- لا تشارك هذا الإيصال الا مع المستلم حرصا على سلامة أموالك.</div>
+            
+            <div class="qr-box" style="text-align: center; margin-right: 20px; border: 2px dashed #ccc; padding: 10px; border-radius: 12px; background: #fff;">
+                <div class="header-label" style="margin-bottom: 5px; color: #ef4444;">امسح للتسليم</div>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode(route('admin.transfers.deliver', $transfer->transfer_number)) }}" alt="Scan to deliver" style="width: 90px; height: 90px;">
             </div>
         </div>
     </div>

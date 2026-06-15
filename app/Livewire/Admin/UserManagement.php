@@ -24,6 +24,7 @@ class UserManagement extends Component
     public string $password = '';
     public string $role = 'customer'; // admin, agent, customer
     public bool $is_active = true;
+    public bool $two_factor_enabled = false;
 
     public bool $showFormModal = false;
 
@@ -54,6 +55,7 @@ class UserManagement extends Component
         $this->phone = $user->phone ?? '';
         $this->role = $user->role;
         $this->is_active = $user->is_active;
+        $this->two_factor_enabled = $user->two_factor_enabled;
         
         $this->showFormModal = true;
     }
@@ -79,6 +81,7 @@ class UserManagement extends Component
             'phone' => $this->phone,
             'role' => $this->role,
             'is_active' => $this->is_active,
+            'two_factor_enabled' => $this->two_factor_enabled,
         ];
 
         if (!empty($this->password)) {
@@ -112,7 +115,7 @@ class UserManagement extends Component
 
     private function resetForm(): void
     {
-        $this->reset(['editingUserId', 'name', 'email', 'phone', 'password', 'role', 'is_active']);
+        $this->reset(['editingUserId', 'name', 'email', 'phone', 'password', 'role', 'is_active', 'two_factor_enabled']);
         $this->resetValidation();
     }
 

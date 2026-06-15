@@ -136,6 +136,10 @@
                             <input wire:model="is_active" id="is_active" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-500">
                             <label for="is_active" class="mr-2 text-sm text-gray-600">حساب {{ __('messages.status_active') }}</label>
                         </div>
+                        <div class="flex items-center mt-2">
+                            <input wire:model="two_factor_enabled" id="two_factor_enabled" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-500">
+                            <label for="two_factor_enabled" class="mr-2 text-sm text-gray-600">{{ __('messages.enable_2fa') }}</label>
+                        </div>
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 flex flex-row-reverse gap-2">

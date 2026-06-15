@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'welcome_to' => 'Welcome to SxDx.',
+    'welcome_to' => 'Welcome to Teacher VC.',
     'hello_welcome_back' => 'Hello :name, welcome back!',
     'quick_stats' => 'Quick Stats About Your Balances',
     'new_transfer' => 'New Transfer.',
@@ -25,7 +25,7 @@ return [
     'total_try_spent' => 'Total TRY Spent',
     'total_usd_spent' => 'Total USD Spent',
     'total_eur_spent' => 'Total EUR Spent',
-    'vodafone_balance' => 'Vodafone Balance (Valuated)',
+    'vodafone_balance' => 'Vodafone Balance ',
     'excellent_performance' => 'Excellent Performance',
     'incoming_requests' => 'Incoming Requests',
     'pending_customer_requests_today' => 'Today\'s Pending Customer Requests',
@@ -183,4 +183,5 @@ return [
     'leave_blank_to_keep' => '(leave blank to keep unchanged)',
     'active_account' => 'Active Account',
     'save' => 'Save',
+    'enable_2fa' => 'Enable Two-Factor Authentication (OTP)',
 ];

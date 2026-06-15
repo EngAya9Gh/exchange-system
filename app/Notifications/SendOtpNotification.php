@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Notifications\Channels\WhatsAppChannel;
+use App\Notifications\Channels\TelegramChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -24,7 +25,18 @@ class SendOtpNotification extends Notification
      */
     public function via(mixed $notifiable): array
     {
+        if (!empty($notifiable->telegram_chat_id)) {
+            return [TelegramChannel::class];
+        }
         return [WhatsAppChannel::class];
+    }
+
+    public function toTelegram(mixed $notifiable): array
+    {
+        return [
+            'to' => $notifiable->telegram_chat_id,
+            'text' => "🔐 *رمز التحقق الثنائي (2FA) الخاص بك هو:* `{$this->code}`\n\nهذا الرمز صالح لمدة 5 دقائق. يرجى عدم مشاركته مع أي شخص.",
+        ];
     }
 
     /**

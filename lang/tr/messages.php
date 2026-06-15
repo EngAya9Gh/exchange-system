@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'welcome_to' => 'SxDx\'e Hoş Geldiniz.',
+    'welcome_to' => 'Teacher VC\'e Hoş Geldiniz.',
     'hello_welcome_back' => 'Merhaba :name, tekrar hoş geldin!',
     'quick_stats' => 'Bakiyeleriniz Hakkında Hızlı İstatistikler',
     'new_transfer' => 'Yeni Transfer.',
@@ -25,7 +25,7 @@ return [
     'total_try_spent' => 'Harcanan Toplam TRY',
     'total_usd_spent' => 'Harcanan Toplam USD',
     'total_eur_spent' => 'Harcanan Toplam EUR',
-    'vodafone_balance' => 'Vodafone Bakiyesi (Değerlenen)',
+    'vodafone_balance' => 'Vodafone Bakiyesi',
     'excellent_performance' => 'Mükemmel Performans',
     'incoming_requests' => 'Gelen İstekler',
     'pending_customer_requests_today' => 'Bugünün Bekleyen Müşteri İstekleri',
@@ -183,4 +183,5 @@ return [
     'leave_blank_to_keep' => '(değiştirmemek için boş bırakın)',
     'active_account' => 'Aktif Hesap',
     'save' => 'Kaydet',
+    'enable_2fa' => 'İki Faktörlü Doğrulamayı Etkinleştir (OTP)',
 ];

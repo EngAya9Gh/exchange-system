@@ -3,8 +3,8 @@
     <aside class="w-[280px] bg-white border-l border-slate-100 flex-col hidden md:flex shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20">
         <!-- Logo Area -->
         <div class="h-28 flex items-center px-8">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-xl shadow-soft">Sx</div>
-            <span class="mr-3 font-black text-2xl text-slate-800 tracking-tight">SxDx Bank</span>
+            <img src="{{ asset('logo.png') }}" alt="Teacher VC" class="h-10 object-contain mr-2">
+            <span class="mr-3 font-black text-2xl text-slate-800 tracking-tight">Teacher VC</span>
         </div>
 
         <div class="px-8 text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider flex justify-between items-center">
@@ -64,7 +64,7 @@
     <main class="flex-1 flex flex-col overflow-hidden relative">
         
         <!-- Top Header -->
-        <header class="h-28 bg-transparent flex items-center justify-between px-10 pt-4 z-10 relative">
+        <header class="h-28 bg-transparent flex items-center justify-between px-10 pt-4">
             <!-- Decorative Triangles Background from SxDx image -->
             <div class="absolute inset-0 overflow-hidden pointer-events-none opacity-20 -z-10">
                 <div class="absolute top-2 left-10 text-primary-300 transform rotate-45">▲</div>
@@ -106,15 +106,22 @@
 
                 <!-- Language Switcher -->
                 <div class="relative" x-data="{ openLang: false }" wire:ignore>
-                    <button @click="openLang = !openLang" @click.away="openLang = false" class="p-2 text-slate-400 hover:text-primary-600 transition flex items-center gap-1 rounded-xl hover:bg-slate-50">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
-                        <span class="text-xs font-bold">{{ strtoupper(app()->getLocale()) }}</span>
+                    <button @click="openLang = !openLang" @click.away="openLang = false" class="px-3 py-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-all flex items-center gap-2 rounded-xl border border-slate-100 shadow-sm bg-white">
+                        <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        @php
+                            $currentLocale = app()->getLocale();
+                            $flags = ['ar' => '🇸🇦', 'en' => '🇬🇧', 'tr' => '🇹🇷'];
+                        @endphp
+                        <span class="text-sm">{{ $flags[$currentLocale] ?? '🌐' }}</span>
+                        <span class="text-xs font-bold uppercase">{{ $currentLocale }}</span>
+                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                     
-                    <div x-show="openLang" style="display: none;" class="absolute left-0 mt-2 w-32 bg-white border border-slate-100 rounded-xl shadow-lg z-50 overflow-hidden">
+                    <div x-show="openLang" style="display: none;" class="absolute left-0 mt-2 w-36 bg-white border border-slate-100 rounded-xl shadow-lg z-50 overflow-hidden py-1">
                         @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
-                            <a rel="alternate" hreflang="{{ $localeCode }}" href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}" class="block px-4 py-2 text-sm font-bold {{ app()->getLocale() === $localeCode ? 'bg-primary-50 text-primary-600' : 'text-slate-600 hover:bg-slate-50' }}">
-                                {{ $properties['native'] }}
+                            <a rel="alternate" hreflang="{{ $localeCode }}" href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}" class="flex items-center gap-3 px-4 py-2 text-sm font-bold transition-colors {{ app()->getLocale() === $localeCode ? 'bg-primary-50 text-primary-600' : 'text-slate-600 hover:bg-slate-50 hover:text-primary-500' }}">
+                                <span class="text-lg">{{ $flags[$localeCode] ?? '🌐' }}</span>
+                                <span>{{ $properties['native'] }}</span>
                             </a>
                         @endforeach
                     </div>
@@ -130,6 +137,8 @@
 
         <!-- Scrollable Content -->
         <div class="flex-1 overflow-y-auto px-10 py-6 pb-20">
+            <!-- Telegram Link -->
+            <livewire:telegram-link />
 
         <!-- TAB 1: General Dashboard -->
         @if ($activeTab === 'dashboard')
@@ -182,7 +191,7 @@
                 </div>
 
                 <!-- EGP Card (مقوم) -->
-                <div class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-[28px] p-6 flex flex-col justify-between shadow-soft-xl relative overflow-hidden text-right">
+                <div class="bg-gradient-to-br from-primary-700 via-primary-600 to-rose-500 rounded-[28px] p-6 flex flex-col justify-between shadow-soft-xl relative overflow-hidden text-right">
                     <div class="absolute -left-6 -top-6 w-24 h-24 rounded-full bg-white/10 blur-xl"></div>
                     <div class="absolute -right-10 -bottom-10 w-32 h-32 rounded-full bg-white/10 blur-2xl"></div>
                     
@@ -258,13 +267,19 @@
                                             {{ $req->created_at->format('M d, Y') }}
                                         </div>
                                     </td>
-                                    <td class="px-4 py-4 text-center space-x-2 space-x-reverse">
-                                        <button wire:click="payTransfer({{ $req->id }})" class="px-4 py-2 bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white rounded-xl text-xs font-bold transition">
-                                            {{ __('messages.receipt') }}
-                                        </button>
-                                        <button x-on:click="rejectId = {{ $req->id }}; rejectModal = true" class="px-4 py-2 bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-xs font-bold transition">
-                                            {{ __('messages.reject') }}
-                                        </button>
+                                    <td class="px-4 py-4 text-center">
+                                        <div class="flex flex-col gap-2 w-full max-w-[120px] mx-auto">
+                                            <button wire:click="payTransfer({{ $req->id }})" wire:loading.attr="disabled" class="w-full px-4 py-2 bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white rounded-xl text-xs font-bold transition disabled:opacity-75 disabled:cursor-wait flex items-center justify-center">
+                                                <span wire:loading.remove wire:target="payTransfer({{ $req->id }})">{{ __('messages.receipt') }}</span>
+                                                <span wire:loading wire:target="payTransfer({{ $req->id }})" class="flex items-center">
+                                                    <svg class="animate-spin ml-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                    يُحمل...
+                                                </span>
+                                            </button>
+                                            <button x-on:click="rejectId = {{ $req->id }}; rejectModal = true" class="w-full px-4 py-2 bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center">
+                                                {{ __('messages.reject') }}
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -290,21 +305,21 @@
                         <!-- Decorative subtle gradient at top right -->
                         <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-primary-50 to-transparent rounded-bl-full -z-0 opacity-50"></div>
                         
-                        <h3 class="text-xl font-bold text-slate-800 mb-8 flex items-center relative z-10">
+                        <h3 class="text-xl font-bold text-slate-800 mb-8 flex items-center relative">
                             <div class="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center mr-3 ml-3">
                                 <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                             </div>
-                            {{ __('messages.register_btn') }}{{ __('messages.new_transfer_menu') }}
+                            {{ __('messages.register_btn') }} {{ __('messages.new_transfer_menu') }}
                         </h3>
                         
                         @if (session()->has('transfer_success'))
-                            <div class="mb-8 p-4 bg-emerald-50 text-emerald-800 font-bold rounded-2xl flex items-center relative z-10">
+                            <div class="mb-8 p-4 bg-emerald-50 text-emerald-800 font-bold rounded-2xl flex items-center relative">
                                 <svg class="w-5 h-5 ml-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                 {{ session('transfer_success') }}
                             </div>
                         @endif
 
-                        <form wire:submit="submitManualTransfer" class="space-y-6 relative z-10">
+                        <form wire:submit="submitManualTransfer" class="space-y-6 relative">
                             <!-- Structured Fields like the image -->
                             <div class="bg-slate-50/50 p-6 rounded-[24px] space-y-5">
                                 <!-- Row 1: Recipient Name & Phone -->
@@ -350,7 +365,7 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.amount') }}{{ __('messages.required_to_transfer') }}</label>
+                                        <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.amount') }} {{ __('messages.required_to_transfer') }}</label>
                                         <input wire:model.live="amount" type="number" step="0.01" class="w-full bg-white border-none text-primary-600 font-black text-xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition" required>
                                     </div>
                                     <div>
@@ -369,14 +384,14 @@
                             </div>
 
                             <!-- Calculations Section -->
-                            <div class="bg-gradient-to-r from-primary-50 to-indigo-50 p-6 rounded-[24px]">
+                            <div class="bg-gradient-to-r from-primary-50 to-rose-50 p-6 rounded-[24px]">
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                                     <div class="text-center">
                                         <span class="block text-[10px] font-bold text-primary-400 mb-1 uppercase tracking-widest">{{ __('messages.exchange_rate_label') }}</span>
                                         <span class="block font-black text-slate-800 text-lg">{{ number_format($exchange_rate, 4) }}</span>
                                     </div>
                                     <div class="text-center border-r border-primary-200/50">
-                                        <span class="block text-[10px] font-bold text-rose-400 mb-1 uppercase tracking-widest">{{ __('messages.fees') }}{{ __('messages.and_separator') }}{{ __('messages.commission_label') }}</span>
+                                        <span class="block text-[10px] font-bold text-rose-400 mb-1 uppercase tracking-widest">{{ __('messages.fees') }} {{ __('messages.and_separator') }} {{ __('messages.commission_label') }}</span>
                                         <span class="block font-black text-rose-500 text-lg">{{ number_format($commission, 2) }} <span class="text-xs">{{ $source_currency }}</span></span>
                                     </div>
                                     <div class="text-center border-r border-primary-200/50">
@@ -392,9 +407,15 @@
                                     <span class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{{ __('messages.total_to_collect') }}</span>
                                     <span class="block text-3xl font-black text-slate-800">{{ number_format($total_to_pay, 2) }} <span class="text-base text-slate-400">{{ $source_currency }}</span></span>
                                 </div>
-                                <button type="submit" class="px-8 py-4 bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-700 hover:to-indigo-700 text-white rounded-2xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex items-center">
-                                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                                    {{ __('messages.approve_and_send') }}
+                                <button type="submit" wire:loading.attr="disabled" wire:target="submitManualTransfer" class="px-8 py-4 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-2xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex items-center justify-center disabled:opacity-75 disabled:cursor-wait">
+                                    <span wire:loading.remove wire:target="submitManualTransfer" class="flex items-center">
+                                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                                        {{ __('messages.approve_and_send') }}
+                                    </span>
+                                    <span wire:loading wire:target="submitManualTransfer" class="flex items-center">
+                                        <svg class="animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        جاري الاعتماد والتحويل...
+                                    </span>
                                 </button>
                             </div>
                         </form>
@@ -442,9 +463,20 @@
                             </table>
                         </div>
                         <div class="bg-slate-50 p-4 text-center border-t border-slate-100">
-                            <button wire:click="syncExchangeRates" class="text-xs font-bold text-slate-500 hover:text-primary-600 transition flex items-center justify-center mx-auto">
-                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                {{ __('messages.update_from_global_market') }}
+                            @if (session()->has('rate_success'))
+                                <div class="mb-3 text-xs font-bold text-emerald-600 bg-emerald-50 rounded-lg p-2">
+                                    {{ session('rate_success') }}
+                                </div>
+                            @endif
+                            <button wire:click="syncExchangeRates" class="text-xs font-bold text-slate-500 hover:text-primary-600 transition flex items-center justify-center mx-auto" wire:loading.attr="disabled">
+                                <span wire:loading.remove wire:target="syncExchangeRates" class="flex items-center">
+                                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    {{ __('messages.update_from_global_market') }}
+                                </span>
+                                <span wire:loading wire:target="syncExchangeRates" class="flex items-center text-primary-600">
+                                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    {{ __('messages.updating') }}
+                                </span>
                             </button>
                         </div>
                     </div>
@@ -488,6 +520,7 @@
                             <tr>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.number') }}</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.recipient') }}</th>
+                                <th class="px-4 py-4 font-bold text-center">رقم هاتف المستفيد</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.amount') }}</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.commission_label') }}</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.transfer_date') }}</th>
@@ -506,7 +539,9 @@
                                     </td>
                                     <td class="px-4 py-5 text-center">
                                         <div class="text-sm font-bold text-slate-800">{{ $tr->recipient_name }}</div>
-                                        <div class="text-[11px] text-slate-400 mt-1">{{ __('messages.from_label') }} <span class="font-bold text-slate-600">{{ $tr->sender_name ?: __('messages.branch') }}</span></div>
+                                    </td>
+                                    <td class="px-4 py-5 text-center">
+                                        <div class="text-[11px] font-bold text-slate-600" dir="ltr">{{ $tr->recipient_phone }}</div>
                                     </td>
                                     <td class="px-4 py-5 text-center">
                                         <div class="text-sm font-black text-slate-800 flex items-center justify-center">
@@ -544,14 +579,26 @@
                                             </span>
                                         @endif
                                         <div class="mt-2 flex space-x-2 space-x-reverse justify-center">
-                                            <button wire:click="viewReceipt({{ $tr->id }})" class="px-2 py-1 bg-purple-400 hover:bg-purple-500 text-white rounded text-[10px] font-bold transition flex items-center">
-                                                <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                                {{ __('messages.status_notification') }}
+                                            <button wire:click="viewReceipt({{ $tr->id }})" wire:loading.attr="disabled" class="px-2 py-1 bg-purple-400 hover:bg-purple-500 text-white rounded text-[10px] font-bold transition flex items-center disabled:opacity-75 disabled:cursor-wait">
+                                                <span wire:loading.remove wire:target="viewReceipt({{ $tr->id }})" class="flex items-center">
+                                                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                    {{ __('messages.status_notification') }}
+                                                </span>
+                                                <span wire:loading wire:target="viewReceipt({{ $tr->id }})" class="flex items-center">
+                                                    <svg class="animate-spin ml-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                    يُحمل...
+                                                </span>
                                             </button>
                                             @if($tr->status === 'new' || $tr->status === 'pending')
-                                            <button wire:click="payTransfer({{ $tr->id }})" class="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-bold transition flex items-center">
-                                                <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                {{ __('messages.receipt') }}
+                                            <button wire:click="payTransfer({{ $tr->id }})" wire:loading.attr="disabled" class="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-bold transition flex items-center disabled:opacity-75 disabled:cursor-wait">
+                                                <span wire:loading.remove wire:target="payTransfer({{ $tr->id }})" class="flex items-center">
+                                                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                    {{ __('messages.receipt') }}
+                                                </span>
+                                                <span wire:loading wire:target="payTransfer({{ $tr->id }})" class="flex items-center">
+                                                    <svg class="animate-spin ml-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                    يُحمل...
+                                                </span>
                                             </button>
                                             @endif
                                         </div>
@@ -584,7 +631,7 @@
             <x-card class="p-6">
                 <div class="flex justify-between items-center border-b border-gray-50 pb-3 mb-6">
                     <h3 class="text-lg font-bold text-gray-800">{{ __('messages.manage_label') }}{{ __('messages.exchange_rates_menu') }}</h3>
-                    <button wire:click="syncExchangeRates" wire:loading.attr="disabled" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-sm flex items-center transition disabled:opacity-50">
+                    <button wire:click="syncExchangeRates" wire:loading.attr="disabled" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold shadow-sm flex items-center transition disabled:opacity-50">
                         <svg wire:loading.remove wire:target="syncExchangeRates" class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                         <svg wire:loading wire:target="syncExchangeRates" class="animate-spin w-4 h-4 ml-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         <span wire:loading.remove wire:target="syncExchangeRates">{{ __('messages.update_prices_now') }}</span>
@@ -689,7 +736,7 @@
                             @error('tierMaxAmount') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-2">{{ __('messages.type_label') }}{{ __('messages.commission_label') }}</label>
+                            <label class="block text-xs font-bold text-slate-600 mb-2">{{ __('messages.type_label') }} {{ __('messages.commission_label') }}</label>
                             <select wire:model="tierCommissionType" class="w-full bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-primary-500 px-4 py-3 text-sm">
                                 <option value="fixed">{{ __('messages.fixed_amount_try') }}</option>
                                 <option value="percentage">{{ __('messages.percentage_symbol') }}</option>
@@ -720,7 +767,7 @@
                             <thead class="bg-slate-50">
                                 <tr>
                                     <th class="px-6 py-4 text-right text-xs font-black text-slate-500 uppercase tracking-wider">{{ __('messages.range_label') }}</th>
-                                    <th class="px-6 py-4 text-right text-xs font-black text-slate-500 uppercase tracking-wider">{{ __('messages.type_label') }}{{ __('messages.commission_label') }}</th>
+                                    <th class="px-6 py-4 text-right text-xs font-black text-slate-500 uppercase tracking-wider">{{ __('messages.type_label') }} {{ __('messages.commission_label') }}</th>
                                     <th class="px-6 py-4 text-right text-xs font-black text-slate-500 uppercase tracking-wider">{{ __('messages.value_label') }}</th>
                                     <th class="px-6 py-4 text-center text-xs font-black text-slate-500 uppercase tracking-wider">{{ __('messages.actions_label') }}</th>
                                 </tr>
@@ -775,7 +822,13 @@
                     $wire.rejectRequest(rejectId, rejectNotes);
                     rejectModal = false;
                     rejectNotes = '';
-                " class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold">{{ __('messages.confirm_reject_btn') }}</button>
+                " wire:loading.attr="disabled" wire:target="rejectRequest" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center justify-center disabled:opacity-75 disabled:cursor-wait">
+                    <span wire:loading.remove wire:target="rejectRequest">{{ __('messages.confirm_reject_btn') }}</span>
+                    <span wire:loading wire:target="rejectRequest" class="flex items-center">
+                        <svg class="animate-spin ml-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        يُحمل...
+                    </span>
+                </button>
             </div>
         </div>
     </div>

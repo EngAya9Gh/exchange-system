@@ -404,11 +404,7 @@
         <div class="content-wrapper">
             <!-- Logo -->
             <div class="logo-container" style="text-align: left;">
-                <div class="logo">
-                    <div class="logo-circle"></div>
-                    <div class="logo-text">ALFA</div>
-                    <div class="logo-sub">CASH</div>
-                </div>
+                <img src="{{ asset('logo.png') }}" alt="Logo" style="max-height: 50px; object-fit: contain;">
             </div>
 
             <!-- Header Info -->
@@ -484,13 +480,11 @@
 
             <!-- QR Codes -->
             <div class="qr-section">
-                <div class="qr-box">
-                    <div class="qr-label">عناوين الفروع</div>
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode(url('/')) }}" class="qr-img" alt="Branches">
-                </div>
+                <!-- Keep branches QR hidden for now as it's not requested, only Scan to Deliver -->
+                <div></div> <!-- spacer -->
                 <div class="qr-box">
                     <div class="qr-label">امسح للتسليم</div>
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode(route('transfers.verify', $transfer->transfer_number)) }}" class="qr-img" alt="Scan to deliver">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode(route('admin.transfers.deliver', $transfer->transfer_number)) }}" class="qr-img" alt="Scan to deliver">
                 </div>
             </div>
         </div>

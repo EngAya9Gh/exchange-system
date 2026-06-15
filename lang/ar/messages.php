@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'welcome_to' => 'مرحباً بك في SxDx.',
+    'welcome_to' => 'مرحباً بك في Teacher VC.',
     'hello_welcome_back' => 'أهلاً :name، مرحباً بعودتك!',
     'quick_stats' => 'إحصائيات سريعة عن أرصدتك',
     'new_transfer' => 'حوالة جديدة.',
@@ -25,7 +25,7 @@ return [
     'total_try_spent' => 'إجمالي الليرة المصروفة',
     'total_usd_spent' => 'إجمالي الدولار المصروف',
     'total_eur_spent' => 'إجمالي اليورو المصروف',
-    'vodafone_balance' => 'رصيد الفودافون (المقوم)',
+    'vodafone_balance' => 'رصيد الفودافون ',
     'excellent_performance' => 'أداء ممتاز',
     'incoming_requests' => 'الطلبات الواردة',
     'pending_customer_requests_today' => 'طلبات الزبائن المعلقة لليوم',
@@ -96,8 +96,8 @@ return [
     'current_label' => ' الحالي',
     'save_new_rate' => 'حفظ السعر الجديد',
     'user_management' => 'إدارة المستخدمين',
-    'automated_commissions_by_tiers' => 'العمولات ال{{ __(\'messages.automated\') }}ة (حسب الشرائح)',
-    'automated_commissions_desc' => 'في حال تفعيل هذا الخيار، سيقوم النظام بحساب {{ __(\'messages.commission_label\') }} تلقائياً وإغلاق حقل "{{ __(\'messages.fees\') }}". في حال تعطيله، ستتمكن من إدخال {{ __(\'messages.fees\') }} يدوياً لكل حوالة.',
+    'automated_commissions_by_tiers' => 'العمولات الآلية (حسب الشرائح)',
+    'automated_commissions_desc' => 'في حال تفعيل هذا الخيار، سيقوم النظام بحساب العمولة تلقائياً وإغلاق حقل "الأجور". في حال تعطيله، ستتمكن من إدخال الأجور يدوياً لكل حوالة.',
     'default_commission_percentage' => 'النسبة الافتراضية للعمولات',
     'default_commission_desc' => 'هذه النسبة يتم تطبيقها في حال لم يتطابق مبلغ الحوالة مع أي من الشرائح المعرفة أدناه.',
     'percentage' => 'النسبة المئوية (%)',
@@ -183,4 +183,5 @@ return [
     'leave_blank_to_keep' => '(اتركه فارغاً لعدم التغيير)',
     'active_account' => 'حساب نشط',
     'save' => 'حفظ',
+    'enable_2fa' => 'تفعيل التحقق بخطوتين (OTP)',
 ];
