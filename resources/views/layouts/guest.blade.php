@@ -27,11 +27,8 @@
                 <div class="absolute bottom-32 right-32 text-pink-300 transform -rotate-12 text-3xl">▲</div>
             </div>
 
-            <div>
-                <a href="/" wire:navigate class="flex items-center space-x-3 space-x-reverse mb-8">
-                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-2xl shadow-soft">Sx</div>
-                    <span class="font-black text-4xl text-slate-800 tracking-tight">SxDx</span>
-                </a>
+            <div class="flex justify-center mb-6">
+                <img src="{{ asset('logo.png') }}" alt="Teacher VC" class="h-28 object-contain">
             </div>
 
             <div class="w-full sm:max-w-md mt-2 px-10 py-10 bg-white shadow-soft-xl border border-slate-50 sm:rounded-[32px] relative z-10">

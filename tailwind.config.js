@@ -16,13 +16,13 @@ export default {
             },
             colors: {
                 primary: {
-                    50: '#f5f3ff',
-                    100: '#ede9fe',
-                    500: '#8b5cf6', // A vibrant, modern purple/indigo (like image 2)
-                    600: '#7c3aed',
-                    700: '#6d28d9',
-                    800: '#5b21b6',
-                    900: '#4c1d95',
+                    50: '#fef2f2',
+                    100: '#fee2e2',
+                    500: '#ef4444', 
+                    600: '#dc2626', // Vodafone Red
+                    700: '#b91c1c',
+                    800: '#991b1b',
+                    900: '#7f1d1d',
                 },
                 secondary: {
                     500: '#f59e0b',

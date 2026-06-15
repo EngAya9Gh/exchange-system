@@ -3,7 +3,7 @@
     <div class="bg-white shadow-sm border-b border-gray-100 py-4 px-6 mb-6">
         <div class="max-w-7xl mx-auto flex justify-between items-center w-full" dir="rtl">
             <h2 class="font-black text-2xl text-slate-800 leading-tight">
-                {{ __('{{ __('messages.customer_portal') }}') }}
+                {{ __('messages.customer_portal') }}
             </h2>
             <div class="flex items-center gap-4">
                 <livewire:notification-dropdown />
@@ -20,6 +20,9 @@
                 <h3 class="text-xl font-bold">{{ __('messages.welcome_name') }}{{ auth()->user()->name }}</h3>
                 <p class="text-sm text-red-100 mt-1">{{ __('messages.customer_portal_desc') }}</p>
             </div>
+
+            <!-- Telegram Link -->
+            <livewire:telegram-link />
 
             <!-- New Request Form -->
             <livewire:customer.new-transfer-request />
