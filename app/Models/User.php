@@ -32,6 +32,8 @@ class User extends Authenticatable
         'two_factor_enabled',
         'is_active',
         'language',
+        'telegram_chat_id',
+        'telegram_link_token',
     ];
 
     /**
