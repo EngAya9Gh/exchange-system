@@ -9,6 +9,9 @@ git pull origin main
 # Install PHP dependencies
 composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 # Install Node dependencies and build assets
 npm install
 npm run build
