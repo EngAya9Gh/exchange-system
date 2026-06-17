@@ -1,0 +1,22 @@
+{
+    "Profile Information": "Profil Bilgileri",
+    "Update your account's profile information and email address.": "Hesabınızın profil bilgilerini ve e-posta adresini güncelleyin.",
+    "Name": "İsim",
+    "Email": "E-posta",
+    "Save": "Kaydet",
+    "Saved.": "Kaydedildi.",
+    "Update Password": "Şifreyi Güncelle",
+    "Ensure your account is using a long, random password to stay secure.": "Güvende kalmak için hesabınızın uzun ve rastgele bir şifre kullandığından emin olun.",
+    "Current Password": "Mevcut Şifre",
+    "New Password": "Yeni Şifre",
+    "Confirm Password": "Şifreyi Onayla",
+    "Delete Account": "Hesabı Sil",
+    "Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.": "Hesabınız silindiğinde, tüm kaynakları ve verileri kalıcı olarak silinecektir. Hesabınızı silmeden önce lütfen saklamak istediğiniz veri veya bilgileri indirin.",
+    "Are you sure you want to delete your account?": "Hesabınızı silmek istediğinizden emin misiniz?",
+    "Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.": "Hesabınız silindiğinde, tüm kaynakları ve verileri kalıcı olarak silinecektir. Hesabınızı kalıcı olarak silmek istediğinizi onaylamak için lütfen şifrenizi girin.",
+    "Password": "Şifre",
+    "Cancel": "İptal",
+    "Your email address is unverified.": "E-posta adresiniz doğrulanmadı.",
+    "Click here to re-send the verification email.": "Doğrulama e-postasını yeniden göndermek için buraya tıklayın.",
+    "A new verification link has been sent to your email address.": "E-posta adresinize yeni bir doğrulama bağlantısı gönderildi."
+}

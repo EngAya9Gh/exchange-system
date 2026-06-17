@@ -9,7 +9,7 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form action="{{ route('login') }}" method="POST" x-data="{ submitting: false }" @submit="submitting = true">
+    <form action="{{ route('login') }}" method="POST" id="login-form">
         @csrf
         <!-- Email Address -->
         <div>
@@ -48,10 +48,13 @@
         </div>
 
         <div class="mt-8">
-            <button type="submit" x-bind:disabled="submitting" class="w-full py-4 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex justify-center items-center disabled:opacity-75 disabled:cursor-wait">
-                <span x-show="!submitting">{{ __('تسجيل الدخول') }}</span>
-                <span x-show="submitting" class="flex items-center" style="display: none;">
-                    <svg class="animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <button type="submit" id="login-btn" class="w-full py-4 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex justify-center items-center">
+                <span id="login-text">{{ __('تسجيل الدخول') }}</span>
+                <span id="login-spinner" class="hidden flex items-center">
+                    <svg class="animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                     جاري التحقق...
                 </span>
             </button>
@@ -67,7 +70,6 @@
             var passInput = document.getElementById('password');
             var eyeShow = document.getElementById('eye-show');
             var eyeHide = document.getElementById('eye-hide');
-            
             if (passInput.type === 'password') {
                 passInput.type = 'text';
                 eyeShow.classList.add('hidden');
@@ -78,5 +80,15 @@
                 eyeHide.classList.add('hidden');
             }
         }
+
+        document.getElementById('login-form').addEventListener('submit', function() {
+            var btn = document.getElementById('login-btn');
+            var text = document.getElementById('login-text');
+            var spinner = document.getElementById('login-spinner');
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-wait');
+            text.classList.add('hidden');
+            spinner.classList.remove('hidden');
+        });
     </script>
 </x-guest-layout>

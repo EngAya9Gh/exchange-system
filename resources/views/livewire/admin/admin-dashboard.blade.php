@@ -3,7 +3,7 @@
     <aside class="w-[280px] bg-white border-l border-slate-100 flex-col hidden md:flex shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20">
         <!-- Logo Area -->
         <div class="h-28 flex items-center px-8">
-            <img src="{{ asset('logo.png') }}" alt="Teacher VC" class="h-10 object-contain mr-2">
+            <img src="{{ asset('logo.png?v=2') }}" alt="Teacher VC" class="h-10 object-contain mr-2">
             <span class="mr-3 font-black text-2xl text-slate-800 tracking-tight">Teacher VC</span>
         </div>
 
@@ -96,13 +96,15 @@
                 
                 <livewire:notification-dropdown />
 
-                <div class="flex items-center cursor-pointer gap-3">
-                    <div class="text-left hidden md:block">
+                <a href="{{ route('profile') }}" title="{{ __('messages.profile') }}" class="flex items-center cursor-pointer gap-3 hover:opacity-80 transition bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-xl border border-slate-100">
+                    <div class="text-left hidden md:block" dir="ltr">
                         <div class="text-sm font-bold text-slate-800">{{ auth()->user()->name }}</div>
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{{ auth()->user()->role }}</div>
+                        <div class="text-[11px] font-bold text-slate-400 mt-0.5">{{ __('messages.system_admin') }}</div>
                     </div>
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 shadow-sm border border-white"></div>
-                </div>
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 shadow-sm border border-white flex items-center justify-center text-white font-bold">
+                        {{ mb_substr(auth()->user()->name, 0, 1) }}
+                    </div>
+                </a>
 
                 <!-- Language Switcher -->
                 <div class="relative" x-data="{ openLang: false }" wire:ignore>
@@ -137,8 +139,10 @@
 
         <!-- Scrollable Content -->
         <div class="flex-1 overflow-y-auto px-10 py-6 pb-20">
-            <!-- Telegram Link -->
-            <livewire:telegram-link />
+            <!-- Telegram Link (Only show if not linked) -->
+            @if(empty(auth()->user()->telegram_chat_id))
+                <livewire:telegram-link />
+            @endif
 
         <!-- TAB 1: General Dashboard -->
         @if ($activeTab === 'dashboard')
@@ -149,7 +153,7 @@
             </div>
 
             <!-- Balance Cards Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
                 <!-- TRY Card -->
                 <div class="bg-white rounded-[28px] p-6 flex flex-col items-center justify-between shadow-soft border border-slate-50 transition-transform hover:-translate-y-1">
                     <span class="text-sm text-slate-600 font-bold mb-4">TRY Balance</span>
@@ -188,6 +192,21 @@
 
                     <h3 class="text-2xl font-black text-slate-800 mb-1 tracking-tight">{{ number_format($totalEurSent, 2) }}</h3>
                     <div class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mt-4">{{ __('messages.total_eur_spent') }}</div>
+                </div>
+
+                <!-- Profits / Commissions Card -->
+                <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-[28px] p-6 flex flex-col justify-between shadow-soft border border-slate-50 transition-transform hover:-translate-y-1 relative overflow-hidden text-right">
+                    <div class="absolute -left-10 -bottom-10 w-32 h-32 rounded-full bg-white/10 blur-2xl"></div>
+                    
+                    <div>
+                        <span class="text-xs text-white/80 font-bold uppercase tracking-wider">{{ __('messages.total_profits') }}</span>
+                        <h3 class="text-3xl font-black text-white mt-2 tracking-tight">{{ number_format($totalCommissions, 2) }}</h3>
+                    </div>
+                    
+                    <div class="flex justify-between items-end mt-8 relative z-10">
+                        <div class="text-[10px] font-bold text-white/90 uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-sm">TRY</div>
+                        <svg class="w-10 h-10 text-white/30" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    </div>
                 </div>
 
                 <!-- EGP Card (مقوم) -->
@@ -234,6 +253,7 @@
                     <table class="w-full text-sm text-right">
                         <thead class="text-xs text-slate-400 border-b border-slate-100">
                             <tr>
+                                <th class="px-4 py-4 font-semibold pb-4 text-center">#</th>
                                 <th class="px-4 py-4 font-semibold pb-4">{{ __('messages.sender_info') }}</th>
                                 <th class="px-4 py-4 font-semibold pb-4">{{ __('messages.recipient_info') }}</th>
                                 <th class="px-4 py-4 font-semibold pb-4">{{ __('messages.amount') }}</th>
@@ -244,6 +264,9 @@
                         <tbody>
                             @forelse($incomingRequests as $req)
                                 <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                                    <td class="px-4 py-4 text-center">
+                                        <span class="text-xs font-bold text-slate-400">{{ $incomingRequests->firstItem() + $loop->index }}</span>
+                                    </td>
                                     <td class="px-4 py-4">
                                         <div class="flex items-center">
                                             <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs ml-3 group-hover:bg-primary-50 group-hover:text-primary-600 transition">
@@ -293,6 +316,12 @@
                         </tbody>
                     </table>
                 </div>
+
+                @if($incomingRequests->hasPages())
+                    <div class="p-4 border-t border-slate-50 bg-slate-50/30">
+                        {{ $incomingRequests->links('livewire::tailwind', data: ['scrollTo' => false]) }}
+                    </div>
+                @endif
             </div>
         @endif
 
@@ -493,12 +522,27 @@
                         <p class="text-xs text-slate-400 mt-1">{{ __('messages.all_transfers_desc') }}</p>
                     </div>
                     
-                    <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                        <div class="relative">
-                            <input wire:model.live="searchQuery" type="text" placeholder="{{ __('messages.search_placeholder') }}" class="bg-slate-50 border-none text-sm font-bold text-slate-600 rounded-xl px-4 py-3 w-full sm:w-64 focus:ring-2 focus:ring-primary-500 transition pl-10">
+                    <div class="flex flex-col lg:flex-row gap-3 w-full lg:w-auto mt-4 md:mt-0">
+                        <div class="relative w-full lg:w-auto">
+                            <input wire:model.live="searchQuery" type="text" placeholder="{{ __('messages.search_placeholder') }}" class="bg-slate-50 border-none text-sm font-bold text-slate-600 rounded-xl px-4 py-3 w-full lg:w-48 focus:ring-2 focus:ring-primary-500 transition pl-10">
                             <svg class="w-4 h-4 text-slate-400 absolute top-3.5 left-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </div>
-                        <select wire:model.live="ledgerStatusFilter" class="bg-slate-50 border-none text-sm font-bold text-slate-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-500 transition cursor-pointer">
+                        
+                        <select wire:model.live="ledgerCurrencyFilter" class="bg-slate-50 border-none text-sm font-bold text-slate-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-500 transition cursor-pointer w-full lg:w-auto">
+                            <option value="all">{{ __('messages.all_currencies') }}</option>
+                            <option value="TRY">{{ __('messages.turkish_lira') }}</option>
+                            <option value="USD">{{ __('messages.us_dollar') }}</option>
+                            <option value="EUR">{{ __('messages.euro') }}</option>
+                        </select>
+                        
+                        <select wire:model.live="ledgerDateFilter" class="bg-slate-50 border-none text-sm font-bold text-slate-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-500 transition cursor-pointer w-full lg:w-auto">
+                            <option value="all">{{ __('messages.all_times') }}</option>
+                            <option value="today">{{ __('messages.today') }}</option>
+                            <option value="this_week">{{ __('messages.this_week') }}</option>
+                            <option value="this_month">{{ __('messages.this_month') }}</option>
+                        </select>
+
+                        <select wire:model.live="ledgerStatusFilter" class="bg-slate-50 border-none text-sm font-bold text-slate-600 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-500 transition cursor-pointer w-full lg:w-auto">
                             <option value="all">{{ __('messages.all_statuses') }}</option>
                             <option value="pending">{{ __('messages.status_pending') }}</option>
                             <option value="paid">{{ __('messages.status_paid') }}</option>
@@ -518,9 +562,10 @@
                     <table class="w-full text-sm text-right">
                         <thead class="text-[11px] text-slate-400 uppercase tracking-wider bg-slate-50/50">
                             <tr>
+                                <th class="px-4 py-4 font-bold text-center">#</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.number') }}</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.recipient') }}</th>
-                                <th class="px-4 py-4 font-bold text-center">رقم هاتف المستفيد</th>
+                                <th class="px-4 py-4 font-bold text-center">{{ __('messages.recipient_phone_number') }}</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.amount') }}</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.commission_label') }}</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.transfer_date') }}</th>
@@ -531,6 +576,9 @@
                         <tbody>
                             @forelse($transfers as $tr)
                                 <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                                    <td class="px-4 py-5 text-center">
+                                        <span class="text-xs font-bold text-slate-400">{{ $transfers->firstItem() + $loop->index }}</span>
+                                    </td>
                                     <td class="px-4 py-5 text-center">
                                         <div class="flex flex-col items-center justify-center">
                                             <div class="font-black text-slate-800 font-mono tracking-tight">{{ $tr->transfer_number }}</div>
@@ -618,9 +666,9 @@
                     </table>
                 </div>
                 
-                @if($transfers->hasPages())
+                                @if($transfers->hasPages())
                     <div class="p-6 border-t border-slate-50 bg-slate-50/30">
-                        {{ $transfers->links() }}
+                        {{ $transfers->links('livewire::tailwind', data: ['scrollTo' => false]) }}
                     </div>
                 @endif
             </div>

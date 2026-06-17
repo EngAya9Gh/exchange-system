@@ -404,7 +404,7 @@
         <div class="content-wrapper">
             <!-- Logo -->
             <div class="logo-container" style="text-align: left;">
-                <img src="{{ asset('logo.png') }}" alt="Logo" style="max-height: 50px; object-fit: contain;">
+                <img src="{{ asset('logo.png?v=2') }}" alt="Logo" style="max-height: 50px; object-fit: contain;">
             </div>
 
             <!-- Header Info -->

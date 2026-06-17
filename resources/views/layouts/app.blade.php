@@ -28,6 +28,11 @@
 
             <!-- Page Content -->
             <main class="flex-1 min-w-0">
+                @if (isset($header))
+                    <header>
+                        {{ $header }}
+                    </header>
+                @endif
                 {{ $slot }}
             </main>
         </div>

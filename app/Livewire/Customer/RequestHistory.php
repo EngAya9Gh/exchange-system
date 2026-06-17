@@ -12,7 +12,7 @@ class RequestHistory extends Component
 {
     use WithPagination;
 
-    protected $listeners = ['request-created' => 'render'];
+    protected $listeners = ['request-created' => '$refresh'];
 
     public function render()
     {

@@ -20,7 +20,7 @@ class AutoLogoutOnIdle
     {
         if (Auth::check() && !Auth::viaRemember()) {
             $lastActivity = session('last_activity_timestamp');
-            $idleTimeout = 15 * 60; // 15 minutes in seconds
+            $idleTimeout = config('session.lifetime') * 60; // Uses SESSION_LIFETIME from .env (currently 720 minutes = 12 hours)
 
             if ($lastActivity && (time() - $lastActivity) > $idleTimeout) {
                 Auth::logout();

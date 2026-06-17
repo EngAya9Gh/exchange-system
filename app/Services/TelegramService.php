@@ -39,7 +39,7 @@ class TelegramService
         }
 
         try {
-            $response = Http::post($this->apiUrl . 'sendMessage', $payload);
+            $response = Http::timeout(5)->post($this->apiUrl . 'sendMessage', $payload);
             
             if (!$response->successful()) {
                 Log::error('Telegram API Error (sendMessage): ' . $response->body());
@@ -70,7 +70,7 @@ class TelegramService
         ];
 
         try {
-            $response = Http::post($this->apiUrl . 'sendDocument', $payload);
+            $response = Http::timeout(5)->post($this->apiUrl . 'sendDocument', $payload);
             
             if (!$response->successful()) {
                 Log::error('Telegram API Error (sendDocument): ' . $response->body());
@@ -103,7 +103,7 @@ class TelegramService
         }
 
         try {
-            $response = Http::post($this->apiUrl . 'editMessageText', $payload);
+            $response = Http::timeout(5)->post($this->apiUrl . 'editMessageText', $payload);
             if (!$response->successful()) {
                 Log::error('Telegram API Error (editMessageText): ' . $response->body());
                 return false;
@@ -129,7 +129,7 @@ class TelegramService
         ];
 
         try {
-            $response = Http::post($this->apiUrl . 'answerCallbackQuery', $payload);
+            $response = Http::timeout(5)->post($this->apiUrl . 'answerCallbackQuery', $payload);
             return $response->successful();
         } catch (\Exception $e) {
             Log::error('Telegram API Exception (answerCallbackQuery): ' . $e->getMessage());

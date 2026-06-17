@@ -10,6 +10,7 @@
         <table class="w-full text-sm text-right">
             <thead class="text-[11px] text-slate-400 uppercase tracking-wider bg-slate-50/50">
                 <tr>
+                    <th scope="col" class="px-8 py-4 font-bold text-center">#</th>
                     <th scope="col" class="px-8 py-4 font-bold">المستفيد</th>
                     <th scope="col" class="px-8 py-4 font-bold">{{ __('messages.requested_amount') }}</th>
                     <th scope="col" class="px-8 py-4 font-bold">تاريخ الطلب</th>
@@ -20,6 +21,9 @@
             <tbody>
                 @forelse($requests as $request)
                     <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
+                        <td class="px-8 py-5 text-center">
+                            <span class="text-xs font-bold text-slate-400">{{ $requests->firstItem() + $loop->index }}</span>
+                        </td>
                         <td class="px-8 py-5">
                             <div class="flex items-center">
                                 <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center ml-4 group-hover:bg-primary-50 transition">
@@ -39,9 +43,13 @@
                             <div class="text-slate-400 mt-0.5">{{ $request->created_at->format('h:i A') }}</div>
                         </td>
                         <td class="px-8 py-5 text-center">
-                            @if($request->status === 'approved')
+                            @if($request->status === 'new')
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5"></span> {{ __('messages.status_approved') }}
+                                </span>
+                            @elseif($request->status === 'received' || $request->status === 'paid')
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-purple-50 text-purple-600 border border-purple-100">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-purple-500 ml-1.5"></span> {{ __('messages.status_paid') }}
                                 </span>
                             @elseif($request->status === 'rejected')
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">
@@ -73,7 +81,7 @@
 
     @if($requests->hasPages())
         <div class="p-6 border-t border-slate-50 bg-slate-50/30">
-            {{ $requests->links() }}
+            {{ $requests->links('livewire::tailwind', data: ['scrollTo' => false]) }}
         </div>
     @endif
 </div>

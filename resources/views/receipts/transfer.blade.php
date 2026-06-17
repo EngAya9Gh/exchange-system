@@ -269,7 +269,7 @@
             </div>
             
             <div class="top-col col-logo">
-                <img src="{{ asset('logo.png') }}" alt="Logo" style="max-width: 80px; max-height: 80px; display: inline-block; object-fit: contain;">
+                <img src="{{ asset('logo.png?v=2') }}" alt="Logo" style="max-width: 80px; max-height: 80px; display: inline-block; object-fit: contain;">
             </div>
         </div>
 

@@ -111,6 +111,8 @@ class TransferStatusNotification extends Notification
 
         $message = "";
         $document = null;
+        $replyMarkup = null;
+        $extraMessages = [];
         $branchName = $this->transfer->branch ? $this->transfer->branch->name : 'غير محدد';
 
         if ($this->statusType === 'created') {
@@ -133,7 +135,7 @@ class TransferStatusNotification extends Notification
             }
 
         } elseif ($this->statusType === 'paid') {
-            $message = "💵 *تم تسليم الحوالة   بنجاح!*\n\n"
+            $message = "💵 *تم تسليم الحوالة بنجاح!*\n\n"
                 . "رقم الحوالة: `{$this->transfer->transfer_number}`\n"
                 . "المبلغ المدفوع: {$this->transfer->received_amount} {$this->transfer->target_currency}";
                 
@@ -159,9 +161,6 @@ class TransferStatusNotification extends Notification
         if (empty($message)) {
             return [];
         }
-
-        $replyMarkup = null;
-        $extraMessages = [];
 
         if ($this->statusType === 'created') {
             $replyMarkup = [

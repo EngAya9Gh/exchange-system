@@ -28,7 +28,7 @@
             </div>
 
             <div class="flex justify-center mb-6">
-                <img src="{{ asset('logo.png') }}" alt="Teacher VC" class="h-28 object-contain">
+                <img src="{{ asset('logo.png?v=2') }}" alt="Teacher VC" class="h-28 object-contain">
             </div>
 
             <div class="w-full sm:max-w-md mt-2 px-10 py-10 bg-white shadow-soft-xl border border-slate-50 sm:rounded-[32px] relative z-10">

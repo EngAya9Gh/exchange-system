@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Transfer;
 use App\Services\TelegramService;
 use App\Services\ReceiptService;
+use App\Notifications\TransferStatusNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -116,6 +117,15 @@ class TelegramWebhookController extends Controller
             // Answer callback to remove loading
             $this->telegramService->answerCallbackQuery($callbackQueryId, '✅ تم قبول الحوالة بنجاح.');
 
+            // Notify client
+            try {
+                if ($transfer->user_id) {
+                    $transfer->user->notify(new TransferStatusNotification($transfer, 'paid'));
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to notify user on Telegram transfer approval: " . $e->getMessage());
+            }
+
             // Update the message text to show it was approved and add the receipt button
             try {
                 $receiptService = app(ReceiptService::class);
@@ -147,6 +157,15 @@ class TelegramWebhookController extends Controller
 
             // Answer callback
             $this->telegramService->answerCallbackQuery($callbackQueryId, '❌ تم رفض الحوالة.');
+
+            // Notify client
+            try {
+                if ($transfer->user_id) {
+                    $transfer->user->notify(new TransferStatusNotification($transfer, 'cancelled'));
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to notify user on Telegram transfer rejection: " . $e->getMessage());
+            }
 
             // Update the message text to show it was rejected
             $newText = $callbackQuery['message']['text'] . "\n\n❌ *الحالة:* مرفوضة (بواسطة {$fromName})";

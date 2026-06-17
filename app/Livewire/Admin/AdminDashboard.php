@@ -48,7 +48,9 @@ class AdminDashboard extends Component
 
     // Search and filter in ledger
     public string $searchQuery = '';
-    public string $ledgerStatusFilter = 'all';
+    public $ledgerStatusFilter = 'all';
+    public $ledgerDateFilter = 'all';
+    public $ledgerCurrencyFilter = 'all';
 
     // Rate adjustment state
     public array $adjustedRates = [];
@@ -239,6 +241,15 @@ class AdminDashboard extends Component
             'admin_notes' => $notes ?: 'تم الرفض من قبل المسؤول.'
         ]);
 
+        // Notify client
+        try {
+            if ($transfer->user_id) {
+                $transfer->user->notify(new TransferStatusNotification($transfer, 'cancelled'));
+            }
+        } catch (\Exception $e) {
+            Log::error("Failed to notify user on transfer rejection: " . $e->getMessage());
+        }
+
         session()->flash('request_success', 'تم رفض الطلب بنجاح.');
     }
 
@@ -382,8 +393,11 @@ class AdminDashboard extends Component
         // Equiv EGP (مقوم) - all paid transfers received amount in EGP
         $totalEgpPaid = Transfer::where('target_currency', 'EGP')->where('status', 'received')->sum('received_amount');
 
+        // Total Commissions in TRY
+        $totalCommissions = Transfer::where('currency', 'TRY')->where('status', 'received')->sum('commission');
+
         // Incoming pending requests
-        $incomingRequests = Transfer::with('user')->where('status', 'pending')->latest()->get();
+        $incomingRequests = Transfer::with('user')->where('status', 'pending')->latest()->paginate(10, ['*'], 'requests_page');
 
         // Ledger list with filters
         $ledgerQuery = Transfer::with(['creator']);
@@ -399,7 +413,28 @@ class AdminDashboard extends Component
         }
 
         if ($this->ledgerStatusFilter !== 'all') {
-            $ledgerQuery->where('status', $this->ledgerStatusFilter);
+            // Handle multiple statuses mapping if needed, e.g., paid -> received
+            $statusMap = [
+                'paid' => 'received',
+                'cancelled' => 'rejected'
+            ];
+            $filterStatus = $statusMap[$this->ledgerStatusFilter] ?? $this->ledgerStatusFilter;
+            $ledgerQuery->where('status', $filterStatus);
+        }
+
+        if ($this->ledgerCurrencyFilter !== 'all') {
+            $ledgerQuery->where('currency', $this->ledgerCurrencyFilter);
+        }
+
+        if ($this->ledgerDateFilter !== 'all') {
+            $now = now();
+            if ($this->ledgerDateFilter === 'today') {
+                $ledgerQuery->whereDate('created_at', $now->toDateString());
+            } elseif ($this->ledgerDateFilter === 'this_week') {
+                $ledgerQuery->whereBetween('created_at', [$now->startOfWeek()->toDateTimeString(), $now->endOfWeek()->toDateTimeString()]);
+            } elseif ($this->ledgerDateFilter === 'this_month') {
+                $ledgerQuery->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year);
+            }
         }
 
         $transfers = $ledgerQuery->latest()->paginate(10);
@@ -415,6 +450,7 @@ class AdminDashboard extends Component
             'totalUsdSent',
             'totalEurSent',
             'totalEgpPaid',
+            'totalCommissions',
             'incomingRequests',
             'transfers',
             'exchangeRates',
