@@ -59,4 +59,12 @@ Route::post('/webhook/telegram', [TelegramWebhookController::class, 'handle'])
     ->name('webhook.telegram')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
+// Fallback route to force logout if JS is broken
+Route::get('/force-logout', function () {
+    auth()->logout();
+    session()->invalidate();
+    session()->regenerateToken();
+    return redirect('/login');
+})->name('force-logout');
+
 require __DIR__.'/auth.php';

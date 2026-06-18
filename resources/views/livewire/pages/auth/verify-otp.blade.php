@@ -159,9 +159,9 @@ new #[Layout('layouts.guest')] class extends Component
             </div>
             
             <div class="mt-4 pt-4 border-t border-gray-100 text-center">
-                <button type="button" wire:click="logout" class="text-sm font-bold text-rose-600 hover:text-rose-800 transition">
-                    تسجيل الخروج والعودة
-                </button>
+                <a href="{{ route('force-logout') }}" class="text-sm font-bold text-rose-600 hover:text-rose-800 transition block w-full py-2 bg-rose-50 rounded-lg border border-rose-100">
+                    تسجيل الخروج والعودة (انقر هنا)
+                </a>
             </div>
         </div>
     </form>
