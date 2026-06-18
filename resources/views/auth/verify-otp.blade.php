@@ -29,7 +29,7 @@
         @endif
 
         {{-- POST using relative URL to bypass APP_URL misconfiguration --}}
-        <form method="POST" action="/verify-otp">
+        <form method="POST" action="{{ route('otp.verify.post') }}">
             @csrf
             <div>
                 <x-input-label for="code" :value="__('رمز التحقق (OTP)')" class="text-right block mb-1" />
@@ -45,7 +45,7 @@
             </div>
         </form>
 
-        <form method="POST" action="/verify-otp/resend" class="mt-4 text-center">
+        <form method="POST" action="{{ route('otp.resend') }}" class="mt-4 text-center">
             @csrf
             <button type="submit" class="text-sm text-indigo-600 hover:text-indigo-900 underline">
                 إعادة إرسال الرمز
@@ -53,9 +53,8 @@
         </form>
         
         <div class="mt-4 pt-4 border-t border-gray-100 text-center">
-            {{-- Direct GET link - no JS, no CSRF needed --}}
-            <a href="/force-logout" class="text-sm font-bold text-rose-600 hover:text-rose-800 transition block w-full py-2 bg-rose-50 rounded-lg border border-rose-100">
-                تسجيل الخروج والعودة
+            <a href="{{ route('force-logout') }}" class="text-sm font-bold text-rose-600 hover:text-rose-800 transition block w-full py-2 bg-rose-50 rounded-lg border border-rose-100">
+                تسجيل الخروج والعودة (انقر هنا)
             </a>
         </div>
     </div>
