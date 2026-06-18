@@ -26,11 +26,13 @@ class OtpVerificationController extends Controller
             ->where('expires_at', '>', Carbon::now())
             ->first();
 
-        if (!$existing && !empty($user->phone)) {
+        if (!$existing && !empty($user->telegram_chat_id)) {
             $this->sendCode($user);
         }
 
-        return view('auth.verify-otp');
+        $botUsername = config('services.telegram.bot_username', 'exchange_adbtrk_bot');
+
+        return view('auth.verify-otp', compact('botUsername'));
     }
 
     public function verify(Request $request)
@@ -76,13 +78,13 @@ class OtpVerificationController extends Controller
             return redirect()->route('login');
         }
 
-        if (empty($user->phone)) {
-            return back()->with('error', 'لا يوجد رقم هاتف مسجل لحسابك. يرجى الاتصال بالمسؤول.');
+        if (empty($user->telegram_chat_id)) {
+            return back()->with('error', 'يجب ربط حسابك ببوت التلغرام أولاً لتتمكن من استلام الرمز.');
         }
 
         $this->sendCode($user);
 
-        return back()->with('status', 'تم إعادة إرسال رمز التحقق إلى رقم واتساب الخاص بك بنجاح.');
+        return back()->with('status', 'تم إعادة إرسال رمز التحقق إلى حساب التلغرام الخاص بك بنجاح.');
     }
 
     private function sendCode($user)
@@ -113,5 +115,12 @@ class OtpVerificationController extends Controller
                 session()->flash('dev_code', $otp);
             }
         }
+    }
+
+    public function checkStatus()
+    {
+        return response()->json([
+            'linked' => !empty(auth()->user()->telegram_chat_id)
+        ]);
     }
 }
