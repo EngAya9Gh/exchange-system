@@ -76,17 +76,5 @@
                 eyeHide.classList.add('hidden');
             }
         }
-
-        document.getElementById('login-form').addEventListener('submit', function() {
-            var btn = document.getElementById('login-btn');
-            var text = document.getElementById('login-text');
-            var spinner = document.getElementById('login-spinner');
-            setTimeout(function() {
-                btn.disabled = true;
-                btn.classList.add('opacity-75', 'cursor-wait');
-                text.classList.add('hidden');
-                spinner.classList.remove('hidden');
-            }, 10);
-        });
     </script>
 </x-guest-layout>
