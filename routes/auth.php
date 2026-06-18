@@ -28,8 +28,9 @@ Route::middleware('auth')->group(function () {
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
 
-    Volt::route('verify-otp', 'pages.auth.verify-otp')
-        ->name('otp.verify');
+    Route::get('verify-otp', [\App\Http\Controllers\Auth\OtpVerificationController::class, 'show'])->name('otp.verify');
+    Route::post('verify-otp', [\App\Http\Controllers\Auth\OtpVerificationController::class, 'verify'])->name('otp.verify.post');
+    Route::post('verify-otp/resend', [\App\Http\Controllers\Auth\OtpVerificationController::class, 'resend'])->name('otp.resend');
 
     Volt::route('confirm-password', 'pages.auth.confirm-password')
         ->name('password.confirm');
