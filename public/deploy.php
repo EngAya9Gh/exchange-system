@@ -24,9 +24,8 @@ if (!$signature) {
     }
 }
 
-// Execute the deployment script
-// The path must point to the deploy.sh file in the root directory
-$output = shell_exec('cd .. && bash deploy.sh 2>&1');
+// Execute the deployment script in the background to prevent GitHub timeout
+shell_exec('cd .. && nohup bash deploy.sh > deploy.log 2>&1 &');
 
-// Output the result for logging
-echo "<pre>$output</pre>";
+// Output a success message immediately
+echo "Deployment started in the background.";
