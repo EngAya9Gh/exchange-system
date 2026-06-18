@@ -113,6 +113,12 @@ class UserManagement extends Component
         session()->flash('success', 'تم تغيير حالة المستخدم بنجاح.');
     }
 
+    public function closeModal(): void
+    {
+        $this->showFormModal = false;
+        $this->resetForm();
+    }
+
     private function resetForm(): void
     {
         $this->reset(['editingUserId', 'name', 'email', 'phone', 'password', 'role', 'is_active', 'two_factor_enabled']);

@@ -34,7 +34,7 @@
 
     <!-- Users Table -->
     <x-card class="overflow-x-auto">
-        <table class="w-full text-sm text-right text-gray-500">
+        <table class="w-full text-sm text-start text-gray-500">
             <thead class="text-xs text-gray-700 uppercase bg-white/50 backdrop-blur-sm border-b border-white/40">
                 <tr>
                     <th class="px-6 py-3">{{ __('messages.name_label') }}</th>
@@ -93,37 +93,37 @@
 
     <!-- Create / Edit Modal -->
     @if($showFormModal)
-    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" wire:key="user-form-modal">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="$set('showFormModal', false)"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="closeModal"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg text-right overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+            <div class="inline-block align-bottom bg-white rounded-lg text-start overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
                         {{ $editingUserId ? __('messages.edit_user') : __('messages.add_new_user') }}
                     </h3>
                     <div class="space-y-4">
-                        <div>
+                        <div wire:key="field-name">
                             <x-input-label value="{{ __('messages.name_label') }}" />
-                            <x-text-input wire:model="name" type="text" class="mt-1 block w-full" />
+                            <x-text-input wire:model="name" type="text" class="mt-1 block w-full" autocomplete="off" />
                             <x-input-error :messages="$errors->get('name')" class="mt-2" />
                         </div>
-                        <div>
+                        <div wire:key="field-email">
                             <x-input-label value="{{ __('messages.email') }}" />
-                            <x-text-input wire:model="email" type="email" class="mt-1 block w-full" dir="ltr" />
+                            <x-text-input wire:model="email" type="email" class="mt-1 block w-full" dir="ltr" autocomplete="off" />
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
-                        <div>
+                        <div wire:key="field-phone">
                             <x-input-label value="{{ __('messages.phone') }}" />
-                            <x-text-input wire:model="phone" type="text" class="mt-1 block w-full" dir="ltr" placeholder="+201..." />
+                            <x-text-input wire:model="phone" type="text" class="mt-1 block w-full" dir="ltr" placeholder="+201..." autocomplete="off" />
                             <x-input-error :messages="$errors->get('phone')" class="mt-2" />
                         </div>
-                        <div>
+                        <div wire:key="field-password">
                             <x-input-label value="{{ __('messages.password') }}{{ $editingUserId ? __('messages.leave_blank_to_keep') : '' }}" />
-                            <x-password-input wire:model="password" class="mt-1 block w-full" />
+                            <x-password-input wire:model="password" class="mt-1 block w-full" autocomplete="new-password" />
                             <x-input-error :messages="$errors->get('password')" class="mt-2" />
                         </div>
-                        <div>
+                        <div wire:key="field-role">
                             <x-input-label value="{{ __('messages.role') }}" />
                             <select wire:model="role" class="mt-1 block w-full bg-white/50 backdrop-blur-md border-white/60 focus:bg-white focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm py-2 transition-all duration-300">
                                 <option value="customer">{{ __('messages.role_customer_label') }}</option>
@@ -132,13 +132,13 @@
                             </select>
                             <x-input-error :messages="$errors->get('role')" class="mt-2" />
                         </div>
-                        <div class="flex items-center mt-4">
+                        <div class="flex items-center gap-2 mt-4" wire:key="field-active">
                             <input wire:model="is_active" id="is_active" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-500">
-                            <label for="is_active" class="mr-2 text-sm text-gray-600">حساب {{ __('messages.status_active') }}</label>
+                            <label for="is_active" class="text-sm text-gray-600">حساب {{ __('messages.status_active') }}</label>
                         </div>
-                        <div class="flex items-center mt-2">
+                        <div class="flex items-center gap-2 mt-2" wire:key="field-2fa">
                             <input wire:model="two_factor_enabled" id="two_factor_enabled" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-500">
-                            <label for="two_factor_enabled" class="mr-2 text-sm text-gray-600">{{ __('messages.enable_2fa') }}</label>
+                            <label for="two_factor_enabled" class="text-sm text-gray-600">{{ __('messages.enable_2fa') }}</label>
                         </div>
                     </div>
                 </div>
@@ -146,7 +146,7 @@
                     <x-primary-button wire:click="saveUser" class="bg-primary-600 hover:bg-primary-700">
                         {{ __('messages.save') }}
                     </x-primary-button>
-                    <button wire:click="$set('showFormModal', false)" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button wire:click="closeModal" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         {{ __('messages.cancel_btn') }}
                     </button>
                 </div>

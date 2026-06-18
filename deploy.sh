@@ -23,7 +23,7 @@ php artisan migrate --force
 php artisan optimize:clear
 php artisan config:cache
 php artisan event:cache
-php artisan route:cache
+
 php artisan view:cache
 
 # Restart queues (if using Supervisor for Laravel Horizon/Queue)
