@@ -110,12 +110,12 @@
                         </div>
                         <div wire:key="field-email">
                             <x-input-label value="{{ __('messages.email') }}" />
-                            <x-text-input wire:model="email" type="email" class="mt-1 block w-full" dir="ltr" autocomplete="off" />
+                            <x-text-input wire:model="email" type="email" class="mt-1 block w-full text-start" autocomplete="off" />
                             <x-input-error :messages="$errors->get('email')" class="mt-2" />
                         </div>
                         <div wire:key="field-phone">
                             <x-input-label value="{{ __('messages.phone') }}" />
-                            <x-text-input wire:model="phone" type="text" class="mt-1 block w-full" dir="ltr" placeholder="+201..." autocomplete="off" />
+                            <x-text-input wire:model="phone" type="text" class="mt-1 block w-full text-start" placeholder="+201..." autocomplete="off" />
                             <x-input-error :messages="$errors->get('phone')" class="mt-2" />
                         </div>
                         <div wire:key="field-password">
