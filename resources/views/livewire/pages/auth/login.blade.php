@@ -59,10 +59,6 @@
                 </span>
             </button>
         </div>
-        
-        <div class="mt-6 text-center">
-            <p class="text-sm text-slate-500 font-bold">ليس لديك حساب؟ <a href="{{ route('register') }}" class="text-primary-600 hover:text-primary-700 transition">سجل الآن</a></p>
-        </div>
     </form>
 
     <script>
@@ -85,10 +81,12 @@
             var btn = document.getElementById('login-btn');
             var text = document.getElementById('login-text');
             var spinner = document.getElementById('login-spinner');
-            btn.disabled = true;
-            btn.classList.add('opacity-75', 'cursor-wait');
-            text.classList.add('hidden');
-            spinner.classList.remove('hidden');
+            setTimeout(function() {
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-wait');
+                text.classList.add('hidden');
+                spinner.classList.remove('hidden');
+            }, 10);
         });
     </script>
 </x-guest-layout>
