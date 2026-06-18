@@ -39,4 +39,9 @@ return [
         'api_key' => env('EXCHANGERATE_API_KEY'),
     ],
 
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'bot_username' => env('TELEGRAM_BOT_USERNAME', 'exchange_adbtrk_bot'),
+    ],
+
 ];
