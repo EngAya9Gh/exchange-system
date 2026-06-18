@@ -72,7 +72,7 @@
             @endif
 
             {{-- POST using relative URL to bypass APP_URL misconfiguration --}}
-            <form method="POST" action="{{ route('otp.verify.post') }}">
+            <form method="POST" action="{{ route('otp.verify.post') }}" id="otp-form">
                 @csrf
                 <div>
                     <x-input-label for="code" :value="__('رمز التحقق (OTP)')" class="text-right block mb-1" />
@@ -82,18 +82,44 @@
                 </div>
 
                 <div class="mt-6">
-                    <x-primary-button class="w-full justify-center py-3 bg-slate-800 hover:bg-slate-900 active:bg-slate-950 rounded-xl text-lg shadow-soft transition-transform hover:-translate-y-1">
+                    <x-primary-button id="otp-submit-btn" class="w-full justify-center py-3 bg-slate-800 hover:bg-slate-900 active:bg-slate-950 rounded-xl text-lg shadow-soft transition-transform hover:-translate-y-1">
                         {{ __('تأكيد الرمز') }}
                     </x-primary-button>
                 </div>
             </form>
 
-            <form method="POST" action="{{ route('otp.resend') }}" class="mt-4 text-center">
+            <form method="POST" action="{{ route('otp.resend') }}" id="otp-resend-form" class="mt-4 text-center">
                 @csrf
-                <button type="submit" class="text-sm text-indigo-600 hover:text-indigo-900 font-bold transition">
+                <button type="submit" id="otp-resend-btn" class="text-sm text-indigo-600 hover:text-indigo-900 font-bold transition">
                     إعادة إرسال الرمز عبر التلغرام
                 </button>
             </form>
+
+            <script>
+                document.getElementById('otp-form').addEventListener('submit', function (e) {
+                    const btn = document.getElementById('otp-submit-btn');
+                    if (btn) {
+                        // Prevent double clicks by adding pointer-events-none and opacity
+                        btn.classList.add('opacity-75', 'cursor-not-allowed', 'pointer-events-none');
+                        btn.classList.remove('hover:-translate-y-1');
+                        btn.innerHTML = `
+                            <svg class="animate-spin ml-2 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            جاري التحقق...
+                        `;
+                    }
+                });
+
+                document.getElementById('otp-resend-form').addEventListener('submit', function (e) {
+                    const btn = document.getElementById('otp-resend-btn');
+                    if (btn) {
+                        btn.classList.add('opacity-50', 'pointer-events-none');
+                        btn.innerHTML = 'جاري إعادة الإرسال...';
+                    }
+                });
+            </script>
         @endif
         
         <div class="mt-6 pt-4 border-t border-slate-100 text-center">
