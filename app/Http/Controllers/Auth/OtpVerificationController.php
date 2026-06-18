@@ -30,6 +30,11 @@ class OtpVerificationController extends Controller
             $this->sendCode($user);
         }
 
+        if (empty($user->telegram_chat_id) && empty($user->telegram_link_token)) {
+            $user->telegram_link_token = \Illuminate\Support\Str::random(32);
+            $user->save();
+        }
+
         $botUsername = config('services.telegram.bot_username', 'exchange_adbtrk_bot');
 
         return view('auth.verify-otp', compact('botUsername'));
