@@ -401,7 +401,18 @@
 </head>
 <body>
     <div class="receipt-container">
-        <div class="content-wrapper">
+        @if($transfer->status === 'rejected' || $transfer->status === 'cancelled')
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 100px; color: rgba(255, 0, 0, 0.15); font-weight: 900; z-index: 0; pointer-events: none; border: 10px solid rgba(255, 0, 0, 0.15); padding: 20px; border-radius: 20px; text-align: center; line-height: 1.2;">
+                مرفوضة<br><span style="font-size: 40px;">REJECTED</span>
+            </div>
+            <div style="background-color: #ef4444; color: white; text-align: center; padding: 10px; font-weight: bold; font-size: 16px; position: relative; z-index: 10; border-radius: 8px 8px 0 0; margin: -40px -40px 20px -40px;">
+                ⚠️ هذه الحوالة مرفوضة وملغاة وغير صالحة
+                @if($transfer->admin_notes)
+                    <br><span style="font-size: 13px; font-weight: normal;">السبب: {{ $transfer->admin_notes }}</span>
+                @endif
+            </div>
+        @endif
+        <div class="content-wrapper" style="position: relative; z-index: 10;">
             <!-- Logo -->
             <div class="logo-container" style="text-align: left;">
                 <img src="{{ asset('logo.png?v=2') }}" alt="Logo" style="max-height: 50px; object-fit: contain;">

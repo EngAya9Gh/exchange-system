@@ -657,10 +657,13 @@
                                             <span class="inline-flex items-center px-3 py-1 rounded-sm text-[10px] font-bold bg-emerald-600 text-white shadow">
                                                 {{ __('messages.status_received') }}
                                             </span>
-                                        @elseif($tr->status === 'cancelled')
+                                        @elseif($tr->status === 'cancelled' || $tr->status === 'rejected')
                                             <span class="inline-flex items-center px-3 py-1 rounded-sm text-[10px] font-bold bg-rose-600 text-white shadow">
-                                                {{ __('messages.status_cancelled') }}
+                                                {{ $tr->status === 'rejected' ? 'مرفوضة' : __('messages.status_cancelled') }}
                                             </span>
+                                            @if($tr->admin_notes)
+                                                <div class="text-[10px] text-slate-500 font-bold mt-1 max-w-[120px] truncate mx-auto" title="{{ $tr->admin_notes }}">سبب: {{ $tr->admin_notes }}</div>
+                                            @endif
                                         @else
                                             <span class="inline-flex items-center px-3 py-1 rounded-sm text-[10px] font-bold bg-amber-500 text-white shadow">
                                                 {{ __('messages.status_pending') }}
@@ -687,6 +690,10 @@
                                                     <svg class="animate-spin ml-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                                     يُحمل...
                                                 </span>
+                                            </button>
+                                            <button x-on:click="rejectId = {{ $tr->id }}; rejectModal = true" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-bold transition flex items-center">
+                                                <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                                رفض
                                             </button>
                                             @endif
                                         </div>

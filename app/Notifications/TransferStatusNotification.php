@@ -53,9 +53,12 @@ class TransferStatusNotification extends Notification
             $title = 'تم تسليم الحوالة';
             $message = "تم تسليم الحوالة رقم {$this->transfer->transfer_number} للمستفيد.";
             $icon = 'M5 13l4 4L19 7'; // Check icon
-        } elseif ($this->statusType === 'cancelled') {
-            $title = 'إلغاء حوالة';
-            $message = "تم إلغاء الحوالة رقم {$this->transfer->transfer_number}.";
+        } elseif ($this->statusType === 'cancelled' || $this->statusType === 'rejected') {
+            $title = $this->statusType === 'rejected' ? 'تم رفض الحوالة' : 'إلغاء حوالة';
+            $message = $this->statusType === 'rejected' ? "تم رفض الحوالة رقم {$this->transfer->transfer_number}." : "تم إلغاء الحوالة رقم {$this->transfer->transfer_number}.";
+            if ($this->transfer->admin_notes && $this->statusType === 'rejected') {
+                $message .= "\nالسبب: " . $this->transfer->admin_notes;
+            }
             $icon = 'M6 18L18 6M6 6l12 12'; // X icon
         }
 
@@ -92,8 +95,12 @@ class TransferStatusNotification extends Notification
             $message = "تم تسليم الحوالة  بنجاح للمستفيد\n"
                 . "رقم الحوالة: *{$this->transfer->transfer_number}*\n"
                 . "المبلغ المدفوع: *{$this->transfer->received_amount} {$this->transfer->target_currency}*";
-        } elseif ($this->statusType === 'cancelled') {
-            $message = "تم إلغاء الحوالة  رقم *{$this->transfer->transfer_number}* بنجاح.";
+        } elseif ($this->statusType === 'cancelled' || $this->statusType === 'rejected') {
+            $action = $this->statusType === 'rejected' ? 'رفض' : 'إلغاء';
+            $message = "تم {$action} الحوالة رقم *{$this->transfer->transfer_number}*.";
+            if ($this->transfer->admin_notes && $this->statusType === 'rejected') {
+                $message .= "\nالسبب: " . $this->transfer->admin_notes;
+            }
         }
 
         return [
@@ -153,9 +160,13 @@ class TransferStatusNotification extends Notification
                 \Log::error("Failed to generate receipt link for paid transfer {$this->transfer->id}: " . $e->getMessage());
             }
             
-        } elseif ($this->statusType === 'cancelled') {
-            $message = "❌ *تم إلغاء الحوالة  *\n\n"
+        } elseif ($this->statusType === 'cancelled' || $this->statusType === 'rejected') {
+            $action = $this->statusType === 'rejected' ? 'رفض' : 'إلغاء';
+            $message = "❌ *تم {$action} الحوالة*\n\n"
                 . "رقم الحوالة: `{$this->transfer->transfer_number}`";
+            if ($this->transfer->admin_notes && $this->statusType === 'rejected') {
+                $message .= "\nالسبب: {$this->transfer->admin_notes}";
+            }
         }
 
         if (empty($message)) {

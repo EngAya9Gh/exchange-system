@@ -244,7 +244,7 @@ class AdminDashboard extends Component
         // Notify client
         try {
             if ($transfer->user_id) {
-                $transfer->user->notify(new TransferStatusNotification($transfer, 'cancelled'));
+                $transfer->user->notify(new TransferStatusNotification($transfer, 'rejected'));
             }
         } catch (\Exception $e) {
             Log::error("Failed to notify user on transfer rejection: " . $e->getMessage());
