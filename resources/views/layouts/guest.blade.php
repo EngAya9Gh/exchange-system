@@ -17,22 +17,23 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans text-slate-900 antialiased bg-[#f8f9fc] min-h-screen" style="font-family: 'Cairo', sans-serif;">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 relative overflow-hidden">
+        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 relative overflow-hidden bg-slate-50/50">
             
-            <!-- Decorative Background Elements from the modern look -->
-            <div class="absolute inset-0 overflow-hidden pointer-events-none opacity-40 -z-10">
-                <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-primary-400 to-indigo-500 blur-[100px] animate-pulse" style="animation-duration: 8s;"></div>
-                <div class="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] rounded-full bg-gradient-to-br from-pink-400 to-orange-400 blur-[80px]"></div>
-                <!-- Triangles -->
-                <div class="absolute top-20 left-20 text-primary-300 transform rotate-45 text-2xl">▲</div>
-                <div class="absolute bottom-32 right-32 text-pink-300 transform -rotate-12 text-3xl">▲</div>
+            <!-- Decorative Glows (Far Back) -->
+            <div class="absolute inset-0 overflow-hidden pointer-events-none -z-20">
+                <div class="absolute top-[0%] left-[-5%] w-[30%] h-[30%] rounded-full bg-gradient-to-br from-red-400 to-rose-300 blur-[80px] opacity-70 animate-pulse" style="animation-duration: 10s;"></div>
+                <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-gradient-to-br from-pink-400 to-orange-400 blur-[80px] opacity-80"></div>
             </div>
 
-            <div class="flex justify-center mb-6">
-                <img src="{{ asset('logo.png?v=2') }}" alt="Teacher VC" class="h-28 object-contain">
+            <!-- Full Screen Glass Layer -->
+            <div class="absolute inset-0 bg-white/1 backdrop-blur-[20px] -z-10 pointer-events-none border-t border-white/50"></div>
+
+            <div class="flex justify-center mb-6 relative z-20">
+                <img src="{{ asset('logo.png?v=2') }}" alt="Teacher VC" class="h-28 object-contain drop-shadow-md">
             </div>
 
-            <div class="w-full sm:max-w-md mt-2 px-10 py-10 bg-white shadow-soft-xl border border-slate-50 sm:rounded-[32px] relative z-10">
+            <!-- Inner form container with subtle borders -->
+            <div class="w-full sm:max-w-md mt-2 px-10 py-10 bg-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.05)] border border-white/60 sm:rounded-[32px] relative z-10">
                 {{ $slot }}
             </div>
         </div>

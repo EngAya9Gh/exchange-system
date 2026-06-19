@@ -45,9 +45,9 @@
             <!-- State 2: OTP Verification -->
             <div class="mb-4 text-center">
                 <h2 class="text-2xl font-bold text-gray-800">تأكيد الهوية</h2>
-                <p class="text-sm text-gray-600 mt-2">
+                <p class="text-sm text-slate-600 mt-2">
                     لقد قمنا بإرسال رمز تحقق مكون من 6 أرقام إلى حساب التلغرام الخاص بك:
-                    <span class="font-bold text-indigo-600 block mt-1">
+                    <span class="font-bold text-rose-600 block mt-1">
                         {{ auth()->user()->name }}
                     </span>
                 </p>
@@ -66,8 +66,8 @@
             @endif
 
             @if (session('dev_code'))
-                <div class="mb-4 p-3 bg-blue-50 text-blue-800 text-xs rounded-lg text-center border border-blue-100">
-                    الرمز للتطوير المحلي هو: <strong>{{ session('dev_code') }}</strong>
+                <div class="mb-4 p-3 bg-rose-50/80 backdrop-blur-sm text-rose-800 text-xs rounded-xl text-center border border-rose-200">
+                    الرمز للتطوير المحلي هو: <strong class="text-rose-900">{{ session('dev_code') }}</strong>
                 </div>
             @endif
 
@@ -82,7 +82,7 @@
                 </div>
 
                 <div class="mt-6">
-                    <x-primary-button id="otp-submit-btn" class="w-full justify-center py-3 bg-slate-800 hover:bg-slate-900 active:bg-slate-950 rounded-xl text-lg shadow-soft transition-transform hover:-translate-y-1">
+                    <x-primary-button id="otp-submit-btn" class="w-full justify-center py-3.5 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-xl text-lg font-black shadow-soft transition-transform hover:-translate-y-1">
                         {{ __('تأكيد الرمز') }}
                     </x-primary-button>
                 </div>
@@ -90,7 +90,7 @@
 
             <form method="POST" action="{{ route('otp.resend') }}" id="otp-resend-form" class="mt-4 text-center">
                 @csrf
-                <button type="submit" id="otp-resend-btn" class="text-sm text-indigo-600 hover:text-indigo-900 font-bold transition">
+                <button type="submit" id="otp-resend-btn" class="text-sm text-black-600 hover:text-black-800 font-bold transition">
                     إعادة إرسال الرمز عبر التلغرام
                 </button>
             </form>

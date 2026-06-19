@@ -13,9 +13,9 @@
             <x-text-input wire:model.live="searchQuery" placeholder="{{ __('messages.search_users_placeholder') }}" class="w-full sm:w-1/2" />
             <select wire:model.live="roleFilter" class="bg-white/50 backdrop-blur-md border-white/60 focus:bg-white focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm w-full sm:w-1/4 py-2 transition-all duration-300">
                 <option value="all">{{ __('messages.all_roles') }}</option>
-                <option value="admin">{{ __('messages.role_admin_label') }}</option>
-                <option value="agent">{{ __('messages.role_agent_label') }}</option>
-                <option value="customer">{{ __('messages.role_customer_label') }}</option>
+                <option value="Super Admin">{{ __('messages.role_admin_label') ?? 'مدير النظام' }}</option>
+                <option value="Agent">{{ __('messages.role_agent_label') ?? 'موظف فرع' }}</option>
+                <option value="Customer">{{ __('messages.role_customer_label') ?? 'عميل عادي' }}</option>
             </select>
         </div>
     </x-card>
@@ -52,12 +52,12 @@
                         <td class="px-6 py-4">{{ $user->email }}</td>
                         <td class="px-6 py-4" dir="ltr">{{ $user->phone ?? '-' }}</td>
                         <td class="px-6 py-4">
-                            @if($user->role === 'admin')
-                                <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ __('messages.role_admin') }}</span>
-                            @elseif($user->role === 'agent')
-                                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ __('messages.role_agent') }}</span>
+                            @if($user->hasRole('Super Admin'))
+                                <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ __('messages.role_admin') ?? 'مدير النظام' }}</span>
+                            @elseif($user->hasRole('Agent'))
+                                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ __('messages.role_agent') ?? 'موظف فرع' }}</span>
                             @else
-                                <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ __('messages.role_customer') }}</span>
+                                <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ __('messages.role_customer') ?? 'عميل عادي' }}</span>
                             @endif
                         </td>
                         <td class="px-6 py-4">
@@ -126,9 +126,9 @@
                         <div wire:key="field-role">
                             <x-input-label value="{{ __('messages.role') }}" />
                             <select wire:model="role" class="mt-1 block w-full bg-white/50 backdrop-blur-md border-white/60 focus:bg-white focus:border-primary-500 focus:ring-primary-500 rounded-xl shadow-sm py-2 transition-all duration-300">
-                                <option value="customer">{{ __('messages.role_customer_label') }}</option>
-                                <option value="agent">{{ __('messages.role_agent_label') }}</option>
-                                <option value="admin">{{ __('messages.role_admin_label') }}</option>
+                                <option value="Customer">{{ __('messages.role_customer_label') ?? 'عميل عادي' }}</option>
+                                <option value="Agent">{{ __('messages.role_agent_label') ?? 'موظف فرع' }}</option>
+                                <option value="Super Admin">{{ __('messages.role_admin_label') ?? 'مدير النظام' }}</option>
                             </select>
                             <x-input-error :messages="$errors->get('role')" class="mt-2" />
                         </div>

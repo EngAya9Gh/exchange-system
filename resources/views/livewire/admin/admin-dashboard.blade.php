@@ -1,10 +1,19 @@
-<div class="min-h-screen flex bg-[#f8f9fc] font-sans {{ app()->getLocale() == 'ar' ? 'text-right' : 'text-left' }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}" x-data="{ rejectModal: false, rejectId: null, rejectNotes: '' }" wire:init="autoSyncRates">
+<div class="min-h-screen flex bg-[#f8f9fc] font-sans {{ app()->getLocale() == 'ar' ? 'text-right' : 'text-left' }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}" x-data="{ rejectModal: false, rejectId: null, rejectNotes: '', mobileMenuOpen: false }" wire:init="autoSyncRates">
+    <!-- Mobile overlay -->
+    <div x-show="mobileMenuOpen" @click="mobileMenuOpen = false" x-cloak class="fixed inset-0 bg-slate-900/50 z-30 md:hidden backdrop-blur-sm transition-opacity"></div>
+
     <!-- Modern Sidebar -->
-    <aside class="w-[280px] bg-white border-l border-slate-100 flex-col hidden md:flex shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20">
+    <aside :class="mobileMenuOpen ? 'translate-x-0' : 'translate-x-full rtl:translate-x-full ltr:-translate-x-full md:translate-x-0 md:rtl:translate-x-0 md:ltr:translate-x-0'" class="w-[280px] shrink-0 bg-white border-x border-slate-100 flex-col flex shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-40 fixed md:sticky md:top-0 inset-y-0 right-0 rtl:right-0 ltr:left-0 transition-transform duration-300 ease-in-out h-screen">
         <!-- Logo Area -->
-        <div class="h-28 flex items-center px-8">
-            <img src="{{ asset('logo.png?v=2') }}" alt="Teacher VC" class="h-10 object-contain mr-2">
-            <span class="mr-3 font-black text-2xl text-slate-800 tracking-tight">Teacher VC</span>
+        <div class="h-28 flex items-center justify-between px-8">
+            <div class="flex items-center">
+                <img src="{{ asset('logo.png?v=2') }}" alt="Teacher VC" class="h-10 object-contain mr-2">
+                <span class="mr-3 font-black text-2xl text-slate-800 tracking-tight">Teacher VC</span>
+            </div>
+            <!-- Close Mobile Menu -->
+            <button @click="mobileMenuOpen = false" class="md:hidden text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
         </div>
 
         <div class="px-8 text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider flex justify-between items-center">
@@ -64,17 +73,17 @@
     <main class="flex-1 flex flex-col overflow-hidden relative">
         
         <!-- Top Header -->
-        <header class="h-28 bg-transparent flex items-center justify-between px-10 pt-4">
-            <!-- Decorative Triangles Background from SxDx image -->
-            <div class="absolute inset-0 overflow-hidden pointer-events-none opacity-20 -z-10">
-                <div class="absolute top-2 left-10 text-primary-300 transform rotate-45">▲</div>
-                <div class="absolute top-8 left-32 text-pink-300 transform rotate-12 text-sm">▲</div>
-                <div class="absolute top-4 left-64 text-primary-200 transform -rotate-12 text-lg">▲</div>
-                <div class="absolute top-12 left-96 text-orange-200 transform rotate-45 text-xs">▲</div>
-            </div>
+        <header class="bg-transparent px-4 md:px-10 pt-4 md:pt-6 pb-2">
+            <div class="flex items-center justify-between">
+                
+                <!-- Hamburger (Mobile Only) -->
+                <button @click="mobileMenuOpen = true" class="md:hidden text-slate-800 p-2 -mr-2">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
 
-            <div>
-                <h1 class="text-[28px] font-black text-slate-800 tracking-tight flex items-center">
+                <!-- Desktop Welcome Text -->
+                <div class="hidden md:block">
+                    <h1 class="text-[28px] font-black text-slate-800 tracking-tight flex items-center">
                     @if($activeTab === 'dashboard') 
                         <span class="text-primary-600 ml-2">{{ __('messages.welcome_to') }}</span>
                     @endif
@@ -83,62 +92,81 @@
                     @if($activeTab === 'rates') <span class="text-primary-600 ml-2">{{ __('messages.exchange_rates') }}</span> @endif
                     @if($activeTab === 'users') <span class="text-primary-600 ml-2">{{ __('messages.system_settings') }}</span> @endif
                     @if($activeTab === 'commissions') <span class="text-primary-600 ml-2">{{ __('messages.commissions') }}</span> @endif
+                    </h1>
+                    <p class="text-sm text-slate-400 font-medium mt-1">
+                        @if($activeTab === 'dashboard') {{ __('messages.hello_welcome_back', ['name' => auth()->user()->name]) }} @else {{ __('messages.manage_details_here') }} @endif
+                    </p>
+                </div>
+                
+                <!-- Right Side Icons -->
+                <div class="flex items-center space-x-2 md:space-x-6 space-x-reverse">
+                    <button class="text-slate-400 hover:text-primary-600 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    </button>
+                    
+                    <livewire:notification-dropdown />
+
+                    <a href="{{ route('profile') }}" title="{{ __('messages.profile') }}" class="flex items-center cursor-pointer gap-3 hover:opacity-80 transition bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-xl border border-slate-100">
+                        <div class="text-left hidden md:block" dir="ltr">
+                            <div class="text-sm font-bold text-slate-800">{{ auth()->user()->name }}</div>
+                            <div class="text-[11px] font-bold text-slate-400 mt-0.5">{{ __('messages.system_admin') }}</div>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 shadow-sm border border-white flex items-center justify-center text-white font-bold">
+                            {{ mb_substr(auth()->user()->name, 0, 1) }}
+                        </div>
+                    </a>
+
+                    <!-- Language Switcher -->
+                    <div class="relative" x-data="{ openLang: false }" wire:ignore>
+                        <button @click="openLang = !openLang" @click.away="openLang = false" class="px-3 py-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-all flex items-center gap-2 rounded-xl border border-slate-100 shadow-sm bg-white">
+                            <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            @php
+                                $currentLocale = app()->getLocale();
+                                $flags = ['ar' => '🇸🇦', 'en' => '🇬🇧', 'tr' => '🇹🇷'];
+                            @endphp
+                            <span class="text-sm">{{ $flags[$currentLocale] ?? '🌐' }}</span>
+                            <span class="text-xs font-bold uppercase">{{ $currentLocale }}</span>
+                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        
+                        <div x-show="openLang" style="display: none;" class="absolute left-0 mt-2 w-36 bg-white border border-slate-100 rounded-xl shadow-lg z-50 overflow-hidden py-1">
+                            @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
+                                <a rel="alternate" hreflang="{{ $localeCode }}" href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}" class="flex items-center gap-3 px-4 py-2 text-sm font-bold transition-colors {{ app()->getLocale() === $localeCode ? 'bg-primary-50 text-primary-600' : 'text-slate-600 hover:bg-slate-50 hover:text-primary-500' }}">
+                                    <span class="text-lg">{{ $flags[$localeCode] ?? '🌐' }}</span>
+                                    <span>{{ $properties['native'] }}</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Logout Button -->
+                    <button wire:click="logout" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition flex items-center gap-2 mr-2" title="{{ __('messages.logout_button') }}">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        <span class="text-sm font-bold hidden sm:inline">{{ __('messages.logout') }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Welcome Text (Drops below header on small screens) -->
+            <div class="md:hidden mt-6 mb-2 px-2">
+                <h1 class="text-2xl font-black text-slate-800 tracking-tight flex items-center flex-wrap gap-1">
+                    @if($activeTab === 'dashboard') 
+                        <span class="text-primary-600">{{ __('messages.welcome_to') }}</span>
+                    @endif
+                    @if($activeTab === 'new_transfer') <span class="text-primary-600">{{ __('messages.new_transfer') }}</span> @endif
+                    @if($activeTab === 'ledger') <span class="text-primary-600">{{ __('messages.transactions') }}</span> @endif
+                    @if($activeTab === 'rates') <span class="text-primary-600">{{ __('messages.exchange_rates') }}</span> @endif
+                    @if($activeTab === 'users') <span class="text-primary-600">{{ __('messages.system_settings') }}</span> @endif
+                    @if($activeTab === 'commissions') <span class="text-primary-600">{{ __('messages.commissions') }}</span> @endif
                 </h1>
                 <p class="text-sm text-slate-400 font-medium mt-1">
                     @if($activeTab === 'dashboard') {{ __('messages.hello_welcome_back', ['name' => auth()->user()->name]) }} @else {{ __('messages.manage_details_here') }} @endif
                 </p>
             </div>
-            
-            <div class="flex items-center space-x-6 space-x-reverse">
-                <button class="text-slate-400 hover:text-primary-600 transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                </button>
-                
-                <livewire:notification-dropdown />
-
-                <a href="{{ route('profile') }}" title="{{ __('messages.profile') }}" class="flex items-center cursor-pointer gap-3 hover:opacity-80 transition bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-xl border border-slate-100">
-                    <div class="text-left hidden md:block" dir="ltr">
-                        <div class="text-sm font-bold text-slate-800">{{ auth()->user()->name }}</div>
-                        <div class="text-[11px] font-bold text-slate-400 mt-0.5">{{ __('messages.system_admin') }}</div>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 shadow-sm border border-white flex items-center justify-center text-white font-bold">
-                        {{ mb_substr(auth()->user()->name, 0, 1) }}
-                    </div>
-                </a>
-
-                <!-- Language Switcher -->
-                <div class="relative" x-data="{ openLang: false }" wire:ignore>
-                    <button @click="openLang = !openLang" @click.away="openLang = false" class="px-3 py-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-all flex items-center gap-2 rounded-xl border border-slate-100 shadow-sm bg-white">
-                        <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        @php
-                            $currentLocale = app()->getLocale();
-                            $flags = ['ar' => '🇸🇦', 'en' => '🇬🇧', 'tr' => '🇹🇷'];
-                        @endphp
-                        <span class="text-sm">{{ $flags[$currentLocale] ?? '🌐' }}</span>
-                        <span class="text-xs font-bold uppercase">{{ $currentLocale }}</span>
-                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </button>
-                    
-                    <div x-show="openLang" style="display: none;" class="absolute left-0 mt-2 w-36 bg-white border border-slate-100 rounded-xl shadow-lg z-50 overflow-hidden py-1">
-                        @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
-                            <a rel="alternate" hreflang="{{ $localeCode }}" href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}" class="flex items-center gap-3 px-4 py-2 text-sm font-bold transition-colors {{ app()->getLocale() === $localeCode ? 'bg-primary-50 text-primary-600' : 'text-slate-600 hover:bg-slate-50 hover:text-primary-500' }}">
-                                <span class="text-lg">{{ $flags[$localeCode] ?? '🌐' }}</span>
-                                <span>{{ $properties['native'] }}</span>
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
-
-                <!-- Logout Button -->
-                <button wire:click="logout" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition flex items-center gap-2 mr-2" title="{{ __('messages.logout_button') }}">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    <span class="text-sm font-bold hidden sm:inline">{{ __('messages.logout') }}</span>
-                </button>
-            </div>
         </header>
 
         <!-- Scrollable Content -->
-        <div class="flex-1 overflow-y-auto px-10 py-6 pb-20">
+        <div class="flex-1 overflow-y-auto px-4 md:px-10 py-6 pb-20">
             <!-- Telegram Link (Only show if not linked) -->
             @if(empty(auth()->user()->telegram_chat_id))
                 <livewire:telegram-link />
@@ -463,7 +491,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="p-0">
+                        <div class="p-0 overflow-x-auto">
                             <table class="w-full text-sm text-center">
                                 <thead class="text-xs text-slate-400 uppercase tracking-wider">
                                     <tr>
@@ -558,7 +586,7 @@
                     </div>
                 @endif
 
-                <div class="p-0 mt-4">
+                <div class="p-0 mt-4 overflow-x-auto">
                     <table class="w-full text-sm text-right">
                         <thead class="text-[11px] text-slate-400 uppercase tracking-wider bg-slate-50/50">
                             <tr>
@@ -810,7 +838,7 @@
                 <div class="bg-white rounded-3xl p-6 shadow-soft border border-slate-50 {{ !$enableAutomatedCommissions ? 'opacity-50 pointer-events-none' : '' }}">
                     <h3 class="text-lg font-bold text-slate-800 mb-6">{{ __('messages.current_tiers') }}</h3>
                     
-                    <div class="overflow-hidden rounded-2xl border border-slate-100">
+                    <div class="overflow-x-auto rounded-2xl border border-slate-100">
                         <table class="min-w-full divide-y divide-slate-100">
                             <thead class="bg-slate-50">
                                 <tr>
