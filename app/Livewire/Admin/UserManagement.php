@@ -22,7 +22,8 @@ class UserManagement extends Component
     public string $email = '';
     public string $phone = '';
     public string $password = '';
-    public string $role = 'customer'; // admin, agent, customer
+    public string $role = 'Customer'; // Super Admin, Agent, Customer
+
     public bool $is_active = true;
     public bool $two_factor_enabled = false;
 
@@ -53,7 +54,7 @@ class UserManagement extends Component
         $this->name = $user->name;
         $this->email = $user->email;
         $this->phone = $user->phone ?? '';
-        $this->role = $user->role;
+        $this->role = $user->roles->first()?->name ?? 'Customer';
         $this->is_active = $user->is_active;
         $this->two_factor_enabled = $user->two_factor_enabled;
         
@@ -66,7 +67,7 @@ class UserManagement extends Component
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email' . ($this->editingUserId ? ',' . $this->editingUserId : ''),
             'phone' => 'nullable|string|max:20|unique:users,phone' . ($this->editingUserId ? ',' . $this->editingUserId : ''),
-            'role' => 'required|in:admin,agent,customer',
+            'role' => 'required|exists:roles,name',
         ];
 
         if (!$this->editingUserId || !empty($this->password)) {
@@ -79,7 +80,6 @@ class UserManagement extends Component
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
-            'role' => $this->role,
             'is_active' => $this->is_active,
             'two_factor_enabled' => $this->two_factor_enabled,
         ];
@@ -89,10 +89,13 @@ class UserManagement extends Component
         }
 
         if ($this->editingUserId) {
-            User::findOrFail($this->editingUserId)->update($data);
+            $user = User::findOrFail($this->editingUserId);
+            $user->update($data);
+            $user->syncRoles([$this->role]);
             session()->flash('success', 'تم تحديث بيانات المستخدم بنجاح.');
         } else {
-            User::create($data);
+            $user = User::create($data);
+            $user->assignRole($this->role);
             session()->flash('success', 'تم إضافة المستخدم بنجاح.');
         }
 
@@ -123,11 +126,12 @@ class UserManagement extends Component
     {
         $this->reset(['editingUserId', 'name', 'email', 'phone', 'password', 'role', 'is_active', 'two_factor_enabled']);
         $this->resetValidation();
+        $this->role = 'Customer';
     }
 
     public function render()
     {
-        $query = User::query();
+        $query = User::query()->with('roles');
 
         if ($this->searchQuery) {
             $query->where(function ($q) {
@@ -138,11 +142,12 @@ class UserManagement extends Component
         }
 
         if ($this->roleFilter !== 'all') {
-            $query->where('role', $this->roleFilter);
+            $query->role($this->roleFilter);
         }
 
         $users = $query->latest()->paginate(10);
+        $availableRoles = \Spatie\Permission\Models\Role::all();
 
-        return view('livewire.admin.user-management', compact('users'));
+        return view('livewire.admin.user-management', compact('users', 'availableRoles'));
     }
 }

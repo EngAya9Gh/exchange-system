@@ -1,15 +1,15 @@
 <?php
 
 return [
-    'welcome_to' => 'Teacher VC\'e Hoş Geldiniz.',
-    'hello_welcome_back' => 'Merhaba :name, tekrar hoş geldin!',
+    'welcome_to' => 'Teacher VC\'e Hoş Geldiniz',
+    'hello_welcome_back' => 'Merhaba :name, tekrar hoş geldin',
     'quick_stats' => 'Bakiyeleriniz Hakkında Hızlı İstatistikler',
-    'new_transfer' => 'Yeni Transfer.',
+    'new_transfer' => 'Yeni Transfer',
     'manage_details_here' => 'Ayrıntılarınızı buradan yönetin.',
-    'exchange_rates' => 'Döviz Kurları.',
-    'system_settings' => 'Kullanıcı Yönetimi.',
-    'transactions' => 'İşlemler.',
-    'commissions' => 'Komisyonlar.',
+    'exchange_rates' => 'Döviz Kurları',
+    'system_settings' => 'Kullanıcı Yönetimi',
+    'transactions' => 'İşlemler',
+    'commissions' => 'Komisyonlar',
     'home' => 'Ana Sayfa',
     'return_home' => 'Ana Sayfaya Dön',
     'profile' => 'Profil',

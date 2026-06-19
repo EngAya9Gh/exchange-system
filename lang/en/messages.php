@@ -1,15 +1,15 @@
 <?php
 
 return [
-    'welcome_to' => 'Welcome to Teacher VC.',
-    'hello_welcome_back' => 'Hello :name, welcome back!',
+    'welcome_to' => 'Welcome to Teacher VC',
+    'hello_welcome_back' => 'Hello :name, welcome back',
     'quick_stats' => 'Quick Stats About Your Balances',
-    'new_transfer' => 'New Transfer.',
+    'new_transfer' => 'New Transfer',
     'manage_details_here' => 'Manage your details here.',
-    'exchange_rates' => 'Exchange Rates.',
-    'system_settings' => 'User Management.',
-    'transactions' => 'Transactions.',
-    'commissions' => 'Commissions.',
+    'exchange_rates' => 'Exchange Rates',
+    'system_settings' => 'User Management',
+    'transactions' => 'Transactions',
+    'commissions' => 'Commissions',
     'home' => 'Home',
     'return_home' => 'Return to Home',
     'profile' => 'Profile',

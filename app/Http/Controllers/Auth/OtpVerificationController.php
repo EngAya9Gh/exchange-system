@@ -68,7 +68,7 @@ class OtpVerificationController extends Controller
         session(['last_activity_timestamp' => time()]);
 
         // Redirect based on role
-        if ($user->role === 'admin') {
+        if ($user->hasAnyRole(['Super Admin', 'Agent'])) {
             return redirect()->route('admin.dashboard');
         } else {
             return redirect()->route('dashboard');

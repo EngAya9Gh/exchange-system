@@ -32,6 +32,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'localeCookieRedirect'    => \Mcamara\LaravelLocalization\Middleware\LocaleCookieRedirect::class,
             'localeViewPath'          => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationViewPath::class,
         ]);
+
+        $middleware->redirectGuestsTo(fn (\Illuminate\Http\Request $request) => route('login'));
+        $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
+            if (auth()->check() && auth()->user()->hasAnyRole(['Super Admin', 'Agent'])) {
+                return route('admin.dashboard');
+            }
+            return route('dashboard');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

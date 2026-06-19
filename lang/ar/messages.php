@@ -1,15 +1,15 @@
 <?php
 
 return [
-    'welcome_to' => 'مرحباً بك في Teacher VC.',
-    'hello_welcome_back' => 'أهلاً :name، مرحباً بعودتك!',
+    'welcome_to' => 'مرحباً بك في Teacher VC',
+    'hello_welcome_back' => 'أهلاً :name، مرحباً بعودتك',
     'quick_stats' => 'إحصائيات سريعة عن أرصدتك',
-    'new_transfer' => 'حوالة جديدة.',
-    'manage_details_here' => 'أدر تفاصيلك من هنا.',
-    'exchange_rates' => 'أسعار الصرف.',
-    'system_settings' => 'إدارة المستخدمين.',
-    'transactions' => 'العمليات.',
-    'commissions' => 'العمولات.',
+    'new_transfer' => 'حوالة جديدة',
+    'manage_details_here' => 'أدر تفاصيلك من هنا',
+    'exchange_rates' => 'أسعار الصرف',
+    'system_settings' => 'إدارة المستخدمين',
+    'transactions' => 'العمليات',
+    'commissions' => 'العمولات',
     'home' => 'الرئيسية',
     'return_home' => 'العودة للرئيسية',
     'profile' => 'الملف الشخصي',
