@@ -226,7 +226,8 @@ class AdminDashboard extends Component
         $this->viewReceipt($transfer->id);
 
         // Reset fields
-        $this->reset(['sender_name', 'sender_phone', 'recipient_name', 'recipient_phone', 'destination', 'address', 'notes', 'amount']);
+        $this->reset(['sender_name', 'sender_phone', 'recipient_name', 'recipient_phone', 'address', 'notes', 'amount']);
+        $this->destination = 'جميع المحافظات - فودافون مباشر';
         $this->calculateTotals();
 
         session()->flash('transfer_success', 'تم إنشاء الحوالة رقم ' . $transferNumber . ' بنجاح.');

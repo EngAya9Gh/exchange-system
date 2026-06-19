@@ -396,10 +396,12 @@
                                     <div>
                                         <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.recipient_name') }}</label>
                                         <input wire:model="recipient_name" type="text" class="w-full bg-white border-none text-slate-800 font-bold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" required placeholder="{{ __('messages.full_name') }}">
+                                        @error('recipient_name') <span class="text-xs text-rose-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
                                         <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.recipient_phone') }}</label>
                                         <input wire:model="recipient_phone" type="text" class="w-full bg-white border-none text-slate-800 font-bold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" required placeholder="05xxxxxxxx">
+                                        @error('recipient_phone') <span class="text-xs text-rose-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 
@@ -410,6 +412,7 @@
                                         <select wire:model="destination" class="w-full bg-white border-none text-slate-800 font-bold rounded-xl focus:ring-2 focus:ring-primary-500 pr-4 pl-10 py-3.5 shadow-sm transition bg-left" required>
                                             <option value="{{ __('messages.all_governorates_vodafone') }}">{{ __('messages.all_governorates_vodafone') }}</option>
                                         </select>
+                                        @error('destination') <span class="text-xs text-rose-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
                                         <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.destination_address') }}</label>
@@ -435,7 +438,8 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.amount') }} {{ __('messages.required_to_transfer') }}</label>
-                                        <input wire:model.live="amount" type="number" step="0.01" class="w-full bg-white border-none text-primary-600 font-black text-xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition" required>
+                                        <input wire:model.live="amount" type="number" step="0.01" class="w-full bg-white border-none text-primary-600 font-black text-xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition" required oninput="this.value = this.value.replace(/[^0-9.]/g, '')">
+                                        @error('amount') <span class="text-xs text-rose-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
                                         <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">
@@ -447,7 +451,9 @@
                                         <input wire:model.live="manual_fee" type="number" step="0.01" 
                                             class="w-full border-none font-black text-xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition {{ $enableAutomatedCommissions ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-rose-600' }}" 
                                             @if($enableAutomatedCommissions) disabled @endif
-                                            placeholder="{{ $enableAutomatedCommissions ? __('messages.automatic_by_tiers') : __('messages.enter_fees_value') }}">
+                                            placeholder="{{ $enableAutomatedCommissions ? __('messages.automatic_by_tiers') : __('messages.enter_fees_value') }}"
+                                            oninput="this.value = this.value.replace(/[^0-9.]/g, '')">
+                                        @error('manual_fee') <span class="text-xs text-rose-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                             </div>
