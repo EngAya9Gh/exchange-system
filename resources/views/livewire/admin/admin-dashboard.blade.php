@@ -388,7 +388,7 @@
                             </div>
                         @endif
 
-                        <form wire:submit="submitManualTransfer" class="space-y-6 relative">
+                        <form x-data="{ confirming: false }" @submit.prevent="confirming = true" class="space-y-6 relative">
                             <!-- Structured Fields like the image -->
                             <div class="bg-slate-50/50 p-6 rounded-[24px] space-y-5">
                                 <!-- Row 1: Recipient Name & Phone -->
@@ -482,16 +482,36 @@
                                     <span class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{{ __('messages.total_to_collect') }}</span>
                                     <span class="block text-3xl font-black text-slate-800">{{ number_format($total_to_pay, 2) }} <span class="text-base text-slate-400">{{ $source_currency }}</span></span>
                                 </div>
-                                <button type="submit" wire:loading.attr="disabled" wire:target="submitManualTransfer" class="px-8 py-4 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-2xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex items-center justify-center disabled:opacity-75 disabled:cursor-wait">
-                                    <span wire:loading.remove wire:target="submitManualTransfer" class="flex items-center">
+                                <button type="submit" class="px-8 py-4 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-2xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex items-center justify-center">
+                                    <span class="flex items-center">
                                         <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                                         {{ __('messages.approve_and_send') }}
                                     </span>
-                                    <span wire:loading wire:target="submitManualTransfer" class="flex items-center">
-                                        <svg class="animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                        جاري الاعتماد والتحويل...
-                                    </span>
                                 </button>
+                            </div>
+
+                            <!-- Alpine Confirmation Modal -->
+                            <div x-show="confirming" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" x-transition.opacity>
+                                <div @click.away="confirming = false" class="bg-white rounded-[24px] p-8 max-w-md w-full mx-4 shadow-2xl transform transition-all" x-transition>
+                                    <div class="flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 text-orange-500 mx-auto mb-6">
+                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    </div>
+                                    <h3 class="text-2xl font-black text-center text-slate-800 mb-2">تأكيد الاعتماد والإرسال</h3>
+                                    <p class="text-slate-500 text-center font-bold mb-8 leading-relaxed">
+                                        هل تأكدت من صحة بيانات المستلم والمبالغ المحسوبة؟ سيتم تسجيل الحوالة وإرسال إشعار للمستلم فوراً.
+                                    </p>
+                                    <div class="flex space-x-4 space-x-reverse">
+                                        <button type="button" @click="$wire.submitManualTransfer(); confirming = false;" class="flex-1 px-6 py-3 bg-gradient-to-r from-primary-600 to-rose-600 text-white rounded-xl font-black text-lg shadow-soft hover:shadow-lg transition-all hover:-translate-y-0.5 relative flex justify-center items-center">
+                                            <span wire:loading.remove wire:target="submitManualTransfer">تأكيد واعتماد</span>
+                                            <span wire:loading wire:target="submitManualTransfer">
+                                                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            </span>
+                                        </button>
+                                        <button type="button" @click="confirming = false" class="flex-1 px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-lg hover:bg-slate-200 transition-colors">
+                                            مراجعة البيانات
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </form>
                     </div>
