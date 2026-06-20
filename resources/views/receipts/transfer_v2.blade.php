@@ -491,8 +491,10 @@
 
             <!-- QR Codes -->
             <div class="qr-section">
-                <!-- Keep branches QR hidden for now as it's not requested, only Scan to Deliver -->
-                <div></div> <!-- spacer -->
+                <div class="qr-box">
+                    <div class="qr-label" style="color: #25d366;">للتواصل واتساب</div>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode('https://wa.me/905392065497') }}" class="qr-img" alt="WhatsApp QR">
+                </div>
                 <div class="qr-box">
                     <div class="qr-label">امسح للتسليم</div>
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode(route('admin.transfers.deliver', $transfer->transfer_number)) }}" class="qr-img" alt="Scan to deliver">
