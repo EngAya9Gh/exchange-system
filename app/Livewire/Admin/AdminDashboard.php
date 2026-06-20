@@ -186,7 +186,9 @@ class AdminDashboard extends Component
         $user = auth()->user();
         $totalToPay = $this->amount + $this->commission;
         
-        if (!$user->hasRole('Super Admin')) {
+        $isAdmin = $user->hasRole('Super Admin') || $user->role === 'admin';
+        
+        if (!$isAdmin) {
             if ($user->balance < $totalToPay) {
                 $this->addError('amount', 'رصيدك الحالي غير كافٍ لإتمام هذه الحوالة.');
                 return;
@@ -223,7 +225,7 @@ class AdminDashboard extends Component
                 'transferred_at' => Carbon::now(),
             ]);
 
-            if (!$user->hasRole('Super Admin')) {
+            if (!$isAdmin) {
                 $user->balance -= $totalToPay;
                 $user->save();
             }
@@ -273,7 +275,8 @@ class AdminDashboard extends Component
 
             // Refund user balance if applicable
             if ($transfer->user_id && $transfer->user) {
-                if (!$transfer->user->hasRole('admin')) {
+                $transferUserIsAdmin = $transfer->user->hasRole('Super Admin') || $transfer->user->role === 'admin';
+                if (!$transferUserIsAdmin) {
                     // Refund = amount + commission (total_to_pay)
                     $refundAmount = $transfer->amount + $transfer->commission;
                     $transfer->user->balance += $refundAmount;

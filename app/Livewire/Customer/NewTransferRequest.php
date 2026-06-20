@@ -144,7 +144,7 @@ class NewTransferRequest extends Component
 
         session()->flash('success', 'تم إرسال طلب التحويل بنجاح! سيتم مراجعته من قبل الإدارة.');
         $this->dispatch('request-created');
-        $this->dispatch('show-receipt', transferNumber: $transferNumber);
+        $this->js("window.open('/receipts/{$transferNumber}', '_blank');");
     }
 
     public function render()

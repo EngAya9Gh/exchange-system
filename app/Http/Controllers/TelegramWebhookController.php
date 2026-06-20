@@ -157,7 +157,8 @@ class TelegramWebhookController extends Controller
 
             // Refund user balance if applicable
             if ($transfer->user_id && $transfer->user) {
-                if (!$transfer->user->hasRole('admin')) {
+                $transferUserIsAdmin = $transfer->user->hasRole('Super Admin') || $transfer->user->role === 'admin';
+                if (!$transferUserIsAdmin) {
                     // Refund = amount + commission
                     $refundAmount = $transfer->amount + $transfer->commission;
                     $transfer->user->balance += $refundAmount;

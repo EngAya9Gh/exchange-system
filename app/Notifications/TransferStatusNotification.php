@@ -173,17 +173,29 @@ class TransferStatusNotification extends Notification
             return [];
         }
 
+        $isAdmin = $notifiable->hasRole('Super Admin') || $notifiable->role === 'admin';
+
         if ($this->statusType === 'created') {
-            $replyMarkup = [
-                'inline_keyboard' => [
-                    [
-                        ['text' => '🟢 قبول وإصدار إيصال', 'callback_data' => "approve_transfer_{$this->transfer->id}"]
-                    ],
-                    [
-                        ['text' => '🔴 رفض الطلب', 'callback_data' => "reject_transfer_{$this->transfer->id}"]
+            if ($isAdmin) {
+                $replyMarkup = [
+                    'inline_keyboard' => [
+                        [
+                            ['text' => '🟢 قبول وإصدار إيصال', 'callback_data' => "approve_transfer_{$this->transfer->id}"]
+                        ],
+                        [
+                            ['text' => '🔴 رفض الطلب', 'callback_data' => "reject_transfer_{$this->transfer->id}"]
+                        ]
                     ]
-                ]
-            ];
+                ];
+            } else if ($document) {
+                $replyMarkup = [
+                    'inline_keyboard' => [
+                        [
+                            ['text' => '📄 عرض الإيصال', 'url' => $document]
+                        ]
+                    ]
+                ];
+            }
 
             if ($this->transfer->recipient_phone) {
                 $extraMessages[] = ['text' => "{$this->transfer->recipient_phone}"];

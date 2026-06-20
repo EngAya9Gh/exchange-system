@@ -1,4 +1,21 @@
-<div class="bg-white rounded-[28px] shadow-soft border border-slate-50 p-8" wire:init="autoSyncRates">
+<div x-data="{
+    confirmTransfer() {
+        Swal.fire({
+            title: 'تأكيد إرسال الحوالة',
+            text: 'سيتم خصم إجمالي التكلفة من رصيدك المتاح، هل أنت متأكد من الاعتماد والإرسال؟',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#ef4444',
+            confirmButtonText: 'نعم، أرسل الطلب',
+            cancelButtonText: 'إلغاء'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $wire.submitRequest();
+            }
+        });
+    }
+}" class="bg-white rounded-[28px] shadow-soft border border-slate-50 p-8" wire:init="autoSyncRates">
     <h3 class="text-xl font-bold text-slate-800 border-b border-slate-50 pb-4 mb-6">{{ __('messages.new_financial_transfer_request') }}</h3>
 
     @if (session()->has('success'))
@@ -10,24 +27,7 @@
         </div>
     @endif
 
-    <form x-data="{
-        confirmTransfer() {
-            Swal.fire({
-                title: 'تأكيد إرسال الحوالة',
-                text: 'سيتم خصم إجمالي التكلفة من رصيدك المتاح، هل أنت متأكد من الاعتماد والإرسال؟',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#ef4444',
-                confirmButtonText: 'نعم، أرسل الطلب',
-                cancelButtonText: 'إلغاء'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $wire.submitRequest();
-                }
-            });
-        }
-    }" x-on:submit.prevent="confirmTransfer" class="space-y-6">
+    <form x-on:submit.prevent="confirmTransfer" class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Additional Info -->
             <div class="bg-slate-50/50 p-6 rounded-[24px] space-y-5">
@@ -141,30 +141,4 @@
                     </button>
                 </div>
             </div>
-        </div>
-    </form>
-
-    @push('scripts')
-    <script>
-        document.addEventListener('livewire:initialized', () => {
-            Livewire.on('show-receipt', (data) => {
-                let transferNumber = data[0].transferNumber || data.transferNumber;
-                Swal.fire({
-                    title: 'تم إرسال الطلب بنجاح!',
-                    text: 'الطلب الآن قيد المراجعة، يمكنك عرض الإشعار لمشاركته مع المستفيد.',
-                    icon: 'success',
-                    showCancelButton: true,
-                    confirmButtonColor: '#10b981',
-                    cancelButtonColor: '#6b7280',
-                    confirmButtonText: '📄 عرض الإشعار (مشاركة)',
-                    cancelButtonText: 'إغلاق'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.open('/receipts/' + transferNumber, '_blank');
-                    }
-                });
-            });
-        });
-    </script>
-    @endpush
 </div>
