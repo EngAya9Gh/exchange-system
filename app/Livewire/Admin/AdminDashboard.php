@@ -6,14 +6,16 @@ namespace App\Livewire\Admin;
 
 use App\Models\CommissionTier;
 use App\Models\ExchangeRate;
+use App\Models\Setting;
 use App\Models\Transfer;
+use App\Models\User;
 use App\Services\CommissionCalculator;
 use App\Services\ExchangeRateService;
 use App\Services\SecretCodeGenerator;
 use App\Services\ReceiptService;
 use App\Notifications\TransferStatusNotification;
-use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Livewire\Actions\Logout;
 use Livewire\Component;
@@ -181,33 +183,58 @@ class AdminDashboard extends Component
             'target_currency' => 'required|string|in:EGP,TRY',
         ]);
 
+        $user = auth()->user();
+        $totalToPay = $this->amount + $this->commission;
+        
+        if (!$user->hasRole('Super Admin')) {
+            if ($user->balance < $totalToPay) {
+                $this->addError('amount', 'رصيدك الحالي غير كافٍ لإتمام هذه الحوالة.');
+                return;
+            }
+        }
+
         $codeGen = app(SecretCodeGenerator::class);
         $secretCode = $codeGen->generate();
         
         $transferNumber = 'RD' . time();
 
-        $transfer = Transfer::create([
-            'transfer_number' => $transferNumber,
-            'user_id' => auth()->id(),
-            'sender_name' => $this->sender_name ?: null,
-            'sender_phone' => $this->sender_phone ?: null,
-            'recipient_name' => $this->recipient_name,
-            'recipient_phone' => $this->recipient_phone,
-            'destination' => $this->destination,
-            'address' => $this->address,
-            'notes' => $this->notes,
-            'amount' => $this->amount,
-            'currency' => $this->source_currency,
-            'target_currency' => $this->target_currency,
-            'exchange_rate' => $this->exchange_rate,
-            'received_amount' => $this->received_amount,
-            'commission' => $this->commission,
-            'net_amount' => $this->received_amount,
-            'secret_code' => $secretCode,
-            'status' => 'new',
-            'created_by' => auth()->id(),
-            'transferred_at' => Carbon::now(),
-        ]);
+        DB::beginTransaction();
+        try {
+            $transfer = Transfer::create([
+                'transfer_number' => $transferNumber,
+                'user_id' => $user->id,
+                'sender_name' => $this->sender_name ?: null,
+                'sender_phone' => $this->sender_phone ?: null,
+                'recipient_name' => $this->recipient_name,
+                'recipient_phone' => $this->recipient_phone,
+                'destination' => $this->destination,
+                'address' => $this->address,
+                'notes' => $this->notes,
+                'amount' => $this->amount,
+                'currency' => $this->source_currency,
+                'target_currency' => $this->target_currency,
+                'exchange_rate' => $this->exchange_rate,
+                'received_amount' => $this->received_amount,
+                'commission' => $this->commission,
+                'net_amount' => $this->received_amount,
+                'secret_code' => $secretCode,
+                'status' => 'new',
+                'created_by' => $user->id,
+                'transferred_at' => Carbon::now(),
+            ]);
+
+            if (!$user->hasRole('Super Admin')) {
+                $user->balance -= $totalToPay;
+                $user->save();
+            }
+            
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Failed to submit manual transfer: " . $e->getMessage());
+            session()->flash('error', 'حدث خطأ أثناء حفظ الطلب.');
+            return;
+        }
 
         // Notify the creator (if it's an agent/admin)
         try {
@@ -233,14 +260,33 @@ class AdminDashboard extends Component
         session()->flash('transfer_success', 'تم إنشاء الحوالة رقم ' . $transferNumber . ' بنجاح.');
     }
 
-    // Reject customer request
     public function rejectRequest(int $id, string $notes): void
     {
         $transfer = Transfer::findOrFail($id);
-        $transfer->update([
-            'status' => 'rejected',
-            'admin_notes' => $notes ?: 'تم الرفض من قبل المسؤول.'
-        ]);
+        
+        DB::beginTransaction();
+        try {
+            $transfer->update([
+                'status' => 'rejected',
+                'admin_notes' => $notes ?: 'تم الرفض من قبل المسؤول.'
+            ]);
+
+            // Refund user balance if applicable
+            if ($transfer->user_id && $transfer->user) {
+                if (!$transfer->user->hasRole('admin')) {
+                    // Refund = amount + commission (total_to_pay)
+                    $refundAmount = $transfer->amount + $transfer->commission;
+                    $transfer->user->balance += $refundAmount;
+                    $transfer->user->save();
+                }
+            }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Failed to reject transfer and refund balance: " . $e->getMessage());
+            session()->flash('error', 'حدث خطأ أثناء رفض الطلب.');
+            return;
+        }
 
         // Notify client
         try {

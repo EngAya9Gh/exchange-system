@@ -34,6 +34,7 @@ class User extends Authenticatable
         'language',
         'telegram_chat_id',
         'telegram_link_token',
+        'balance',
     ];
 
     /**
@@ -59,6 +60,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_enabled' => 'boolean',
             'is_active' => 'boolean',
+            'balance' => 'decimal:3',
         ];
     }
 

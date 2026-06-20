@@ -40,6 +40,7 @@
                     <th class="px-6 py-3">{{ __('messages.name_label') }}</th>
                     <th class="px-6 py-3">{{ __('messages.email') }}</th>
                     <th class="px-6 py-3">{{ __('messages.phone') }}</th>
+                    <th class="px-6 py-3">الرصيد المتاح</th>
                     <th class="px-6 py-3">{{ __('messages.role') }}</th>
                     <th class="px-6 py-3">{{ __('messages.status') }}</th>
                     <th class="px-6 py-3 text-center">{{ __('messages.actions_label') }}</th>
@@ -51,6 +52,7 @@
                         <td class="px-6 py-4 font-bold text-gray-900">{{ $user->name }}</td>
                         <td class="px-6 py-4">{{ $user->email }}</td>
                         <td class="px-6 py-4" dir="ltr">{{ $user->phone ?? '-' }}</td>
+                        <td class="px-6 py-4 font-bold text-green-600">{{ number_format($user->balance, 2) }}</td>
                         <td class="px-6 py-4">
                             @if($user->hasRole('Super Admin'))
                                 <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ __('messages.role_admin') ?? 'مدير النظام' }}</span>
@@ -119,6 +121,11 @@
                             <x-input-label value="{{ __('messages.phone') }}" />
                             <x-text-input wire:model="phone" type="text" class="mt-1 block w-full text-start" placeholder="+201..." autocomplete="off" />
                             <x-input-error :messages="$errors->get('phone')" class="mt-2" />
+                        </div>
+                        <div wire:key="field-balance">
+                            <x-input-label value="الرصيد المتاح" />
+                            <x-text-input wire:model="balance" type="number" step="0.01" min="0" class="mt-1 block w-full text-start font-bold text-green-600" autocomplete="off" />
+                            <x-input-error :messages="$errors->get('balance')" class="mt-2" />
                         </div>
                         <div wire:key="field-password">
                             <x-input-label value="{{ __('messages.password') }}{{ $editingUserId ? __('messages.leave_blank_to_keep') : '' }}" />

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\NewTransferRequestNotification;
 use App\Services\CommissionCalculator;
 use App\Services\ExchangeRateService;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class NewTransferRequest extends Component
@@ -90,21 +91,47 @@ class NewTransferRequest extends Component
             'amount.min' => 'يجب ألا يقل مبلغ التحويل عن 10.',
         ]);
 
-        $transferNumber = 'RD' . time() . rand(100, 999);
-        $transfer = Transfer::create([
-            'transfer_number' => $transferNumber,
-            'user_id' => auth()->id(),
-            'sender_name' => $this->sender_name ?: null,
-            'sender_phone' => $this->sender_phone ?: null,
-            'recipient_name' => $this->recipient_name,
-            'recipient_phone' => $this->recipient_phone,
-            'destination' => $this->destination,
-            'address' => $this->address,
-            'notes' => $this->notes,
-            'amount' => $this->amount,
-            'currency' => $this->currency,
-            'status' => 'pending',
-        ]);
+        $this->calculateTotals();
+
+        $user = auth()->user();
+        if ($user->balance < $this->total_to_pay) {
+            $this->addError('amount', 'رصيدك الحالي غير كافٍ لإتمام هذه الحوالة.');
+            return;
+        }
+
+        DB::beginTransaction();
+        try {
+            $transferNumber = 'RD' . time() . rand(100, 999);
+            $transfer = Transfer::create([
+                'transfer_number' => $transferNumber,
+                'user_id' => $user->id,
+                'sender_name' => $this->sender_name ?: null,
+                'sender_phone' => $this->sender_phone ?: null,
+                'recipient_name' => $this->recipient_name,
+                'recipient_phone' => $this->recipient_phone,
+                'destination' => $this->destination,
+                'address' => $this->address,
+                'notes' => $this->notes,
+                'amount' => $this->amount,
+                'currency' => $this->currency,
+                'target_currency' => 'EGP',
+                'exchange_rate' => $this->exchange_rate,
+                'commission' => $this->commission,
+                'received_amount' => $this->received_amount,
+                'net_amount' => $this->received_amount,
+                'status' => 'pending',
+            ]);
+
+            // Deduct from user balance
+            $user->balance -= $this->total_to_pay;
+            $user->save();
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            session()->flash('error', 'حدث خطأ أثناء معالجة الطلب. يرجى المحاولة لاحقاً.');
+            return;
+        }
 
         // Notify all admins
         $admins = User::where('role', 'admin')->get();
@@ -117,6 +144,7 @@ class NewTransferRequest extends Component
 
         session()->flash('success', 'تم إرسال طلب التحويل بنجاح! سيتم مراجعته من قبل الإدارة.');
         $this->dispatch('request-created');
+        $this->dispatch('show-receipt', transferNumber: $transferNumber);
     }
 
     public function render()

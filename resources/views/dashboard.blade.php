@@ -30,6 +30,10 @@
                     <p class="text-slate-500 font-medium text-sm">{{ __('messages.customer_portal_desc') }}</p>
                 </div>
                 
+                <div class="relative z-10 flex flex-col items-end">
+                    <livewire:customer.available-balance />
+                </div>
+                
                 <!-- Decorative abstract elements -->
                 <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none rounded-[24px] z-0">
                     <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-primary-100/50 rounded-full blur-2xl"></div>

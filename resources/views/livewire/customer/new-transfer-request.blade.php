@@ -10,7 +10,24 @@
         </div>
     @endif
 
-    <form wire:submit="submitRequest" class="space-y-6">
+    <form x-data="{
+        confirmTransfer() {
+            Swal.fire({
+                title: 'تأكيد إرسال الحوالة',
+                text: 'سيتم خصم إجمالي التكلفة من رصيدك المتاح، هل أنت متأكد من الاعتماد والإرسال؟',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#ef4444',
+                confirmButtonText: 'نعم، أرسل الطلب',
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $wire.submitRequest();
+                }
+            });
+        }
+    }" x-on:submit.prevent="confirmTransfer" class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Additional Info -->
             <div class="bg-slate-50/50 p-6 rounded-[24px] space-y-5">
@@ -105,12 +122,17 @@
                 </div>
 
                 <div class="pt-6 relative z-10">
-                    <div class="flex justify-between items-center mb-4">
+                    <div class="flex justify-between items-center mb-2">
                         <span class="text-xs font-bold text-slate-500">{{ __('messages.total_cost_on_you') }}</span>
                         <span class="font-black text-slate-800 text-2xl">{{ number_format($total_to_pay, 2) }} <span class="text-sm text-slate-500">{{ $currency }}</span></span>
                     </div>
 
-                    <button type="submit" wire:loading.attr="disabled" wire:target="submitRequest" class="w-full py-4 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex justify-center items-center disabled:opacity-75 disabled:cursor-wait">
+                    <div class="flex justify-between items-center mb-4 p-2 rounded-lg {{ auth()->user()->balance < $total_to_pay ? 'bg-rose-100 text-rose-700' : 'bg-emerald-50 text-emerald-700' }}">
+                        <span class="text-xs font-bold">الرصيد المتاح:</span>
+                        <span class="font-black text-lg">{{ number_format(auth()->user()->balance, 2) }} <span class="text-xs">TRY</span></span>
+                    </div>
+
+                    <button type="submit" @if(auth()->user()->balance < $total_to_pay) disabled @endif wire:loading.attr="disabled" wire:target="submitRequest" class="w-full py-4 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                         <span wire:loading.remove wire:target="submitRequest">{{ __('messages.send_request_for_review') }}</span>
                         <span wire:loading wire:target="submitRequest" class="flex items-center">
                             <svg class="animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -121,4 +143,28 @@
             </div>
         </div>
     </form>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            Livewire.on('show-receipt', (data) => {
+                let transferNumber = data[0].transferNumber || data.transferNumber;
+                Swal.fire({
+                    title: 'تم إرسال الطلب بنجاح!',
+                    text: 'الطلب الآن قيد المراجعة، يمكنك عرض الإشعار لمشاركته مع المستفيد.',
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: '📄 عرض الإشعار (مشاركة)',
+                    cancelButtonText: 'إغلاق'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.open('/receipts/' + transferNumber, '_blank');
+                    }
+                });
+            });
+        });
+    </script>
+    @endpush
 </div>

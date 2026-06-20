@@ -155,6 +155,16 @@ class TelegramWebhookController extends Controller
             $transfer->admin_notes = "تم الرفض عبر تلغرام بواسطة: {$fromName} - لعدم توافق البيانات.";
             $transfer->save();
 
+            // Refund user balance if applicable
+            if ($transfer->user_id && $transfer->user) {
+                if (!$transfer->user->hasRole('admin')) {
+                    // Refund = amount + commission
+                    $refundAmount = $transfer->amount + $transfer->commission;
+                    $transfer->user->balance += $refundAmount;
+                    $transfer->user->save();
+                }
+            }
+
             // Answer callback
             $this->telegramService->answerCallbackQuery($callbackQueryId, '❌ تم رفض الحوالة.');
 
