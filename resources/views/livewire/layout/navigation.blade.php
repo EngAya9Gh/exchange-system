@@ -21,16 +21,15 @@ new class extends Component
     <div class="px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex items-center">
-                <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" wire:navigate>
+                    <a href="{{ auth()->user()->hasAnyRole(['Super Admin', 'Agent']) ? route('admin.dashboard') : route('dashboard') }}" wire:navigate>
                         <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex space-x-reverse">
-                    @if(auth()->user()->role === 'admin')
+                    @if(auth()->user()->hasAnyRole(['Super Admin', 'Agent']))
                         <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')" wire:navigate>
                             {{ __('لوحة التحكم (الإدارة)') }}
                         </x-nav-link>
@@ -87,7 +86,7 @@ new class extends Component
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden text-right">
         <div class="pt-2 pb-3 space-y-1">
-            @if(auth()->user()->role === 'admin')
+            @if(auth()->user()->hasAnyRole(['Super Admin', 'Agent']))
                 <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')" wire:navigate>
                     {{ __('لوحة التحكم (الإدارة)') }}
                 </x-responsive-nav-link>

@@ -4,7 +4,7 @@
             <h2 class="font-black text-2xl text-slate-800 leading-tight">
                 {{ __('messages.profile') }}
             </h2>
-            <a href="{{ auth()->user()->role === 'admin' ? route('admin.dashboard') : route('dashboard') }}" class="text-sm font-bold text-primary-600 hover:text-primary-700 transition">
+            <a href="{{ auth()->user()->hasAnyRole(['Super Admin', 'Agent']) ? route('admin.dashboard') : route('dashboard') }}" class="text-sm font-bold text-primary-600 hover:text-primary-700 transition">
                 {{ __('messages.return_home') }}
             </a>
         </div>
