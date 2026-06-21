@@ -134,9 +134,13 @@ class NewTransferRequest extends Component
         }
 
         // Notify admins who opted in for telegram alerts
-        $admins = User::permission('receive_telegram_alerts')->get();
-        foreach ($admins as $admin) {
-            $admin->notify(new NewTransferRequestNotification($transfer));
+        try {
+            $admins = User::permission('receive_telegram_alerts')->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new NewTransferRequestNotification($transfer));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to send telegram notification: " . $e->getMessage());
         }
 
         $this->reset(['sender_name', 'sender_phone', 'recipient_name', 'recipient_phone', 'destination', 'address', 'notes', 'amount']);

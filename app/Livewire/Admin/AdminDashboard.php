@@ -246,9 +246,13 @@ class AdminDashboard extends Component
         }
 
         // Notify all other admins who opted in for telegram alerts
-        $admins = \App\Models\User::permission('receive_telegram_alerts')->where('id', '!=', auth()->id())->get();
-        foreach ($admins as $admin) {
-            $admin->notify(new TransferStatusNotification($transfer, 'created'));
+        try {
+            $admins = \App\Models\User::permission('receive_telegram_alerts')->where('id', '!=', auth()->id())->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new TransferStatusNotification($transfer, 'created'));
+            }
+        } catch (\Exception $e) {
+            Log::error("Failed to notify admins: " . $e->getMessage());
         }
 
         // Show receipt modal
