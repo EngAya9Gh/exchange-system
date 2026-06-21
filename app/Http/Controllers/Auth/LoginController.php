@@ -16,15 +16,15 @@ class LoginController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'email' => ['required', 'string'],
+            'username' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
         $remember = $request->boolean('remember');
 
-        if (! Auth::attempt($request->only('email', 'password'), $remember)) {
+        if (! Auth::attempt($request->only('username', 'password'), $remember)) {
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'username' => 'بيانات الدخول غير صحيحة. يرجى التأكد من اسم المستخدم وكلمة المرور.',
             ]);
         }
 
@@ -33,9 +33,9 @@ class LoginController extends Controller
         $user = Auth::user();
 
         if ($user->hasAnyRole(['Super Admin', 'Agent'])) {
-            return redirect()->intended(route('admin.dashboard', absolute: false));
+            return redirect(route('admin.dashboard', absolute: false));
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect(route('dashboard', absolute: false));
     }
 }

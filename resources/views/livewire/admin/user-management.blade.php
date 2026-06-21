@@ -38,7 +38,7 @@
             <thead class="text-xs text-gray-700 uppercase bg-white/50 backdrop-blur-sm border-b border-white/40">
                 <tr>
                     <th class="px-6 py-3">{{ __('messages.name_label') }}</th>
-                    <th class="px-6 py-3">{{ __('messages.email') }}</th>
+                    <th class="px-6 py-3">اسم المستخدم</th>
                     <th class="px-6 py-3">{{ __('messages.phone') }}</th>
                     <th class="px-6 py-3">الرصيد المتاح</th>
                     <th class="px-6 py-3">{{ __('messages.role') }}</th>
@@ -50,7 +50,7 @@
                 @forelse($users as $user)
                     <tr class="bg-white/30 border-b border-white/30 hover:bg-white/60 transition-colors">
                         <td class="px-6 py-4 font-bold text-gray-900">{{ $user->name }}</td>
-                        <td class="px-6 py-4">{{ $user->email }}</td>
+                        <td class="px-6 py-4" dir="ltr">{{ $user->username }}</td>
                         <td class="px-6 py-4" dir="ltr">{{ $user->phone ?? '-' }}</td>
                         <td class="px-6 py-4 font-bold text-green-600">{{ number_format($user->balance, 2) }}</td>
                         <td class="px-6 py-4">
@@ -112,10 +112,10 @@
                             <x-text-input wire:model="name" type="text" class="mt-1 block w-full" autocomplete="off" />
                             <x-input-error :messages="$errors->get('name')" class="mt-2" />
                         </div>
-                        <div wire:key="field-email">
-                            <x-input-label value="{{ __('messages.email') }}" />
-                            <x-text-input wire:model="email" type="email" class="mt-1 block w-full text-start" autocomplete="off" />
-                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                        <div wire:key="field-username">
+                            <x-input-label value="اسم المستخدم" />
+                            <x-text-input wire:model="username" type="text" class="mt-1 block w-full text-start" autocomplete="off" />
+                            <x-input-error :messages="$errors->get('username')" class="mt-2" />
                         </div>
                         <div wire:key="field-phone">
                             <x-input-label value="{{ __('messages.phone') }}" />
@@ -148,6 +148,10 @@
                         <div class="flex items-center gap-2 mt-2" wire:key="field-2fa">
                             <input wire:model="two_factor_enabled" id="two_factor_enabled" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-500">
                             <label for="two_factor_enabled" class="text-sm text-gray-600">{{ __('messages.enable_2fa') }}</label>
+                        </div>
+                        <div class="flex items-center gap-2 mt-2" wire:key="field-telegram-alerts">
+                            <input wire:model="receives_telegram_alerts" id="receives_telegram_alerts" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-500">
+                            <label for="receives_telegram_alerts" class="text-sm text-gray-600 font-bold">استلام إشعارات التلغرام للحوالات الجديدة (للمدراء)</label>
                         </div>
                     </div>
                 </div>

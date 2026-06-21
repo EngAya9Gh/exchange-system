@@ -11,11 +11,11 @@
 
     <form action="{{ route('login') }}" method="POST" id="login-form">
         @csrf
-        <!-- Email Address -->
+        <!-- Username -->
         <div>
-            <x-input-label for="email" :value="__('البريد الإلكتروني / رقم الجوال')" class="text-slate-700 font-bold" />
-            <input id="email" class="block mt-2 w-full bg-slate-50 text-slate-800 font-semibold rounded-xl border-none focus:ring-2 focus:ring-primary-500 px-4 py-3.5 transition" type="text" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2 text-rose-500" />
+            <x-input-label for="username" :value="__('اسم المستخدم')" class="text-slate-700 font-bold" />
+            <input id="username" class="block mt-2 w-full bg-slate-50 text-slate-800 font-semibold rounded-xl border-none focus:ring-2 focus:ring-primary-500 px-4 py-3.5 transition" type="text" name="username" value="{{ old('username') }}" required autofocus autocomplete="username" />
+            <x-input-error :messages="$errors->get('username')" class="mt-2 text-rose-500" />
         </div>
 
         <div class="mt-5">

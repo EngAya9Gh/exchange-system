@@ -245,8 +245,8 @@ class AdminDashboard extends Component
             Log::error("Failed to notify transfer creator: " . $e->getMessage());
         }
 
-        // Notify all other admins
-        $admins = \App\Models\User::where('role', 'admin')->where('id', '!=', auth()->id())->get();
+        // Notify all other admins who opted in for telegram alerts
+        $admins = \App\Models\User::permission('receive_telegram_alerts')->where('id', '!=', auth()->id())->get();
         foreach ($admins as $admin) {
             $admin->notify(new TransferStatusNotification($transfer, 'created'));
         }

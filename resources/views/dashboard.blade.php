@@ -41,11 +41,6 @@
                 </div>
             </div>
 
-            <!-- Telegram Link (Only show if not linked) -->
-            @if(empty(auth()->user()->telegram_chat_id))
-                <livewire:telegram-link />
-            @endif
-
             <!-- New Request Form -->
             <livewire:customer.new-transfer-request />
 

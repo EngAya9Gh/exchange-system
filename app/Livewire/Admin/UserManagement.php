@@ -19,6 +19,7 @@ class UserManagement extends Component
     // Form fields for create/edit
     public ?int $editingUserId = null;
     public string $name = '';
+    public string $username = '';
     public string $email = '';
     public string $phone = '';
     public string $password = '';
@@ -27,6 +28,7 @@ class UserManagement extends Component
 
     public bool $is_active = true;
     public bool $two_factor_enabled = false;
+    public bool $receives_telegram_alerts = false;
 
     public bool $showFormModal = false;
 
@@ -53,12 +55,14 @@ class UserManagement extends Component
         
         $this->editingUserId = $user->id;
         $this->name = $user->name;
-        $this->email = $user->email;
+        $this->username = $user->username;
+        $this->email = $user->email ?? '';
         $this->phone = $user->phone ?? '';
         $this->role = $user->roles->first()?->name ?? 'Customer';
         $this->balance = (float) $user->balance;
         $this->is_active = $user->is_active;
         $this->two_factor_enabled = $user->two_factor_enabled;
+        $this->receives_telegram_alerts = $user->hasDirectPermission('receive_telegram_alerts');
         
         $this->showFormModal = true;
     }
@@ -67,7 +71,8 @@ class UserManagement extends Component
     {
         $rules = [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email' . ($this->editingUserId ? ',' . $this->editingUserId : ''),
+            'username' => 'required|string|max:255|unique:users,username' . ($this->editingUserId ? ',' . $this->editingUserId : ''),
+            'email' => 'nullable|email|max:255|unique:users,email' . ($this->editingUserId ? ',' . $this->editingUserId : ''),
             'phone' => 'nullable|string|max:20|unique:users,phone' . ($this->editingUserId ? ',' . $this->editingUserId : ''),
             'balance' => 'required|numeric|min:0',
             'role' => 'required|exists:roles,name',
@@ -81,6 +86,7 @@ class UserManagement extends Component
 
         $data = [
             'name' => $this->name,
+            'username' => $this->username,
             'email' => $this->email,
             'phone' => $this->phone,
             'balance' => $this->balance,
@@ -96,10 +102,22 @@ class UserManagement extends Component
             $user = User::findOrFail($this->editingUserId);
             $user->update($data);
             $user->syncRoles([$this->role]);
+            
+            if ($this->receives_telegram_alerts) {
+                $user->givePermissionTo('receive_telegram_alerts');
+            } else {
+                $user->revokePermissionTo('receive_telegram_alerts');
+            }
+            
             session()->flash('success', 'تم تحديث بيانات المستخدم بنجاح.');
         } else {
             $user = User::create($data);
             $user->assignRole($this->role);
+            
+            if ($this->receives_telegram_alerts) {
+                $user->givePermissionTo('receive_telegram_alerts');
+            }
+            
             session()->flash('success', 'تم إضافة المستخدم بنجاح.');
         }
 
@@ -128,7 +146,7 @@ class UserManagement extends Component
 
     private function resetForm(): void
     {
-        $this->reset(['editingUserId', 'name', 'email', 'phone', 'password', 'balance', 'role', 'is_active', 'two_factor_enabled']);
+        $this->reset(['editingUserId', 'name', 'username', 'email', 'phone', 'password', 'balance', 'role', 'is_active', 'two_factor_enabled', 'receives_telegram_alerts']);
         $this->resetValidation();
         $this->role = 'Customer';
     }
@@ -140,7 +158,7 @@ class UserManagement extends Component
         if ($this->searchQuery) {
             $query->where(function ($q) {
                 $q->where('name', 'like', '%' . $this->searchQuery . '%')
-                  ->orWhere('email', 'like', '%' . $this->searchQuery . '%')
+                  ->orWhere('username', 'like', '%' . $this->searchQuery . '%')
                   ->orWhere('phone', 'like', '%' . $this->searchQuery . '%');
             });
         }

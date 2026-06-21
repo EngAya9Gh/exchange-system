@@ -133,8 +133,8 @@ class NewTransferRequest extends Component
             return;
         }
 
-        // Notify all admins
-        $admins = User::where('role', 'admin')->get();
+        // Notify admins who opted in for telegram alerts
+        $admins = User::permission('receive_telegram_alerts')->get();
         foreach ($admins as $admin) {
             $admin->notify(new NewTransferRequestNotification($transfer));
         }
