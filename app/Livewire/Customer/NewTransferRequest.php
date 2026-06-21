@@ -37,17 +37,42 @@ class NewTransferRequest extends Component
 
     public function autoSyncRates(): void
     {
-        $dbRate = \App\Models\ExchangeRate::first();
-        if (!$dbRate || $dbRate->updated_at->diffInHours(\Carbon\Carbon::now()) >= 1) {
-            $rateService = app(ExchangeRateService::class);
-            $rateService->syncAllRates();
-            $this->calculateTotals();
-        }
+        // $dbRate = \App\Models\ExchangeRate::first();
+        // if (!$dbRate || $dbRate->updated_at->diffInHours(\Carbon\Carbon::now()) >= 1) {
+        //     $rateService = app(ExchangeRateService::class);
+        //     $rateService->syncAllRates();
+        //     $this->calculateTotals();
+        // }
     }
+
 
     public function updatedAmount(): void
     {
         $this->calculateTotals();
+    }
+
+    public function updatedReceivedAmount(): void
+    {
+        $rateService = app(ExchangeRateService::class);
+        $commissionService = app(CommissionCalculator::class);
+
+        $this->exchange_rate = $rateService->getRate($this->currency, 'EGP');
+
+        if (empty($this->received_amount) || !is_numeric($this->received_amount) || $this->received_amount <= 0) {
+            $this->amount = 0.0;
+            $this->commission = 0.0;
+            $this->total_to_pay = 0.0;
+            return;
+        }
+
+        if ($this->exchange_rate > 0) {
+            $this->amount = round((float)$this->received_amount / $this->exchange_rate, 2);
+        } else {
+            $this->amount = 0;
+        }
+
+        $this->commission = $commissionService->calculate((float)$this->amount);
+        $this->total_to_pay = (float)$this->amount + $this->commission;
     }
 
     public function updatedCurrency(): void
@@ -71,7 +96,7 @@ class NewTransferRequest extends Component
 
         $this->commission = $commissionService->calculate((float)$this->amount);
         
-        $this->received_amount = (float)$this->amount * $this->exchange_rate;
+        $this->received_amount = round((float)$this->amount * $this->exchange_rate, 2);
         $this->total_to_pay = (float)$this->amount + $this->commission;
     }
 

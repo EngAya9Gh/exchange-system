@@ -28,36 +28,11 @@
     @endif
 
     <form x-on:submit.prevent="confirmTransfer" class="space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Additional Info -->
-            <div class="bg-slate-50/50 p-6 rounded-[24px] space-y-5">
-                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{{ __('messages.destination_and_notes_data') }}</h4>
-                
-                <div>
-                    <label for="destination" class="block text-sm font-bold text-slate-700 mb-2">الجهة</label>
-                    <select wire:model="destination" id="destination" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 pr-4 pl-10 py-3.5 shadow-sm transition bg-left">
-                        <option value="جميع المحافظات - فودافون مباشر">جميع المحافظات - فودافون مباشر</option>
-                    </select>
-                    <x-input-error :messages="$errors->get('destination')" class="mt-2 text-rose-500 text-xs" />
-                </div>
-
-                <div>
-                    <label for="address" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.address') }}</label>
-                    <input wire:model="address" id="address" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="مثال: القاهرة، مدينة نصر..." />
-                    <x-input-error :messages="$errors->get('address')" class="mt-2 text-rose-500 text-xs" />
-                </div>
-
-                <div>
-                    <label for="notes" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.notes') }}</label>
-                    <input wire:model="notes" id="notes" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="{{ __('messages.notes') }} إضافية..." />
-                    <x-input-error :messages="$errors->get('notes')" class="mt-2 text-rose-500 text-xs" />
-                </div>
-            </div>
-
-            <!-- Recipient Info -->
-            <div class="bg-slate-50/50 p-6 rounded-[24px] space-y-5">
-                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{{ __('messages.target_recipient') }}</h4>
-                
+        <!-- Recipient Info -->
+        <div class="bg-slate-50/50 p-6 rounded-[24px] space-y-5">
+            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{{ __('messages.target_recipient') }}</h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                     <label for="recipient_name" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.full_recipient_name') }}</label>
                     <input wire:model="recipient_name" id="recipient_name" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" required />
@@ -69,6 +44,12 @@
                     <input wire:model="recipient_phone" id="recipient_phone" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="+20..." required />
                     <x-input-error :messages="$errors->get('recipient_phone')" class="mt-2 text-rose-500 text-xs" />
                 </div>
+
+                <div>
+                    <label for="address" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.address') }}</label>
+                    <input wire:model="address" id="address" type="text" class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="مثال: القاهرة، مدينة نصر..." />
+                    <x-input-error :messages="$errors->get('address')" class="mt-2 text-rose-500 text-xs" />
+                </div>
             </div>
         </div>
 
@@ -79,11 +60,17 @@
             <!-- Region & Branch -->
             <div class="md:col-span-2">
                 <!-- Amount Inputs -->
-                <div class="bg-slate-50/50 p-6 rounded-[24px] grid grid-cols-1 sm:grid-cols-3 gap-5">
-                    <div class="sm:col-span-2">
+                <div class="bg-slate-50/50 p-6 rounded-[24px] grid grid-cols-1 sm:grid-cols-4 gap-5">
+                    <div class="sm:col-span-1">
                         <label for="amount" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.desired_transfer_amount') }}</label>
-                        <input wire:model.live="amount" id="amount" type="number" step="0.01" class="w-full bg-white border-none text-primary-600 font-black text-2xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition" required />
+                        <input wire:model.live.debounce.500ms="amount" id="amount" type="number" step="0.01" class="w-full bg-white border-none text-primary-600 font-black text-xl sm:text-2xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition" required />
                         <x-input-error :messages="$errors->get('amount')" class="mt-2 text-rose-500 text-xs" />
+                    </div>
+
+                    <div class="sm:col-span-1">
+                        <label for="received_amount" class="block text-sm font-bold text-slate-700 mb-2">المبلغ المستلم</label>
+                        <input wire:model.live.debounce.500ms="received_amount" id="received_amount" type="number" step="0.01" class="w-full bg-white border-none text-emerald-600 font-black text-xl sm:text-2xl rounded-xl focus:ring-2 focus:ring-emerald-500 px-4 py-3 shadow-sm transition" required />
+                        <x-input-error :messages="$errors->get('received_amount')" class="mt-2 text-rose-500 text-xs" />
                     </div>
 
                     <div>
@@ -94,6 +81,11 @@
                             <option value="EUR">{{ __('messages.eur_euro') }}</option>
                         </select>
                         <x-input-error :messages="$errors->get('currency')" class="mt-2 text-rose-500 text-xs" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">سعر الصرف</label>
+                        <input wire:model="exchange_rate" type="text" class="w-full bg-slate-100/50 border-none text-slate-500 font-bold text-xl rounded-xl focus:ring-0 px-4 py-3 shadow-sm cursor-not-allowed" disabled />
                     </div>
                 </div>
             </div>
@@ -110,15 +102,12 @@
                         <span class="font-black text-slate-800">{{ number_format($exchange_rate, 4) }}</span>
                     </div>
 
-                    <div class="flex justify-between items-center text-sm">
+                    <div class="flex justify-between items-center text-sm pt-3 border-t border-primary-200/50">
                         <span class="text-slate-500 font-bold">{{ __('messages.estimated_commission') }}</span>
                         <span class="font-black text-rose-500">{{ number_format($commission, 2) }} {{ $currency }}</span>
                     </div>
 
-                    <div class="flex justify-between items-center pt-3 border-t border-primary-200/50">
-                        <span class="text-slate-500 font-bold">{{ __('messages.expected_net_received') }}</span>
-                        <span class="font-black text-emerald-600 text-xl">{{ number_format($received_amount, 2) }} <span class="text-xs">EGP</span></span>
-                    </div>
+
                 </div>
 
                 <div class="pt-6 relative z-10">

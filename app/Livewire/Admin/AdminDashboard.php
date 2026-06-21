@@ -98,19 +98,50 @@ class AdminDashboard extends Component
 
     public function autoSyncRates(): void
     {
-        $dbRate = \App\Models\ExchangeRate::first();
-        // If rates haven't been updated in the last hour, sync them via Ajax
-        if (!$dbRate || $dbRate->updated_at->diffInHours(\Carbon\Carbon::now()) >= 1) {
-            $rateService = app(ExchangeRateService::class);
-            $rateService->syncAllRates();
-            $this->loadRates();
-            $this->calculateTotals();
-        }
+        // $dbRate = \App\Models\ExchangeRate::first();
+        // // If rates haven't been updated in the last hour, sync them via Ajax
+        // if (!$dbRate || $dbRate->updated_at->diffInHours(\Carbon\Carbon::now()) >= 1) {
+        //     $rateService = app(ExchangeRateService::class);
+        //     $rateService->syncAllRates();
+        //     $this->loadRates();
+        //     $this->calculateTotals();
+        // }
     }
 
     public function updatedSourceCurrency(): void
     {
         $this->calculateTotals();
+    }
+
+
+
+    public function updatedReceivedAmount(): void
+    {
+        $rateService = app(ExchangeRateService::class);
+        $commissionService = app(CommissionCalculator::class);
+
+        $this->exchange_rate = $rateService->getRate($this->source_currency, $this->target_currency);
+
+        if (empty($this->received_amount) || !is_numeric($this->received_amount) || $this->received_amount <= 0) {
+            $this->amount = 0.0;
+            $this->commission = 0.0;
+            $this->total_to_pay = 0.0;
+            return;
+        }
+
+        if ($this->exchange_rate > 0) {
+            $this->amount = round((float)$this->received_amount / $this->exchange_rate, 2);
+        } else {
+            $this->amount = 0;
+        }
+
+        if ($this->enableAutomatedCommissions) {
+            $this->commission = $commissionService->calculate((float)$this->amount);
+        } else {
+            $this->commission = empty($this->manual_fee) ? 0.0 : (float)$this->manual_fee;
+        }
+        
+        $this->total_to_pay = (float)$this->amount + $this->commission;
     }
 
     public function calculateTotals(): void
@@ -134,7 +165,7 @@ class AdminDashboard extends Component
             $this->commission = empty($this->manual_fee) ? 0.0 : (float)$this->manual_fee;
         }
         
-        $this->received_amount = (float)$this->amount * $this->exchange_rate;
+        $this->received_amount = round((float)$this->amount * $this->exchange_rate, 2);
         $this->total_to_pay = (float)$this->amount + $this->commission;
     }
 

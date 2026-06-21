@@ -414,32 +414,27 @@
                                         </select>
                                         @error('destination') <span class="text-xs text-rose-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                                     </div>
-                                    <div>
-                                        <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.destination_address') }}</label>
-                                        <input wire:model="address" type="text" class="w-full bg-white border-none text-slate-800 font-bold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="{{ __('messages.address_example') }}">
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-1 gap-5">
-                                    <div>
-                                        <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.additional_notes') }}</label>
-                                        <input wire:model="notes" type="text" class="w-full bg-white border-none text-slate-800 font-bold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition" placeholder="{{ __('messages.notes_example') }}">
-                                    </div>
                                 </div>
 
                                 <!-- Row 3: Currency, Amount & Wages -->
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-5 pt-2">
                                     <div>
-                                        <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.delivered_currency') }}</label>
-                                        <select wire:model.live="source_currency" class="w-full bg-white border-none text-slate-800 font-bold rounded-xl focus:ring-2 focus:ring-primary-500 pr-4 pl-10 py-3.5 shadow-sm transition bg-left">
-                                            <option value="TRY">{{ __('messages.turkish_lira') }}</option>
-                                            <option value="USD">{{ __('messages.us_dollar') }}</option>
-                                            <option value="EUR">{{ __('messages.euro') }}</option>
+                                        <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">العملة</label>
+                                        <select wire:model.live="source_currency" class="w-full bg-white border-none text-slate-800 font-bold rounded-xl focus:ring-2 focus:ring-primary-500 pr-4 pl-10 py-3 shadow-sm transition bg-left" required>
+                                            <option value="TRY">{{ __('messages.try_lira') }}</option>
+                                            <option value="USD">{{ __('messages.usd_dollar') }}</option>
+                                            <option value="EUR">{{ __('messages.eur_euro') }}</option>
                                         </select>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.amount') }} {{ __('messages.required_to_transfer') }}</label>
-                                        <input wire:model.live="amount" type="number" step="0.01" class="w-full bg-white border-none text-primary-600 font-black text-xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition" required oninput="this.value = this.value.replace(/[^0-9.]/g, '')">
+                                        <input wire:model.live.debounce.500ms="amount" type="number" step="0.01" class="w-full bg-white border-none text-primary-600 font-black text-xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition" required oninput="this.value = this.value.replace(/[^0-9.]/g, '')">
                                         @error('amount') <span class="text-xs text-rose-500 font-bold mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">المبلغ المستلم</label>
+                                        <input wire:model.live.debounce.500ms="received_amount" type="number" step="0.01" class="w-full bg-white border-none text-emerald-600 font-black text-xl rounded-xl focus:ring-2 focus:ring-emerald-500 px-4 py-3 shadow-sm transition" required oninput="this.value = this.value.replace(/[^0-9.]/g, '')">
+                                        @error('received_amount') <span class="text-xs text-rose-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
                                         <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">
@@ -460,7 +455,7 @@
 
                             <!-- Calculations Section -->
                             <div class="bg-gradient-to-r from-primary-50 to-rose-50 p-6 rounded-[24px]">
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <div class="text-center">
                                         <span class="block text-[10px] font-bold text-primary-400 mb-1 uppercase tracking-widest">{{ __('messages.exchange_rate_label') }}</span>
                                         <span class="block font-black text-slate-800 text-lg">{{ number_format($exchange_rate, 4) }}</span>
@@ -468,10 +463,6 @@
                                     <div class="text-center border-r border-primary-200/50">
                                         <span class="block text-[10px] font-bold text-rose-400 mb-1 uppercase tracking-widest">{{ __('messages.fees') }} {{ __('messages.and_separator') }} {{ __('messages.commission_label') }}</span>
                                         <span class="block font-black text-rose-500 text-lg">{{ number_format($commission, 2) }} <span class="text-xs">{{ $source_currency }}</span></span>
-                                    </div>
-                                    <div class="text-center border-r border-primary-200/50">
-                                        <span class="block text-[10px] font-bold text-emerald-500 mb-1 uppercase tracking-widest">{{ __('messages.net_for_recipient') }}</span>
-                                        <span class="block font-black text-emerald-600 text-2xl">{{ number_format($received_amount, 2) }} <span class="text-sm">EGP</span></span>
                                     </div>
                                 </div>
                             </div>
