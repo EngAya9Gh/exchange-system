@@ -79,6 +79,10 @@
                             <button wire:click="toggleStatus({{ $user->id }})" class="{{ $user->is_active ? 'text-danger-600 hover:text-danger-800' : 'text-success-600 hover:text-success-800' }}">
                                 {{ $user->is_active ? __('messages.suspend') : __('messages.activate') }}
                             </button>
+                            |
+                            <button onclick="confirmDeletion({{ $user->id }})" class="text-red-600 hover:text-red-800 font-bold">
+                                {{ __('messages.delete_btn') ?? 'حذف' }}
+                            </button>
                         </td>
                     </tr>
                 @empty
@@ -168,3 +172,24 @@
     </div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+    function confirmDeletion(id) {
+        Swal.fire({
+            title: 'هل أنت متأكد؟',
+            text: "لن يتم حذف المستخدم نهائياً، سيتم نقله إلى الأرشيف (حذف ناعم).",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'نعم، قم بالحذف!',
+            cancelButtonText: 'إلغاء'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                @this.call('deleteUser', id);
+            }
+        })
+    }
+</script>
+@endpush

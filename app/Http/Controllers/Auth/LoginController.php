@@ -32,6 +32,16 @@ class LoginController extends Controller
 
         $user = Auth::user();
 
+        if (!$user->is_active) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'username' => 'عذراً، هذا الحساب موقوف. يرجى مراجعة الإدارة.',
+            ]);
+        }
+
         if ($user->hasAnyRole(['Super Admin', 'Agent'])) {
             return redirect(route('admin.dashboard', absolute: false));
         }

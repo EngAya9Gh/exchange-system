@@ -138,6 +138,19 @@ class UserManagement extends Component
         session()->flash('success', 'تم تغيير حالة المستخدم بنجاح.');
     }
 
+    public function deleteUser(int $id): void
+    {
+        $user = User::findOrFail($id);
+        
+        if ($user->id === auth()->id()) {
+            session()->flash('error', 'لا يمكنك حذف حسابك الخاص.');
+            return;
+        }
+
+        $user->delete(); // This performs a soft delete because of the SoftDeletes trait
+        session()->flash('success', 'تم حذف المستخدم بنجاح.');
+    }
+
     public function closeModal(): void
     {
         $this->showFormModal = false;
