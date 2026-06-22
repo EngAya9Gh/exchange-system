@@ -201,4 +201,12 @@ return [
     'active_account' => 'حساب نشط',
     'save' => 'حفظ',
     'enable_2fa' => 'تفعيل التحقق بخطوتين (OTP)',
+    'system_error' => 'خطأ في النظام',
+    'system_error_description' => 'حدث خطأ غير متوقع أثناء معالجة طلبك. الرجاء المحاولة مرة أخرى أو الاتصال بالدعم.',
+    'session_expired' => 'انتهت الجلسة',
+    'session_expired_description' => 'انتهت صلاحية الجلسة بسبب عدم النشاط. يرجى تحديث الصفحة.',
+    'reload_page' => 'تحديث الصفحة',
+    'unauthorized' => 'غير مصرح',
+    'unauthorized_description' => 'ليس لديك الصلاحية لإجراء هذه العملية.',
+    'ok' => 'حسناً',
 ];

@@ -201,4 +201,12 @@ return [
     'active_account' => 'Active Account',
     'save' => 'Save',
     'enable_2fa' => 'Enable Two-Factor Authentication (OTP)',
+    'system_error' => 'System Error',
+    'system_error_description' => 'An unexpected error occurred while processing your request. Please try again or contact support.',
+    'session_expired' => 'Session Expired',
+    'session_expired_description' => 'Your session has expired due to inactivity. Please refresh the page.',
+    'reload_page' => 'Reload Page',
+    'unauthorized' => 'Unauthorized',
+    'unauthorized_description' => 'You do not have permission to perform this action.',
+    'ok' => 'OK',
 ];

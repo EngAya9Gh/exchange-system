@@ -40,5 +40,43 @@
         </div>
         
         @stack('scripts')
+        <script>
+            document.addEventListener('livewire:init', () => {
+                Livewire.hook('request', ({ fail }) => {
+                    fail(({ status, preventDefault }) => {
+                        if (status === 500) {
+                            preventDefault();
+                            Swal.fire({
+                                icon: 'error',
+                                title: "{{ __('messages.system_error') }}",
+                                text: "{{ __('messages.system_error_description') }}",
+                                confirmButtonText: "{{ __('messages.ok') }}",
+                                confirmButtonColor: '#3b82f6',
+                            });
+                        } else if (status === 419) {
+                            preventDefault();
+                            Swal.fire({
+                                icon: 'warning',
+                                title: "{{ __('messages.session_expired') }}",
+                                text: "{{ __('messages.session_expired_description') }}",
+                                confirmButtonText: "{{ __('messages.reload_page') }}",
+                                confirmButtonColor: '#3b82f6',
+                            }).then((result) => {
+                                window.location.reload();
+                            });
+                        } else if (status === 403) {
+                            preventDefault();
+                            Swal.fire({
+                                icon: 'error',
+                                title: "{{ __('messages.unauthorized') }}",
+                                text: "{{ __('messages.unauthorized_description') }}",
+                                confirmButtonText: "{{ __('messages.ok') }}",
+                                confirmButtonColor: '#ef4444',
+                            });
+                        }
+                    });
+                });
+            });
+        </script>
     </body>
 </html>

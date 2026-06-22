@@ -201,4 +201,12 @@ return [
     'active_account' => 'Aktif Hesap',
     'save' => 'Kaydet',
     'enable_2fa' => 'İki Faktörlü Doğrulamayı Etkinleştir (OTP)',
+    'system_error' => 'Sistem Hatası',
+    'system_error_description' => 'Talebiniz işlenirken beklenmeyen bir hata oluştu. Lütfen tekrar deneyin veya destekle iletişime geçin.',
+    'session_expired' => 'Oturum Süresi Doldu',
+    'session_expired_description' => 'Oturumunuz hareketsizlik nedeniyle sona erdi. Lütfen sayfayı yenileyin.',
+    'reload_page' => 'Sayfayı Yenile',
+    'unauthorized' => 'Yetkisiz Erişim',
+    'unauthorized_description' => 'Bu işlemi gerçekleştirmek için yetkiniz yok.',
+    'ok' => 'Tamam',
 ];
