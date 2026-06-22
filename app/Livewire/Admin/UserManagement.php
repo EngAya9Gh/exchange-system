@@ -87,8 +87,8 @@ class UserManagement extends Component
         $data = [
             'name' => $this->name,
             'username' => $this->username,
-            'email' => $this->email,
-            'phone' => $this->phone,
+            'email' => empty($this->email) ? null : $this->email,
+            'phone' => empty($this->phone) ? null : $this->phone,
             'balance' => $this->balance,
             'is_active' => $this->is_active,
             'two_factor_enabled' => $this->two_factor_enabled,
