@@ -396,8 +396,8 @@
             body { padding: 0; background-color: white; }
             .receipt-container { border: none; max-width: 100%; box-shadow: none; border-radius: 0; padding: 0; }
             .actions-container, #toast { display: none !important; }
-        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="receipt-container">
@@ -542,20 +542,57 @@
             });
         }
 
-        function shareReceipt() {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'إشعار حوالة - {{ $transfer->transfer_number }}',
-                    text: 'مرفق إشعار الحوالة والتفاصيل.',
-                    url: window.location.href
-                }).catch(console.error);
-            } else {
-                navigator.clipboard.writeText(window.location.href).then(function() {
-                    var toast = document.getElementById("toast");
-                    toast.innerHTML = '<svg class="w-5 h-5 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> تم نسخ رابط الإشعار بنجاح!';
-                    toast.className = "show";
-                    setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        async function shareReceipt() {
+            var btn = event.currentTarget;
+            var originalText = btn.innerHTML;
+            btn.innerHTML = '<svg class="w-5 h-5 ml-2 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> جاري التجهيز...';
+            btn.disabled = true;
+
+            try {
+                const element = document.querySelector('.receipt-container');
+                
+                const canvas = await html2canvas(element, {
+                    scale: 2, // High resolution
+                    useCORS: true, // For the QR codes
+                    backgroundColor: '#ffffff'
                 });
+                
+                canvas.toBlob(async function(blob) {
+                    const file = new File([blob], 'receipt-{{ $transfer->transfer_number }}.png', { type: 'image/png' });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file]
+                            });
+                        } catch (error) {
+                            console.error('Error sharing', error);
+                        }
+                    } else {
+                        // Fallback for desktop browsers
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = 'receipt-{{ $transfer->transfer_number }}.png';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        
+                        var toast = document.getElementById("toast");
+                        toast.innerHTML = '<svg class="w-5 h-5 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> تم تحميل صورة الإشعار بنجاح للمشاركة!';
+                        toast.className = "show";
+                        setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+                    }
+                    
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 'image/png');
+                
+            } catch (err) {
+                console.error("Error capturing receipt:", err);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         }
     </script>
