@@ -7,6 +7,13 @@ use Illuminate\Support\Str;
 
 class TelegramLink extends Component
 {
+    public function mount()
+    {
+        if (!auth()->user()->hasAnyRole(['Super Admin', 'Agent'])) {
+            abort(403, 'غير مصرح لك بالوصول لإعدادات التلغرام.');
+        }
+    }
+
     public function render()
     {
         $user = auth()->user();
