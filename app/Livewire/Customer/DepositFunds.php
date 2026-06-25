@@ -18,7 +18,7 @@ class DepositFunds extends Component
             'details' => "عبد القادر العبد1\nالباركود: ef2dc825e5aa96bdb04c54499b9e1ff1",
         ],
         'uption' => [
-            'name' => 'بنك أوشن',
+            'name' => 'بنك ايش',
             'logo' => 'uption.png',
             'details' => "TR61 0006 4000 0011 0092 9912 59\nABDULKADER ALABD",
         ],
