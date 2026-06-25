@@ -20,7 +20,7 @@
     </div>
 
     <div class="py-12" dir="rtl">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6" x-data="{ activeTab: 'transfer' }">
             <!-- User Welcome Info -->
             <div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-6 sm:p-8 relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 sm:gap-0 transition-transform hover:-translate-y-1">
                 <div class="relative z-10">
@@ -41,11 +41,40 @@
                 </div>
             </div>
 
-            <!-- New Request Form -->
-            <livewire:customer.new-transfer-request />
+            <!-- Dashboard Tabs Navigation -->
+            <div class="flex space-x-2 space-x-reverse overflow-x-auto pb-2 border-b border-gray-200">
+                <button @click="activeTab = 'transfer'" 
+                        :class="activeTab === 'transfer' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    طلب تحويل جديد
+                </button>
+                <button @click="activeTab = 'deposit'" 
+                        :class="activeTab === 'deposit' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    إضافة رصيد
+                </button>
+                <button @click="activeTab = 'history'" 
+                        :class="activeTab === 'history' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    سجل الحوالات
+                </button>
+            </div>
 
-            <!-- Request History List -->
-            <livewire:customer.request-history />
+            <!-- Tab Contents -->
+            <div x-show="activeTab === 'transfer'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+                <livewire:customer.new-transfer-request />
+            </div>
+
+            <div x-show="activeTab === 'deposit'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+                <livewire:customer.deposit-funds />
+            </div>
+
+            <div x-show="activeTab === 'history'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+                <livewire:customer.request-history />
+            </div>
         </div>
     </div>
 </x-app-layout>

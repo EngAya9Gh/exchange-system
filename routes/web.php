@@ -19,6 +19,8 @@ Route::group([
         Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
             Route::view('dashboard', 'admin.dashboard')->name('dashboard');
             Route::get('deliver/{number}', \App\Livewire\Admin\DeliverTransfer::class)->name('transfers.deliver');
+            Route::get('deposit-requests', \App\Livewire\Admin\DepositRequests::class)->name('deposit-requests');
+            Route::get('balance-management', \App\Livewire\Admin\BalanceManagement::class)->name('balance-management');
         });
     });
 

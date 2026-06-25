@@ -52,7 +52,16 @@
                         <td class="px-6 py-4 font-bold text-gray-900">{{ $user->name }}</td>
                         <td class="px-6 py-4" dir="ltr">{{ $user->username }}</td>
                         <td class="px-6 py-4" dir="ltr">{{ $user->phone ?? '-' }}</td>
-                        <td class="px-6 py-4 font-bold text-green-600">{{ number_format($user->balance, 2) }}</td>
+                        <td class="px-6 py-4 font-bold text-green-600">
+                            {{ number_format($user->balance, 2) }}
+                            <div class="text-xs font-normal {{ $user->has_unlimited_balance ? 'text-gray-500' : 'text-red-500' }}">
+                                @if($user->has_unlimited_balance)
+                                    (سقف مفتوح)
+                                @else
+                                    الحد الأقصى: {{ number_format($user->balance_limit, 2) }}
+                                @endif
+                            </div>
+                        </td>
                         <td class="px-6 py-4">
                             @if($user->hasRole('Super Admin'))
                                 <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ __('messages.role_admin') ?? 'مدير النظام' }}</span>
@@ -127,10 +136,25 @@
                             <x-input-error :messages="$errors->get('phone')" class="mt-2" />
                         </div>
                         <div wire:key="field-balance">
-                            <x-input-label value="الرصيد المتاح" />
-                            <x-text-input wire:model="balance" type="number" step="0.01" min="0" class="mt-1 block w-full text-start font-bold text-green-600" autocomplete="off" />
+                            <x-input-label value="الرصيد المتاح حالياً" />
+                            <x-text-input wire:model="balance" type="number" step="0.01" class="mt-1 block w-full text-start font-bold text-green-600" autocomplete="off" />
                             <x-input-error :messages="$errors->get('balance')" class="mt-2" />
                         </div>
+                        
+                        <div wire:key="field-has-limit" class="mt-4">
+                            <div class="flex items-center gap-2">
+                                <input wire:model.live="has_unlimited_balance" id="has_unlimited_balance" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-500">
+                                <label for="has_unlimited_balance" class="text-sm text-gray-800 font-bold">الحساب بسقف مفتوح (رصيد غير محدود)</label>
+                            </div>
+                        </div>
+
+                        @if(!$has_unlimited_balance)
+                            <div wire:key="field-balance-limit" class="mt-2 bg-red-50 p-3 rounded-lg border border-red-100">
+                                <x-input-label value="الحد الائتماني (أقصى مديونية أو سقف للرصيد)" />
+                                <x-text-input wire:model="balance_limit" type="number" step="0.01" min="0" class="mt-1 block w-full text-start font-bold text-red-600" autocomplete="off" />
+                                <x-input-error :messages="$errors->get('balance_limit')" class="mt-2" />
+                            </div>
+                        @endif
                         <div wire:key="field-password">
                             <x-input-label value="{{ __('messages.password') }}{{ $editingUserId ? __('messages.leave_blank_to_keep') : '' }}" />
                             <x-password-input wire:model="password" class="mt-1 block w-full" autocomplete="new-password" />

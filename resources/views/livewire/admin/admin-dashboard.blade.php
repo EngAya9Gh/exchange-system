@@ -58,6 +58,16 @@
                 {{ __('messages.commission_settings') }}
             </button>
             @endcan
+            <div class="h-px bg-slate-100 my-2"></div>
+            <!-- New Features -->
+            <button wire:click="$set('activeTab', 'deposit_requests')" class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'deposit_requests' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
+                <svg class="w-5 h-5 ml-4 {{ $activeTab === 'deposit_requests' ? 'text-primary-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                طلبات الشحن
+            </button>
+            <button wire:click="$set('activeTab', 'balance_management')" class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'balance_management' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
+                <svg class="w-5 h-5 ml-4 {{ $activeTab === 'balance_management' ? 'text-primary-600' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                الأرصدة السريعة
+            </button>
         </nav>
 
         <!-- Help Center Card -->
@@ -101,6 +111,8 @@
                     @if($activeTab === 'users') <span class="text-primary-600 ml-2">{{ __('messages.system_settings') }}</span> @endif
                     @if($activeTab === 'role_settings') <span class="text-primary-600 ml-2">إدارة الأدوار والصلاحيات</span> @endif
                     @if($activeTab === 'commissions') <span class="text-primary-600 ml-2">{{ __('messages.commissions') }}</span> @endif
+                    @if($activeTab === 'deposit_requests') <span class="text-primary-600 ml-2">طلبات شحن الرصيد</span> @endif
+                    @if($activeTab === 'balance_management') <span class="text-primary-600 ml-2">إدارة الأرصدة والسقوف</span> @endif
                     </h1>
                     <p class="text-sm text-slate-400 font-medium mt-1">
                         @if($activeTab === 'dashboard') {{ __('messages.hello_welcome_back', ['name' => auth()->user()->name]) }} @else {{ __('messages.manage_details_here') }} @endif
@@ -168,6 +180,8 @@
                     @if($activeTab === 'users') <span class="text-primary-600">{{ __('messages.system_settings') }}</span> @endif
                     @if($activeTab === 'role_settings') <span class="text-primary-600">إدارة الأدوار والصلاحيات</span> @endif
                     @if($activeTab === 'commissions') <span class="text-primary-600">{{ __('messages.commissions') }}</span> @endif
+                    @if($activeTab === 'deposit_requests') <span class="text-primary-600">طلبات شحن الرصيد</span> @endif
+                    @if($activeTab === 'balance_management') <span class="text-primary-600">إدارة الأرصدة والسقوف</span> @endif
                 </h1>
                 <p class="text-sm text-slate-400 font-medium mt-1">
                     @if($activeTab === 'dashboard') {{ __('messages.hello_welcome_back', ['name' => auth()->user()->name]) }} @else {{ __('messages.manage_details_here') }} @endif
@@ -362,6 +376,18 @@
                         {{ $incomingRequests->links('livewire::tailwind', data: ['scrollTo' => false]) }}
                     </div>
                 @endif
+            </div>
+        @endif
+
+        @if ($activeTab === 'deposit_requests')
+            <div class="mt-4">
+                <livewire:admin.deposit-requests />
+            </div>
+        @endif
+
+        @if ($activeTab === 'balance_management')
+            <div class="mt-4">
+                <livewire:admin.balance-management />
             </div>
         @endif
 

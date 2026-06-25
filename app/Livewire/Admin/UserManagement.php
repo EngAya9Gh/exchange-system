@@ -25,6 +25,8 @@ class UserManagement extends Component
     public string $password = '';
     public string $role = 'Customer'; // Super Admin, Agent, Customer
     public float $balance = 0.0;
+    public bool $has_unlimited_balance = false;
+    public float $balance_limit = 0.0;
 
     public bool $is_active = true;
     public bool $two_factor_enabled = false;
@@ -60,6 +62,8 @@ class UserManagement extends Component
         $this->phone = $user->phone ?? '';
         $this->role = $user->roles->first()?->name ?? 'Customer';
         $this->balance = (float) $user->balance;
+        $this->has_unlimited_balance = (bool) $user->has_unlimited_balance;
+        $this->balance_limit = (float) $user->balance_limit;
         $this->is_active = $user->is_active;
         $this->two_factor_enabled = $user->two_factor_enabled;
         $this->receives_telegram_alerts = $user->hasDirectPermission('receive_telegram_alerts');
@@ -74,7 +78,9 @@ class UserManagement extends Component
             'username' => 'required|string|max:255|unique:users,username' . ($this->editingUserId ? ',' . $this->editingUserId : ''),
             'email' => 'nullable|email|max:255|unique:users,email' . ($this->editingUserId ? ',' . $this->editingUserId : ''),
             'phone' => 'nullable|string|max:20|unique:users,phone' . ($this->editingUserId ? ',' . $this->editingUserId : ''),
-            'balance' => 'required|numeric|min:0',
+            'balance' => 'required|numeric',
+            'has_unlimited_balance' => 'required|boolean',
+            'balance_limit' => 'required_if:has_unlimited_balance,false|numeric|min:0',
             'role' => 'required|exists:roles,name',
         ];
 
@@ -90,6 +96,8 @@ class UserManagement extends Component
             'email' => empty($this->email) ? null : $this->email,
             'phone' => empty($this->phone) ? null : $this->phone,
             'balance' => $this->balance,
+            'has_unlimited_balance' => $this->has_unlimited_balance,
+            'balance_limit' => $this->balance_limit,
             'is_active' => $this->is_active,
             'two_factor_enabled' => $this->two_factor_enabled,
         ];
@@ -159,7 +167,7 @@ class UserManagement extends Component
 
     private function resetForm(): void
     {
-        $this->reset(['editingUserId', 'name', 'username', 'email', 'phone', 'password', 'balance', 'role', 'is_active', 'two_factor_enabled', 'receives_telegram_alerts']);
+        $this->reset(['editingUserId', 'name', 'username', 'email', 'phone', 'password', 'balance', 'has_unlimited_balance', 'balance_limit', 'role', 'is_active', 'two_factor_enabled', 'receives_telegram_alerts']);
         $this->resetValidation();
         $this->role = 'Customer';
     }
