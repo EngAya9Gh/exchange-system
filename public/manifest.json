@@ -1,0 +1,23 @@
+{
+    "name": "Teacher VC - نظام الحوالات",
+    "short_name": "Teacher VC",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f8f9fc",
+    "theme_color": "#ffffff",
+    "description": "نظام الحوالات المالية وإدارة الأرصدة",
+    "icons": [
+        {
+            "src": "/logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

@@ -8,6 +8,11 @@
         <title>{{ config('app.name', __('messages.transfer_system')) }}</title>
         <link rel="icon" type="image/png" href="{{ asset('logo.png?v=2') }}">
 
+        <!-- PWA Meta Tags -->
+        <link rel="manifest" href="{{ asset('manifest.json') }}">
+        <meta name="theme-color" content="#f8f9fc">
+        <link rel="apple-touch-icon" href="{{ asset('logo.png') }}">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,6 +21,14 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js');
+                });
+            }
+        </script>
     </head>
     <body class="font-sans antialiased text-gray-900 bg-slate-50 min-h-screen" style="font-family: 'Cairo', sans-serif;">
         <div class="min-h-screen flex flex-col md:flex-row">
