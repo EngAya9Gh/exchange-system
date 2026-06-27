@@ -116,12 +116,24 @@
                         <span class="font-black text-slate-800 text-2xl">{{ number_format($total_to_pay, 2) }} <span class="text-sm text-slate-500">{{ $currency }}</span></span>
                     </div>
 
-                    <div class="flex justify-between items-center mb-4 p-2 rounded-lg {{ auth()->user()->balance < $total_to_pay ? 'bg-rose-100 text-rose-700' : 'bg-emerald-50 text-emerald-700' }}">
-                        <span class="text-xs font-bold">الرصيد المتاح:</span>
-                        <span class="font-black text-lg">{{ number_format(auth()->user()->balance, 2) }} <span class="text-xs">TRY</span></span>
+                    @php
+                        $user = auth()->user();
+                        $availableCredit = $user->has_unlimited_balance ? PHP_FLOAT_MAX : ($user->balance + $user->balance_limit);
+                        $cannotAfford = $total_to_pay > $availableCredit;
+                    @endphp
+
+                    <div class="flex justify-between items-center mb-4 p-2 rounded-lg {{ $cannotAfford ? 'bg-rose-100 text-rose-700' : 'bg-emerald-50 text-emerald-700' }}">
+                        <span class="text-xs font-bold">المتاح للتحويل (مع السقف):</span>
+                        <span class="font-black text-lg">
+                            @if($user->has_unlimited_balance)
+                                مفتوح
+                            @else
+                                {{ number_format($availableCredit, 2) }} <span class="text-xs">TRY</span>
+                            @endif
+                        </span>
                     </div>
 
-                    <button type="submit" @if(auth()->user()->balance < $total_to_pay) disabled @endif wire:loading.attr="disabled" wire:target="submitRequest" class="w-full py-4 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                    <button type="submit" @if($cannotAfford) disabled @endif wire:loading.attr="disabled" wire:target="submitRequest" class="w-full py-4 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                         <span wire:loading.remove wire:target="submitRequest">{{ __('messages.send_request_for_review') }}</span>
                         <span wire:loading wire:target="submitRequest" class="flex items-center">
                             <svg class="animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
