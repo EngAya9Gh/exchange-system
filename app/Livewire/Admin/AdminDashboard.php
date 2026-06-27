@@ -338,6 +338,18 @@ class AdminDashboard extends Component
         session()->flash('request_success', 'تم رفض الطلب بنجاح.');
     }
 
+    public function deleteTransfer(int $id): void
+    {
+        try {
+            $transfer = Transfer::findOrFail($id);
+            $transfer->delete();
+            session()->flash('transfer_success', 'تم حذف الحوالة (رقم '.$transfer->transfer_number.') بنجاح وتم نقلها لسلة المهملات.');
+        } catch (\Exception $e) {
+            Log::error("Failed to delete transfer: " . $e->getMessage());
+            session()->flash('transfer_error', 'حدث خطأ أثناء محاولة حذف الحوالة.');
+        }
+    }
+
     // Pay / Pay-out transfer (صرف الحوالة)
     public function payTransfer(int $id): void
     {
