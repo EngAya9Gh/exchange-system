@@ -119,8 +119,13 @@ class NewTransferRequest extends Component
         $this->calculateTotals();
 
         $user = auth()->user();
-        if ($user->balance < $this->total_to_pay) {
-            $this->addError('amount', 'رصيدك الحالي غير كافٍ لإتمام هذه الحوالة.');
+        
+        $availableCredit = $user->has_unlimited_balance 
+            ? PHP_FLOAT_MAX 
+            : ($user->balance + $user->balance_limit);
+
+        if ($this->total_to_pay > $availableCredit) {
+            $this->addError('amount', 'من فضلك قم بتعزيز الرصيد لتتمكن من إتمام هذه الحوالة.');
             return;
         }
 
