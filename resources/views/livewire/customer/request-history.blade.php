@@ -6,8 +6,8 @@
         </div>
     </div>
 
-    <div class="p-0">
-        <table class="w-full text-sm text-right">
+    <div class="p-0 overflow-x-auto w-full">
+        <table class="w-full text-sm text-right min-w-[900px]">
             <thead class="text-[11px] text-slate-400 uppercase tracking-wider bg-slate-50/50">
                 <tr>
                     <th scope="col" class="px-8 py-4 font-bold text-center">#</th>
