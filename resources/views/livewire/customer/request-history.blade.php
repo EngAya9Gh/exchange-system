@@ -16,6 +16,7 @@
                     <th scope="col" class="px-8 py-4 font-bold">تاريخ الطلب</th>
                     <th scope="col" class="px-8 py-4 font-bold text-center">{{ __('messages.request_status') }}</th>
                     <th scope="col" class="px-8 py-4 font-bold">{{ __('messages.notes') }} الإدارة</th>
+                    <th scope="col" class="px-8 py-4 font-bold text-center">الإشعار</th>
                 </tr>
             </thead>
             <tbody>
@@ -64,10 +65,15 @@
                         <td class="px-8 py-5 text-xs text-slate-500 max-w-xs truncate font-semibold">
                             {{ $request->admin_notes ?? '-' }}
                         </td>
+                        <td class="px-8 py-5 text-center">
+                            <a href="/receipts/{{ $request->transfer_number }}" target="_blank" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-primary-50 text-slate-600 hover:text-primary-600 transition border border-slate-200 hover:border-primary-200 shadow-sm" title="عرض أو طباعة الإشعار">
+                                عرض الإشعار
+                            </a>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-8 py-16 text-center text-slate-400 text-sm font-bold">
+                        <td colspan="7" class="px-8 py-16 text-center text-slate-400 text-sm font-bold">
                             <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
                                 <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             </div>
