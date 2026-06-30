@@ -96,19 +96,20 @@ class ExchangeRateService
             if ($response->successful() && $response->json()['result'] === 'success') {
                 $rates = $response->json()['conversion_rates'];
 
-                // إضافة 0.22 على سعر الجنيه المصري بناءً على طلب الإدارة
-                if (isset($rates['EGP'])) {
-                    $rates['EGP'] += 0.022;
-                }
-
                 $targets = ['TRY', 'EUR', 'EGP'];
                 
                 foreach ($targets as $currency) {
                     if (isset($rates[$currency])) {
                         // USD to Currency
+                        $usdToTargetRate = $rates[$currency];
+                        // إذا كانت العملة المطلوبة هي الجنيه المصري، نضيف الهامش 0.22 على السعر النهائي
+                        if ($currency === 'EGP') {
+                            $usdToTargetRate += 0.022;
+                        }
+
                         ExchangeRate::updateOrCreate(
                             ['from_currency' => 'USD', 'to_currency' => $currency],
-                            ['rate' => $rates[$currency], 'last_fetched_at' => Carbon::now()]
+                            ['rate' => $usdToTargetRate, 'last_fetched_at' => Carbon::now()]
                         );
                         // Currency to USD
                         ExchangeRate::updateOrCreate(
@@ -133,12 +134,12 @@ class ExchangeRateService
                     // EUR to EGP
                     ExchangeRate::updateOrCreate(
                         ['from_currency' => 'EUR', 'to_currency' => 'EGP'],
-                        ['rate' => $rates['EGP'] / $rates['EUR'], 'last_fetched_at' => Carbon::now()]
+                        ['rate' => ($rates['EGP'] / $rates['EUR']) + 0.22, 'last_fetched_at' => Carbon::now()]
                     );
                     // TRY to EGP
                     ExchangeRate::updateOrCreate(
                         ['from_currency' => 'TRY', 'to_currency' => 'EGP'],
-                        ['rate' => $rates['EGP'] / $rates['TRY'], 'last_fetched_at' => Carbon::now()]
+                        ['rate' => ($rates['EGP'] / $rates['TRY']) + 0.22, 'last_fetched_at' => Carbon::now()]
                     );
                 }
 
