@@ -134,12 +134,12 @@ class ExchangeRateService
                     // EUR to EGP
                     ExchangeRate::updateOrCreate(
                         ['from_currency' => 'EUR', 'to_currency' => 'EGP'],
-                        ['rate' => ($rates['EGP'] / $rates['EUR']) + 0.22, 'last_fetched_at' => Carbon::now()]
+                        ['rate' => ($rates['EGP'] / $rates['EUR']) + 0.022, 'last_fetched_at' => Carbon::now()]
                     );
                     // TRY to EGP
                     ExchangeRate::updateOrCreate(
                         ['from_currency' => 'TRY', 'to_currency' => 'EGP'],
-                        ['rate' => ($rates['EGP'] / $rates['TRY']) + 0.22, 'last_fetched_at' => Carbon::now()]
+                        ['rate' => ($rates['EGP'] / $rates['TRY']) + 0.022, 'last_fetched_at' => Carbon::now()]
                     );
                 }
 
