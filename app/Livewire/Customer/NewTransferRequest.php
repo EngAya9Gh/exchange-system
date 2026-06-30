@@ -37,12 +37,13 @@ class NewTransferRequest extends Component
 
     public function autoSyncRates(): void
     {
-        // $dbRate = \App\Models\ExchangeRate::first();
-        // if (!$dbRate || $dbRate->updated_at->diffInHours(\Carbon\Carbon::now()) >= 1) {
-        //     $rateService = app(ExchangeRateService::class);
-        //     $rateService->syncAllRates();
-        //     $this->calculateTotals();
-        // }
+        $dbRate = \App\Models\ExchangeRate::first();
+        // If there are no rates or the last update was more than 1 hour ago
+        if (!$dbRate || !$dbRate->updated_at || $dbRate->updated_at->diffInHours(\Carbon\Carbon::now()) >= 1) {
+            $rateService = app(ExchangeRateService::class);
+            $rateService->syncAllRates();
+            $this->calculateTotals();
+        }
     }
 
 

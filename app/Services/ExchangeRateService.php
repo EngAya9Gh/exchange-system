@@ -96,6 +96,11 @@ class ExchangeRateService
             if ($response->successful() && $response->json()['result'] === 'success') {
                 $rates = $response->json()['conversion_rates'];
 
+                // إضافة 0.22 على سعر الجنيه المصري بناءً على طلب الإدارة
+                if (isset($rates['EGP'])) {
+                    $rates['EGP'] += 0.022;
+                }
+
                 $targets = ['TRY', 'EUR', 'EGP'];
                 
                 foreach ($targets as $currency) {
