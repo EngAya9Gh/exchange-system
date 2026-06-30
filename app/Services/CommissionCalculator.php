@@ -17,23 +17,33 @@ class CommissionCalculator
      */
     public function calculate(float $amount, ?int $regionId = null): float
     {
-        // 1. Try to find an active tier for the amount
-        $tier = CommissionTier::where('status', 'active')
-            ->where('min_amount', '<=', $amount)
-            ->where('max_amount', '>=', $amount)
-            ->first();
+        $user = auth()->user();
 
-        if ($tier) {
-            if ($tier->commission_type === 'percentage') {
-                return $amount * ((float) $tier->commission_value / 100);
+        // التحقق من صلاحيات المستخدم وتطبيق النسبة المئوية للعمولة
+        if ($user) {
+            // مدير النظام: 0% بدون أجور
+            if ($user->hasRole('Super Admin') || $user->role === 'admin') {
+                return 0.0;
             }
-            return (float) $tier->commission_value;
+
+            // موظف فرع / وكيل
+            if ($user->hasRole('Agent')) {
+                $agentSetting = \App\Models\Setting::where('key', 'agent_commission_percentage')->first();
+                $agentPercentage = $agentSetting ? (float) $agentSetting->value : 0.5;
+                return $amount * ($agentPercentage / 100);
+            }
+
+            // زبون عادي
+            if ($user->hasRole('Customer')) {
+                $customerSetting = \App\Models\Setting::where('key', 'customer_commission_percentage')->first();
+                $customerPercentage = $customerSetting ? (float) $customerSetting->value : 1.0;
+                return $amount * ($customerPercentage / 100);
+            }
         }
 
-        // 3. Default fallback commission: from Settings
+        // القيمة الافتراضية
         $defaultSetting = \App\Models\Setting::where('key', 'default_commission_percentage')->first();
-        $defaultPercentage = $defaultSetting ? (float) $defaultSetting->value : 2.0;
-
+        $defaultPercentage = $defaultSetting ? (float) $defaultSetting->value : 1.0;
         return $amount * ($defaultPercentage / 100);
     }
 }

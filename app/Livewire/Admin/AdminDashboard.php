@@ -70,6 +70,9 @@ class AdminDashboard extends Component
     public $tierCommissionType = 'fixed';
     public $tierCommissionValue = '';
 
+    public $agentCommission = 0.5;
+    public $customerCommission = 1.0;
+
     public function mount(): void
     {
         $this->calculateTotals();
@@ -81,6 +84,12 @@ class AdminDashboard extends Component
         $defaultSetting = \App\Models\Setting::where('key', 'default_commission_percentage')->first();
         $this->defaultCommission = $defaultSetting ? (float) $defaultSetting->value : 2.0;
         
+        $agentSetting = \App\Models\Setting::where('key', 'agent_commission_percentage')->first();
+        $this->agentCommission = $agentSetting ? (float) $agentSetting->value : 0.5;
+
+        $customerSetting = \App\Models\Setting::where('key', 'customer_commission_percentage')->first();
+        $this->customerCommission = $customerSetting ? (float) $customerSetting->value : 1.0;
+
         $this->calculateTotals();
     }
 
@@ -450,6 +459,26 @@ class AdminDashboard extends Component
             ['value' => (string) $this->defaultCommission]
         );
         session()->flash('commission_success', 'تم حفظ النسبة الافتراضية للعمولات بنجاح.');
+    }
+
+    public function saveRoleCommissions(): void
+    {
+        $this->validate([
+            'agentCommission' => 'required|numeric|min:0',
+            'customerCommission' => 'required|numeric|min:0',
+        ]);
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'agent_commission_percentage'],
+            ['value' => (string) $this->agentCommission]
+        );
+
+        \App\Models\Setting::updateOrCreate(
+            ['key' => 'customer_commission_percentage'],
+            ['value' => (string) $this->customerCommission]
+        );
+
+        session()->flash('commission_success', 'تم حفظ نسب العمولات الخاصة بالصلاحيات بنجاح.');
     }
 
     public function saveTier(): void

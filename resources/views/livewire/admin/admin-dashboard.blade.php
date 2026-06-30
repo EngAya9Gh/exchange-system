@@ -879,6 +879,30 @@
                     </div>
                 </div>
 
+                <!-- Role-Based Commission Settings -->
+                <div class="bg-white rounded-3xl p-6 shadow-soft border border-slate-50 {{ !$enableAutomatedCommissions ? 'opacity-50 pointer-events-none' : '' }}">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">نسب العمولات حسب الصلاحيات</h3>
+                    <p class="text-sm text-slate-500 mb-6">حدد النسبة المئوية المخصصة للوكيل وللزبون العادي. (مثال: أدخل 0.5 ليتم احتساب 5 ليرات على كل 1000)</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-2">نسبة الوكيل (%)</label>
+                            <input type="number" step="0.001" wire:model="agentCommission" class="w-full bg-slate-50 text-slate-800 font-bold rounded-xl border-none focus:ring-2 focus:ring-primary-500 px-4 py-3">
+                            @error('agentCommission') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-2">نسبة الزبون العادي (%)</label>
+                            <input type="number" step="0.001" wire:model="customerCommission" class="w-full bg-slate-50 text-slate-800 font-bold rounded-xl border-none focus:ring-2 focus:ring-primary-500 px-4 py-3">
+                            @error('customerCommission') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <button wire:click="saveRoleCommissions" class="w-full py-3 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-sm transition">
+                                حفظ نسب الصلاحيات
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Add New Tier -->
                 <div class="bg-white rounded-3xl p-6 shadow-soft border border-slate-50 {{ !$enableAutomatedCommissions ? 'opacity-50 pointer-events-none' : '' }}">
                     <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">{{ __('messages.add_new_commission_tier') }}</h3>
