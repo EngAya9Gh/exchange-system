@@ -11,12 +11,12 @@
             <thead class="text-[11px] text-slate-400 uppercase tracking-wider bg-slate-50/50">
                 <tr>
                     <th scope="col" class="px-8 py-4 font-bold text-center">#</th>
-                    <th scope="col" class="px-8 py-4 font-bold">المستفيد</th>
-                    <th scope="col" class="px-8 py-4 font-bold">{{ __('messages.requested_amount') }}</th>
-                    <th scope="col" class="px-8 py-4 font-bold">تاريخ الطلب</th>
-                    <th scope="col" class="px-8 py-4 font-bold text-center">{{ __('messages.request_status') }}</th>
-                    <th scope="col" class="px-8 py-4 font-bold">{{ __('messages.notes') }} الإدارة</th>
-                    <th scope="col" class="px-8 py-4 font-bold text-center">الإشعار</th>
+                    <th scope="col" class="px-8 py-4 font-bold">{{ __('messages.recipient') }}</th>
+                    <th scope="col" class="px-8 py-4 font-bold">{{ __('messages.amount') }}</th>
+                    <th scope="col" class="px-8 py-4 font-bold">{{ __('messages.request_date') }}</th>
+                    <th scope="col" class="px-8 py-4 font-bold text-center">{{ __('messages.status') }}</th>
+                    <th scope="col" class="px-8 py-4 font-bold">{{ __('messages.admin_notes') }}</th>
+                    <th scope="col" class="px-8 py-4 font-bold text-center">{{ __('messages.notification') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -66,8 +66,8 @@
                             {{ $request->admin_notes ?? '-' }}
                         </td>
                         <td class="px-8 py-5 text-center">
-                            <a href="/receipts/{{ $request->transfer_number }}" target="_blank" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-primary-50 text-slate-600 hover:text-primary-600 transition border border-slate-200 hover:border-primary-200 shadow-sm" title="عرض أو طباعة الإشعار">
-                                عرض الإشعار
+                            <a href="/receipts/{{ $request->transfer_number }}" target="_blank" class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-primary-50 text-slate-600 hover:text-primary-600 transition border border-slate-200 hover:border-primary-200 shadow-sm" title="{{ __('messages.view_notification') }}">
+                                {{ __('messages.view_notification') }}
                             </a>
                         </td>
                     </tr>

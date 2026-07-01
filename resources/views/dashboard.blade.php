@@ -9,6 +9,35 @@
                 </h2>
             </div>
             <div class="flex flex-wrap justify-start sm:justify-end items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                <!-- Language Switcher -->
+                <div class="relative z-50" x-data="{ openLang: false }" @click.away="openLang = false">
+                    <button @click="openLang = !openLang"
+                        class="flex items-center gap-2 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition border border-slate-100">
+                        @php
+                            $currentLocale = app()->getLocale();
+                            $flags = ['ar' => '🇸🇦', 'en' => '🇬🇧', 'tr' => '🇹🇷'];
+                        @endphp
+                        <span class="text-sm">{{ $flags[$currentLocale] ?? '🌐' }}</span>
+                        <span class="text-xs font-bold uppercase">{{ $currentLocale }}</span>
+                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+
+                    <div x-show="openLang" style="display: none;"
+                        class="absolute left-0 mt-2 w-36 bg-white border border-slate-100 rounded-xl shadow-lg overflow-hidden py-1">
+                        @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
+                            <a rel="alternate" hreflang="{{ $localeCode }}"
+                                href="{{ LaravelLocalization::getLocalizedURL($localeCode, route('dashboard'), [], true) }}"
+                                class="flex items-center gap-3 px-4 py-2 text-sm font-bold transition-colors {{ app()->getLocale() === $localeCode ? 'bg-primary-50 text-primary-600' : 'text-slate-600 hover:bg-slate-50 hover:text-primary-500' }}">
+                                <span class="text-lg">{{ $flags[$localeCode] ?? '🌐' }}</span>
+                                <span>{{ $properties['native'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+
                 <livewire:notification-dropdown />
                 <a href="{{ route('profile') }}" title="{{ __('messages.profile' ?? 'الملف الشخصي') }}" class="text-sm font-bold text-gray-600 hover:text-primary-600 transition bg-slate-50 hover:bg-slate-100 px-4 py-2 rounded-xl flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
@@ -47,19 +76,19 @@
                         :class="activeTab === 'transfer' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                         class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                    طلب تحويل جديد
+                    {{ __('messages.new_transfer_tab') }}
                 </button>
                 <button @click="activeTab = 'deposit'" 
                         :class="activeTab === 'deposit' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                         class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    إضافة رصيد
+                    {{ __('messages.add_balance_tab') }}
                 </button>
                 <button @click="activeTab = 'history'" 
                         :class="activeTab === 'history' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                         class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                    سجل الحوالات
+                    {{ __('messages.transfer_history_tab') }}
                 </button>
             </div>
 

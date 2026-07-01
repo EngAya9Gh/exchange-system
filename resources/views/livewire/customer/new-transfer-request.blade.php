@@ -1,14 +1,14 @@
 <div x-data="{
     confirmTransfer() {
         Swal.fire({
-            title: 'تأكيد إرسال الحوالة',
-            text: 'سيتم خصم إجمالي التكلفة من رصيدك المتاح، هل أنت متأكد من الاعتماد والإرسال؟',
+            title: '{{ __("messages.confirm_send_transfer_title") }}',
+            text: '{{ __("messages.confirm_send_transfer_text") }}',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#10b981',
-            cancelButtonColor: '#ef4444',
-            confirmButtonText: 'نعم، أرسل الطلب',
-            cancelButtonText: 'إلغاء'
+            confirmButtonColor: '#059669',
+            cancelButtonColor: '#cbd5e1',
+            confirmButtonText: '{{ __("messages.yes_send_request") }}',
+            cancelButtonText: '{{ __("messages.cancel_btn") }}'
         }).then((result) => {
             if (result.isConfirmed) {
                 $wire.submitRequest();
@@ -60,7 +60,7 @@
                         class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.address') }}</label>
                     <input wire:model="address" id="address" type="text"
                         class="w-full bg-white border-none text-slate-800 font-semibold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition"
-                        placeholder="مثال: القاهرة، مدينة نصر..." />
+                        placeholder="{{ __('messages.address_example') }}" />
                     <x-input-error :messages="$errors->get('address')" class="mt-2 text-rose-500 text-xs" />
                 </div>
             </div>
@@ -93,7 +93,7 @@
                     </div>
 
                     <div>
-                        <label for="currency" class="block text-sm font-bold text-slate-700 mb-2">العملة</label>
+                        <label for="currency" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.currency_label') }}</label>
                         <select wire:model.live="currency" id="currency"
                             class="w-full bg-white border-none text-slate-800 font-bold rounded-xl focus:ring-2 focus:ring-primary-500 pr-4 pl-10 py-3 shadow-sm transition bg-left">
                             <option value="TRY">{{ __('messages.try_lira') }}</option>
@@ -104,7 +104,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">سعر الصرف</label>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.exchange_rate_label') }}</label>
                         <input wire:model="exchange_rate" type="text"
                             class="w-full bg-slate-100/50 border-none text-slate-500 font-bold text-xl rounded-xl focus:ring-0 px-4 py-3 shadow-sm cursor-not-allowed"
                             disabled />
@@ -151,10 +151,10 @@
 
                     <div
                         class="flex justify-between items-center mb-4 p-2 rounded-lg {{ $cannotAfford ? 'bg-rose-100 text-rose-700' : 'bg-emerald-50 text-emerald-700' }}">
-                        <span class="text-xs font-bold">المتاح للتحويل (مع السقف):</span>
+                        <span class="text-xs font-bold">{{ __('messages.available_for_transfer_with_limit') }}</span>
                         <span class="font-black text-lg">
                             @if($user->has_unlimited_balance)
-                                مفتوح
+                                {{ __('messages.unlimited') }}
                             @else
                                 {{ number_format($availableCredit, 2) }} <span class="text-xs">TRY</span>
                             @endif
@@ -164,18 +164,16 @@
                     <button type="submit" @if($cannotAfford) disabled @endif wire:loading.attr="disabled"
                         wire:target="submitRequest"
                         class="w-full py-4 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-                        <span wire:loading.remove
-                            wire:target="submitRequest">{{ __('messages.send_request_for_review') }}</span>
-                        <span wire:loading wire:target="submitRequest" class="flex items-center">
-                            <svg class="animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
+                        <span wire:loading.remove wire:target="submitRequest" class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                            {{ __('messages.send_request_for_review') }}
+                        </span>
+                        <span wire:loading wire:target="submitRequest" class="flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            جاري الإرسال والمعالجة...
+                            {{ __('messages.sending_and_processing') }}
                         </span>
                     </button>
                 </div>

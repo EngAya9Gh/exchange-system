@@ -10,6 +10,10 @@ Route::group([
     'middleware' => ['localeSessionRedirect', 'localizationRedirect', 'localeViewPath']
 ], function () {
 
+    \Livewire\Livewire::setUpdateRoute(function ($handle) {
+        return Route::post('/livewire-e92fe52f/update', $handle);
+    });
+
     Route::middleware(['auth', 'verified'])->group(function () {
         // Customer routes
         Route::view('dashboard', 'dashboard')->name('dashboard');

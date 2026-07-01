@@ -1,12 +1,12 @@
 <div>
     <div class="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <h2 class="text-xl font-bold text-gray-800 font-cairo">الإدارة السريعة للأرصدة</h2>
+        <h2 class="text-xl font-bold text-gray-800 font-cairo">{{ __('messages.quick_balance_management') }}</h2>
     </div>
 
     <!-- Filters -->
     <x-card class="mb-6 p-4">
         <div class="flex flex-col sm:flex-row gap-4">
-            <x-text-input wire:model.live="searchQuery" placeholder="ابحث عن زبون..." class="w-full sm:w-1/2" />
+            <x-text-input wire:model.live="searchQuery" placeholder="{{ __('messages.search_customer') }}" class="w-full sm:w-1/2" />
         </div>
     </x-card>
 
@@ -21,11 +21,11 @@
         <table class="w-full text-sm text-center text-gray-500">
             <thead class="text-xs text-gray-700 uppercase bg-white/50 backdrop-blur-sm border-b border-white/40">
                 <tr>
-                    <th class="px-6 py-3 text-center">المستخدم</th>
-                    <th class="px-6 py-3 text-center">رقم الهاتف</th>
-                    <th class="px-6 py-3 text-center">الرصيد الفعلي</th>
-                    <th class="px-6 py-3 text-center">السقف / الحد الائتماني</th>
-                    <th class="px-6 py-3 text-center">الإجراءات</th>
+                    <th class="px-6 py-3 text-center">{{ __('messages.user_name') }}</th>
+                    <th class="px-6 py-3 text-center">{{ __('messages.phone_number') }}</th>
+                    <th class="px-6 py-3 text-center">{{ __('messages.actual_balance') }}</th>
+                    <th class="px-6 py-3 text-center">{{ __('messages.credit_limit') }}</th>
+                    <th class="px-6 py-3 text-center">{{ __('messages.actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -36,23 +36,23 @@
                         <td class="px-6 py-4 font-bold text-green-600">{{ number_format($user->balance, 2) }}</td>
                         <td class="px-6 py-4">
                             @if($user->has_unlimited_balance)
-                                <span class="text-gray-500 text-xs font-bold">سقف مفتوح</span>
+                                <span class="text-gray-500 text-xs font-bold">{{ __('messages.unlimited_limit') }}</span>
                             @else
                                 <span class="text-red-600 font-bold">{{ number_format($user->balance_limit, 2) }}</span>
                             @endif
                         </td>
                         <td class="px-6 py-4 flex justify-center gap-2">
                             <button wire:click="openDepositModal({{ $user->id }})" class="text-white font-bold text-xs bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-lg shadow-sm transition">
-                                إيداع / سحب
+                                {{ __('messages.deposit_withdraw') }}
                             </button>
                             <button wire:click="openSettingsModal({{ $user->id }})" class="text-primary-600 hover:text-white font-bold text-xs border border-primary-500 hover:bg-primary-600 px-3 py-1.5 rounded-lg shadow-sm transition">
-                                إعدادات الحساب
+                                {{ __('messages.account_settings') }}
                             </button>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-gray-400">لا يوجد مستخدمين لعرضهم</td>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-400">{{ __('messages.no_users_found') }}</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -70,19 +70,19 @@
                 <div class="inline-block align-bottom bg-white rounded-[24px] text-start overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div class="mt-3 text-center sm:mt-0 sm:text-start w-full">
-                            <h3 class="text-xl leading-6 font-black text-gray-900 mb-2" id="modal-title">إيداع / سحب رصيد</h3>
-                            <p class="text-sm text-gray-500 mb-6">الزبون: <span class="font-bold text-gray-900">{{ $manageUserName }}</span> | الرصيد الحالي: <span class="font-bold text-green-600">{{ number_format($manageUserBalance, 2) }}</span></p>
+                            <h3 class="text-xl leading-6 font-black text-gray-900 mb-2" id="modal-title">{{ __('messages.deposit_withdraw_balance') }}</h3>
+                            <p class="text-sm text-gray-500 mb-6">{{ __('messages.customer') }}: <span class="font-bold text-gray-900">{{ $manageUserName }}</span> | {{ __('messages.current_balance') }}: <span class="font-bold text-green-600">{{ number_format($manageUserBalance, 2) }}</span></p>
                             
                             <div class="mb-4 text-start">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">المبلغ المراد إضافته (للسحب اكتب قيمة سالبة مثل -50)</label>
-                                <input type="number" wire:model="depositAmount" step="0.01" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 font-bold text-lg" placeholder="مثال: 500">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">{{ __('messages.amount_to_add') }}</label>
+                                <input type="number" wire:model="depositAmount" step="0.01" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 font-bold text-lg" placeholder="500">
                                 @error('depositAmount') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
                     <div class="bg-gray-50 px-4 py-3 sm:px-6 flex justify-end gap-2 border-t border-gray-100">
-                        <button wire:click="closeModals" class="bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-xl shadow-sm transition">إلغاء</button>
-                        <button wire:click="confirmDeposit" class="bg-emerald-500 text-white px-6 py-2 text-sm font-bold rounded-xl shadow-md hover:bg-emerald-600 transition hover:-translate-y-0.5">تأكيد العملية</button>
+                        <button wire:click="closeModals" class="bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-xl shadow-sm transition">{{ __('messages.cancel') }}</button>
+                        <button wire:click="confirmDeposit" class="bg-emerald-500 text-white px-6 py-2 text-sm font-bold rounded-xl shadow-md hover:bg-emerald-600 transition hover:-translate-y-0.5">{{ __('messages.confirm_operation') }}</button>
                     </div>
                 </div>
             </div>
@@ -97,10 +97,10 @@
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
                 <div class="inline-block align-bottom bg-white rounded-[24px] text-start overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <h3 class="text-xl leading-6 font-black text-gray-900 mb-6">إعدادات الحساب - {{ $manageUserName }}</h3>
+                        <h3 class="text-xl leading-6 font-black text-gray-900 mb-6">{{ __('messages.account_settings_for') }}{{ $manageUserName }}</h3>
                         <div class="space-y-6 text-start">
                             <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">الرصيد الكلي المباشر (تعديل جذري كامل للرصيد)</label>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">{{ __('messages.absolute_balance_label') }}</label>
                                 <input type="number" wire:model="absoluteBalance" step="0.01" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 font-bold">
                                 @error('absoluteBalance') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
@@ -108,13 +108,13 @@
                             <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
                                 <label class="flex items-center gap-2 text-sm text-gray-900 font-bold mb-4 cursor-pointer">
                                     <input type="checkbox" wire:model.live="editHasUnlimited" class="rounded border-blue-300 text-blue-600 focus:ring-blue-500 w-4 h-4">
-                                    جعل سقف الدين مفتوح (غير محدود)
+                                    {{ __('messages.make_unlimited_limit') }}
                                 </label>
 
                                 @if(!$editHasUnlimited)
                                     <div class="pt-2 border-t border-blue-100/50">
-                                        <label class="block text-xs font-bold text-gray-700 mb-2">سقف الدين الأقصى (بالسالب)</label>
-                                        <input type="number" wire:model="editBalanceLimit" step="0.01" min="0" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 font-bold text-red-600" placeholder="مثال: 5000">
+                                        <label class="block text-xs font-bold text-gray-700 mb-2">{{ __('messages.max_debt_limit') }}</label>
+                                        <input type="number" wire:model="editBalanceLimit" step="0.01" min="0" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 font-bold text-red-600" placeholder="5000">
                                         @error('editBalanceLimit') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                 @endif
@@ -122,8 +122,8 @@
                         </div>
                     </div>
                     <div class="bg-gray-50 px-4 py-3 sm:px-6 flex justify-end gap-2 border-t border-gray-100">
-                        <button wire:click="closeModals" class="bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-xl shadow-sm transition">إلغاء</button>
-                        <button wire:click="confirmSettings" class="bg-primary-600 text-white px-6 py-2 text-sm font-bold rounded-xl shadow-md hover:bg-primary-700 transition hover:-translate-y-0.5">حفظ الإعدادات</button>
+                        <button wire:click="closeModals" class="bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-xl shadow-sm transition">{{ __('messages.cancel') }}</button>
+                        <button wire:click="confirmSettings" class="bg-primary-600 text-white px-6 py-2 text-sm font-bold rounded-xl shadow-md hover:bg-primary-700 transition hover:-translate-y-0.5">{{ __('messages.save_settings') }}</button>
                     </div>
                 </div>
             </div>
