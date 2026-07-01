@@ -39,6 +39,8 @@ class NewTransferRequestNotification extends Notification
         $message = "🔔 *طلب حوالة جديد (بانتظار المراجعة)*\n\n";
         $message .= "الزبون: {$this->transfer->user->name}\n";
         $message .= "المبلغ المطلوب: {$this->transfer->amount} {$this->transfer->currency}\n";
+        $message .= "سعر الصرف: {$this->transfer->exchange_rate}\n";
+        $message .= "المبلغ المستلم: {$this->transfer->received_amount} EGP\n";
         $message .= "اسم المستفيد: {$this->transfer->recipient_name}\n";
         $message .= "📱 *رقم فودافون كاش*: {$this->transfer->recipient_phone}\n\n";
         $message .= "يمكنك نسخ الرقم أعلاه وتنفيذ التحويل مباشرة.";
@@ -70,6 +72,8 @@ class NewTransferRequestNotification extends Notification
         $message = "🔔 *طلب حوالة جديد (بانتظار المراجعة)*\n\n";
         $message .= "الزبون: {$this->transfer->user->name}\n";
         $message .= "المبلغ المطلوب: {$this->transfer->amount} {$this->transfer->currency}\n";
+        $message .= "سعر الصرف: {$this->transfer->exchange_rate}\n";
+        $message .= "المبلغ المستلم: {$this->transfer->received_amount} EGP\n";
         $message .= "اسم المستفيد: {$this->transfer->recipient_name}\n";
         $message .= "📱 *رقم المستفيد*: `{$this->transfer->recipient_phone}`\n";
 

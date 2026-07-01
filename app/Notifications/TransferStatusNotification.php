@@ -87,7 +87,7 @@ class TransferStatusNotification extends Notification
             $message = "تم تسجيل الحوالة بنجاح\n"
                 . "رقم الحوالة: *{$this->transfer->transfer_number}*\n"
                 . "المبلغ المرسل: *{$this->transfer->source_amount} {$this->transfer->source_currency}*\n"
-                . "المبلغ المستلم المتوقع: *{$this->transfer->received_amount} {$this->transfer->target_currency}*\n"
+                . "المبلغ المستلم بالجنيه المصري: *{$this->transfer->received_amount} {$this->transfer->target_currency}*\n"
                 . "الرمز السري للاستلام (مكون من 5 أرقام): *{$this->transfer->secret_code}*\n"
                 . "الفرع المستهدف: *{$branchName}*\n"
                 . "يرجى تقديم الرمز السري عند الاستلام.";
@@ -128,6 +128,8 @@ class TransferStatusNotification extends Notification
             $message = "✅ *تم إنشاء الحوالة بنجاح!*\n\n"
                 . "رقم الحوالة: `{$this->transfer->transfer_number}`\n"
                 . "المبلغ: {$this->transfer->amount} {$this->transfer->currency}\n"
+                . "سعر الصرف: {$this->transfer->exchange_rate}\n"
+                . "المبلغ المستلم: {$this->transfer->received_amount} {$this->transfer->target_currency}\n"
                 . "المستفيد: {$this->transfer->recipient_name}\n";
 
             if ($this->transfer->secret_code) {

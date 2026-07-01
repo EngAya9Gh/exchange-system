@@ -134,7 +134,7 @@ return [
     'target_recipient' => 'المستفيد المستهدف',
     'full_recipient_name' => 'اسم المستفيد الكامل',
     'recipient_phone_number' => 'رقم هاتف المستفيد',
-    'desired_transfer_amount' => 'مبلغ التحويل المرغوب',
+    'desired_transfer_amount' => 'مبلغ التحويل المرغوب بالتركي',
     'try_lira' => 'TRY (ليرة)',
     'usd_dollar' => 'USD (دولار)',
     'eur_euro' => 'EUR (يورو)',
@@ -209,4 +209,5 @@ return [
     'unauthorized' => 'غير مصرح',
     'unauthorized_description' => 'ليس لديك الصلاحية لإجراء هذه العملية.',
     'ok' => 'حسناً',
+    'received_amount_in_egp' => 'المبلغ المستلم بالجنيه المصري',
 ];
