@@ -1,7 +1,7 @@
 <x-app-layout>
     <!-- Custom Header -->
     <div class="bg-white shadow-sm border-b border-gray-100 py-4 px-6 mb-6">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4 sm:gap-0" dir="rtl">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4 sm:gap-0" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
             <div class="flex items-center gap-4">
                 <img src="{{ asset('logo.png?v=2') }}" alt="Logo" class="h-10 object-contain">
                 <h2 class="font-black text-xl sm:text-2xl text-slate-800 leading-tight">
@@ -48,7 +48,7 @@
         </div>
     </div>
 
-    <div class="py-12" dir="rtl">
+    <div class="py-12" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6" x-data="{ activeTab: 'transfer' }">
             <!-- User Welcome Info -->
             <div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-6 sm:p-8 relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 sm:gap-0 transition-transform hover:-translate-y-1">
