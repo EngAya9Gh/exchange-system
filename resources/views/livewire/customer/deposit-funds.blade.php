@@ -37,8 +37,32 @@
             <!-- Amount -->
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-2">{{ __('messages.transferred_amount') }}</label>
-                <div class="relative">
-                    <input type="number" wire:model="amount" step="0.01" min="0" class="block w-full rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 pl-12 shadow-sm font-bold text-lg" placeholder="{{ __('messages.amount_example') }}">
+                <div class="relative" x-data="{
+                    formatted: '',
+                    formatNumber(val) {
+                        if (!val && val !== 0 && val !== '0') return '';
+                        let str = val.toString().replace(/[^0-9.]/g, '');
+                        let parts = str.split('.');
+                        let intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                        return parts.length > 1 ? intPart + '.' + parts[1] : intPart;
+                    }
+                }" x-init="
+                    formatted = formatNumber($wire.amount);
+                    $watch('$wire.amount', val => { if(document.activeElement !== $refs.input) formatted = formatNumber(val); });
+                ">
+                    <input x-ref="hidden" type="hidden" wire:model="amount">
+                    <input x-ref="input" type="text" inputmode="decimal" x-model="formatted"
+                        @input="
+                            let val = $event.target.value.replace(/[^0-9.]/g, '');
+                            let parts = val.split('.');
+                            if (parts.length > 2) parts = [parts[0], parts.slice(1).join('')];
+                            val = parts.join('.');
+                            $refs.hidden.value = val;
+                            $refs.hidden.dispatchEvent(new Event('input', { bubbles: true }));
+                            let displayInt = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                            formatted = parts.length > 1 ? displayInt + '.' + parts[1] : displayInt;
+                        "
+                        class="block w-full rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 pl-12 shadow-sm font-bold text-lg" placeholder="{{ __('messages.amount_example') }}">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <span class="text-gray-500 font-bold">TRY</span>
                     </div>

@@ -26,9 +26,9 @@
             <span class="inline-block py-1.5 px-4 rounded-full bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/30 mb-8">
                 🚀 أسعار محدّثة لحظياً
             </span>
-            <h1 class="text-4xl lg:text-6xl font-black text-white leading-relaxed mb-6 drop-shadow-md">
+            <h1 class="text-4xl lg:text-6xl font-black text-white leading-loose mb-6 drop-shadow-md">
                 <span class="block mb-2">سعر صرف</span>
-                <span class="block pb-4 pt-2 -mb-2 text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-400">الجنيه المصري</span>
+                <span class="block pb-4 mb-2 text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-400">الجنيه المصري</span>
                 <span class="block">الآن بين يديك!</span>
             </h1>
             <p class="text-lg text-slate-300 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
@@ -77,12 +77,35 @@
 
                 <div class="space-y-6">
                     <!-- Amount Input -->
-                    <div class="relative">
+                    <div class="relative" x-data="{
+                        formatted: '',
+                        formatNumber(val) {
+                            if (!val && val !== 0 && val !== '0') return '';
+                            let str = val.toString().replace(/[^0-9.]/g, '');
+                            let parts = str.split('.');
+                            let intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                            return parts.length > 1 ? intPart + '.' + parts[1] : intPart;
+                        }
+                    }" x-init="
+                        formatted = formatNumber($wire.amount);
+                        $watch('$wire.amount', val => { if(document.activeElement !== $refs.input) formatted = formatNumber(val); });
+                    ">
                         <label class="block text-xs font-bold text-slate-400 mb-2">المبلغ بالليرة التركية (TRY)</label>
                         <div class="relative flex items-center">
-                            <input type="number" wire:model.live="amount" 
+                            <input x-ref="hidden" type="hidden" wire:model.live="amount">
+                            <input x-ref="input" type="text" inputmode="decimal" x-model="formatted"
+                                @input="
+                                    let val = $event.target.value.replace(/[^0-9.]/g, '');
+                                    let parts = val.split('.');
+                                    if (parts.length > 2) parts = [parts[0], parts.slice(1).join('')];
+                                    val = parts.join('.');
+                                    $refs.hidden.value = val;
+                                    $refs.hidden.dispatchEvent(new Event('input', { bubbles: true }));
+                                    let displayInt = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                    formatted = parts.length > 1 ? displayInt + '.' + parts[1] : displayInt;
+                                "
                                 class="w-full bg-slate-900/50 border border-slate-700 text-white text-xl font-black rounded-2xl py-4 px-5 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all text-left shadow-inner" 
-                                dir="ltr" placeholder="1000">
+                                dir="ltr" placeholder="1,000">
                             <div class="absolute right-4 flex items-center gap-2 text-slate-400 bg-slate-800 px-3 py-1 rounded-xl">
                                 <span class="text-sm font-bold text-slate-300">TRY</span>
                                 <span class="text-lg">🇹🇷</span>

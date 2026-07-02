@@ -682,20 +682,64 @@
                                                 <option value="EUR">{{ __('messages.eur_euro') }}</option>
                                             </select>
                                         </div>
-                                        <div>
-                                            <label
-                                                class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.amount') }}
-                                                {{ __('messages.required_to_transfer') }}</label>
-                                            <input wire:model.live.debounce.500ms="amount" type="number" step="0.01"
+                                        <div x-data="{
+                                            formatted: '',
+                                            formatNumber(val) {
+                                                if (!val && val !== 0 && val !== '0') return '';
+                                                let str = val.toString().replace(/[^0-9.]/g, '');
+                                                let parts = str.split('.');
+                                                let intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                                return parts.length > 1 ? intPart + '.' + parts[1] : intPart;
+                                            }
+                                        }" x-init="
+                                            formatted = formatNumber($wire.amount);
+                                            $watch('$wire.amount', val => { if(document.activeElement !== $refs.input) formatted = formatNumber(val); });
+                                        ">
+                                            <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.amount') }} {{ __('messages.required_to_transfer') }}</label>
+                                            <input x-ref="hidden" type="hidden" wire:model.live.debounce.500ms="amount">
+                                            <input x-ref="input" type="text" inputmode="decimal" x-model="formatted"
+                                                @input="
+                                                    let val = $event.target.value.replace(/[^0-9.]/g, '');
+                                                    let parts = val.split('.');
+                                                    if (parts.length > 2) parts = [parts[0], parts.slice(1).join('')];
+                                                    val = parts.join('.');
+                                                    $refs.hidden.value = val;
+                                                    $refs.hidden.dispatchEvent(new Event('input', { bubbles: true }));
+                                                    let displayInt = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                                    formatted = parts.length > 1 ? displayInt + '.' + parts[1] : displayInt;
+                                                "
                                                 class="w-full bg-white border-none text-primary-600 font-black text-xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition"
-                                                required oninput="this.value = this.value.replace(/[^0-9.]/g, '')">
-                                            @error('amount') <span
-                                                class="text-xs text-rose-500 font-bold mt-1 block">{{ $message }}</span>
-                                            @enderror
+                                                required>
+                                            @error('amount') <span class="text-xs text-rose-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                                         </div>
-                                        <div>
+                                        <div x-data="{
+                                            formatted: '',
+                                            formatNumber(val) {
+                                                if (!val && val !== 0 && val !== '0') return '';
+                                                let str = val.toString().replace(/[^0-9.]/g, '');
+                                                let parts = str.split('.');
+                                                let intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                                return parts.length > 1 ? intPart + '.' + parts[1] : intPart;
+                                            }
+                                        }" x-init="
+                                            formatted = formatNumber($wire.received_amount);
+                                            $watch('$wire.received_amount', val => { if(document.activeElement !== $refs.input) formatted = formatNumber(val); });
+                                        ">
                                             <label class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">{{ __('messages.received_amount_in_egp') }}</label>
-                                            <input wire:model.live.debounce.500ms="received_amount" type="number" step="0.01" class="w-full bg-white border-none text-emerald-600 font-black text-xl rounded-xl focus:ring-2 focus:ring-emerald-500 px-4 py-3 shadow-sm transition" required oninput="this.value = this.value.replace(/[^0-9.]/g, '')">
+                                            <input x-ref="hidden" type="hidden" wire:model.live.debounce.500ms="received_amount">
+                                            <input x-ref="input" type="text" inputmode="decimal" x-model="formatted"
+                                                @input="
+                                                    let val = $event.target.value.replace(/[^0-9.]/g, '');
+                                                    let parts = val.split('.');
+                                                    if (parts.length > 2) parts = [parts[0], parts.slice(1).join('')];
+                                                    val = parts.join('.');
+                                                    $refs.hidden.value = val;
+                                                    $refs.hidden.dispatchEvent(new Event('input', { bubbles: true }));
+                                                    let displayInt = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                                    formatted = parts.length > 1 ? displayInt + '.' + parts[1] : displayInt;
+                                                "
+                                                class="w-full bg-white border-none text-emerald-600 font-black text-xl rounded-xl focus:ring-2 focus:ring-emerald-500 px-4 py-3 shadow-sm transition"
+                                                required>
                                             @error('received_amount') <span class="text-xs text-rose-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                                         </div>
                                         <div>
