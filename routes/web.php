@@ -14,6 +14,11 @@ Route::group([
         return Route::post('/livewire-e92fe52f/update', $handle);
     });
 
+    // Public Promotional Rates Page
+    Route::get('rates', \App\Livewire\Public\ExchangeRates::class)->name('rates.public');
+    // Also add an alias for /egp
+    Route::get('egp', \App\Livewire\Public\ExchangeRates::class)->name('egp.public');
+
     Route::middleware(['auth', 'verified'])->group(function () {
         // Customer routes
         Route::view('dashboard', 'dashboard')->name('dashboard');

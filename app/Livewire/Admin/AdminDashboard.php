@@ -107,14 +107,14 @@ class AdminDashboard extends Component
 
     public function autoSyncRates(): void
     {
-        // $dbRate = \App\Models\ExchangeRate::first();
-        // // If rates haven't been updated in the last hour, sync them via Ajax
-        // if (!$dbRate || $dbRate->updated_at->diffInHours(\Carbon\Carbon::now()) >= 1) {
-        //     $rateService = app(ExchangeRateService::class);
-        //     $rateService->syncAllRates();
-        //     $this->loadRates();
-        //     $this->calculateTotals();
-        // }
+        $dbRate = \App\Models\ExchangeRate::first();
+        // If rates haven't been updated in the last hour, sync them via Ajax
+        if (!$dbRate || !$dbRate->updated_at || $dbRate->updated_at->diffInHours(\Carbon\Carbon::now()) >= 1) {
+            $rateService = app(\App\Services\ExchangeRateService::class);
+            $rateService->syncAllRates();
+            $this->loadRates();
+            $this->calculateTotals();
+        }
     }
 
     public function updatedSourceCurrency(): void
