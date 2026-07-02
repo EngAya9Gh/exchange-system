@@ -42,6 +42,9 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 flex justify-center gap-2">
+                            <button wire:click="openPaymentModal({{ $user->id }})" class="text-white font-bold text-xs bg-blue-500 hover:bg-blue-600 px-3 py-1.5 rounded-lg shadow-sm transition">
+                                {{ __('messages.record_payment') }}
+                            </button>
                             <button wire:click="openDepositModal({{ $user->id }})" class="text-white font-bold text-xs bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-lg shadow-sm transition">
                                 {{ __('messages.deposit_withdraw') }}
                             </button>
@@ -88,6 +91,53 @@
             </div>
         </div>
     @endif
+
+    <!-- Payment Modal -->
+    @if($showPaymentModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-slate-900 bg-opacity-50 backdrop-blur-sm transition-opacity" wire:click="closeModals"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div class="inline-block align-bottom bg-white rounded-[24px] text-start overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="mt-3 text-center sm:mt-0 sm:text-start w-full">
+                            <h3 class="text-xl leading-6 font-black text-gray-900 mb-2" id="modal-title">{{ __('messages.record_payment') }}</h3>
+                            <p class="text-sm text-gray-500 mb-6">{{ __('messages.customer') }}: <span class="font-bold text-gray-900">{{ $manageUserName }}</span> | {{ __('messages.current_balance') }}: <span class="font-bold text-green-600">{{ number_format($manageUserBalance, 2) }}</span></p>
+                            
+                            <div class="mb-4 text-start">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">{{ __('messages.payment_amount') }}</label>
+                                <input type="number" wire:model="paymentAmount" step="0.01" min="0.01" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 font-bold text-lg" placeholder="500">
+                                @error('paymentAmount') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="mb-4 text-start">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">{{ __('messages.payment_method') }}</label>
+                                <select wire:model="paymentMethod" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 font-bold">
+                                    <option value="cash">{{ __('messages.cash') }}</option>
+                                    <option value="bank_transfer">{{ __('messages.bank_transfer') }}</option>
+                                    <option value="sham_cash">{{ __('messages.method_sham') }}</option>
+                                    <option value="uption">{{ __('messages.method_uption') }}</option>
+                                    <option value="twasul">{{ __('messages.method_twasul') }}</option>
+                                </select>
+                                @error('paymentMethod') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="mb-4 text-start">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">{{ __('messages.payment_notes') }}</label>
+                                <textarea wire:model="paymentNotes" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" rows="3" placeholder="{{ __('messages.optional_notes') }}"></textarea>
+                                @error('paymentNotes') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 flex justify-end gap-2 border-t border-gray-100">
+                        <button wire:click="closeModals" class="bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-xl shadow-sm transition">{{ __('messages.cancel') }}</button>
+                        <button wire:click="confirmPayment" class="bg-blue-500 text-white px-6 py-2 text-sm font-bold rounded-xl shadow-md hover:bg-blue-600 transition hover:-translate-y-0.5">{{ __('messages.confirm_payment') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
 
     <!-- Settings Modal -->
     @if($showSettingsModal)

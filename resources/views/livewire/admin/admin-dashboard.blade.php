@@ -135,6 +135,16 @@
                 </svg>
                 {{ __('messages.balance_and_limits') }}
             </button>
+            <button wire:click="$set('activeTab', 'payments_log')"
+                class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'payments_log' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
+                <svg class="w-5 h-5 ml-4 {{ $activeTab === 'payments_log' ? 'text-primary-600' : 'text-slate-400' }}"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
+                </svg>
+                {{ __('messages.payments_log') }}
+            </button>
         </nav>
 
         <!-- Help Center Card -->
@@ -191,6 +201,7 @@
                         class="text-primary-600 ml-2">{{ __('messages.commissions') }}</span> @endif
                         @if($activeTab === 'deposit_requests') <span class="text-primary-600 ml-2">{{ __('messages.deposit_requests_title') }}</span> @endif
                         @if($activeTab === 'balance_management') <span class="text-primary-600 ml-2">{{ __('messages.balance_and_limits') }}</span> @endif
+                        @if($activeTab === 'payments_log') <span class="text-primary-600 ml-2">{{ __('messages.payments_log') }}</span> @endif
                     </h1>
                     <p class="text-sm text-slate-400 font-medium mt-1">
                         @if($activeTab === 'dashboard')
@@ -291,8 +302,8 @@
                     @if($activeTab === 'commissions') <span
                     class="text-primary-600">{{ __('messages.commissions') }}</span> @endif
                     @if($activeTab === 'deposit_requests') <span class="text-primary-600">طلبات شحن الرصيد</span> @endif
-                    @if($activeTab === 'balance_management') <span class="text-primary-600">إدارة الأرصدة والسقوف</span>
-                    @endif
+                    @if($activeTab === 'balance_management') <span class="text-primary-600">إدارة الأرصدة والسقوف</span> @endif
+                    @if($activeTab === 'payments_log') <span class="text-primary-600">سجل المدفوعات</span> @endif
                 </h1>
                 <p class="text-sm text-slate-400 font-medium mt-1">
                     @if($activeTab === 'dashboard')
@@ -558,14 +569,23 @@
             @endif
 
             @if ($activeTab === 'deposit_requests')
-                <div class="mt-4">
+                <!-- Deposit Requests Tab -->
+                <div class="animate-fade-in-up">
                     <livewire:admin.deposit-requests />
                 </div>
             @endif
 
             @if ($activeTab === 'balance_management')
-                <div class="mt-4">
+                <!-- Balance Management Tab -->
+                <div class="animate-fade-in-up">
                     <livewire:admin.balance-management />
+                </div>
+            @endif
+
+            @if ($activeTab === 'payments_log')
+                <!-- Payments Log Tab -->
+                <div class="animate-fade-in-up">
+                    <livewire:admin.payments-log />
                 </div>
             @endif
 

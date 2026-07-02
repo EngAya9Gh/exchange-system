@@ -18,6 +18,7 @@ Route::group([
         // Customer routes
         Route::view('dashboard', 'dashboard')->name('dashboard');
         Route::view('profile', 'profile')->name('profile');
+        Route::get('my-payments', \App\Livewire\Customer\CustomerPayments::class)->name('customer.payments');
 
         // Admin routes
         Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
@@ -25,6 +26,7 @@ Route::group([
             Route::get('deliver/{number}', \App\Livewire\Admin\DeliverTransfer::class)->name('transfers.deliver');
             Route::get('deposit-requests', \App\Livewire\Admin\DepositRequests::class)->name('deposit-requests');
             Route::get('balance-management', \App\Livewire\Admin\BalanceManagement::class)->name('balance-management');
+            Route::get('payments-log', \App\Livewire\Admin\PaymentsLog::class)->name('payments-log');
         });
     });
 

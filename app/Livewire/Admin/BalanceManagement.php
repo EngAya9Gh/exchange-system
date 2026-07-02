@@ -61,10 +61,32 @@ class BalanceManagement extends Component
         $this->showDepositModal = false;
     }
 
+    // Payment Modal
+    public $showPaymentModal = false;
+    public $paymentAmount = '';
+    public $paymentMethod = 'cash';
+    public $paymentNotes = '';
+
+    public function openPaymentModal($id)
+    {
+        $user = User::findOrFail($id);
+        $this->manageUserId = $user->id;
+        $this->manageUserName = $user->name;
+        $this->manageUserBalance = $user->balance;
+        
+        $this->paymentAmount = '';
+        $this->paymentMethod = 'cash';
+        $this->paymentNotes = '';
+        $this->showPaymentModal = true;
+        $this->showDepositModal = false;
+        $this->showSettingsModal = false;
+    }
+
     public function closeModals()
     {
         $this->showDepositModal = false;
         $this->showSettingsModal = false;
+        $this->showPaymentModal = false;
         $this->manageUserId = null;
     }
 
@@ -84,6 +106,41 @@ class BalanceManagement extends Component
         $action = (float)$this->depositAmount > 0 ? 'إضافة' : 'خصم';
         session()->flash('success', "تم $action الرصيد بنجاح لـ {$this->manageUserName}.");
         $this->closeModals();
+    }
+
+    public function confirmPayment()
+    {
+        $this->validate([
+            'paymentAmount' => 'required|numeric|min:0.01',
+            'paymentMethod' => 'required|string',
+            'paymentNotes' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () {
+                $user = User::findOrFail($this->manageUserId);
+                $user->balance += (float)$this->paymentAmount;
+                $user->save();
+
+                // Register in Payment Table
+                \App\Models\Payment::create([
+                    'user_id' => $user->id,
+                    'admin_id' => auth()->id(),
+                    'amount' => $this->paymentAmount,
+                    'payment_method' => $this->paymentMethod,
+                    'notes' => $this->paymentNotes
+                ]);
+
+                // Send notification
+                $user->notify(new \App\Notifications\PaymentReceivedNotification($this->paymentAmount, $this->paymentMethod, $this->paymentNotes));
+            });
+
+            session()->flash('success', "تم استلام وتسجيل الدفعة بنجاح لـ {$this->manageUserName}.");
+            $this->closeModals();
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'حدث خطأ أثناء معالجة الدفعة: ' . $e->getMessage());
+        }
     }
 
     public function confirmSettings()

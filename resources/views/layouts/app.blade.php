@@ -55,6 +55,27 @@
         @stack('scripts')
         <script>
             document.addEventListener('livewire:init', () => {
+                window.addEventListener('new-notification-toast', event => {
+                    const detail = Array.isArray(event.detail) ? event.detail[0] : event.detail;
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'info',
+                        title: detail.title || 'إشعار جديد',
+                        text: detail.message || '',
+                        showConfirmButton: false,
+                        timer: 5000,
+                        timerProgressBar: true,
+                        customClass: {
+                            popup: 'bg-white text-slate-800 shadow-xl border border-slate-100 rounded-2xl'
+                        },
+                        didOpen: (toast) => {
+                            toast.addEventListener('mouseenter', Swal.stopTimer)
+                            toast.addEventListener('mouseleave', Swal.resumeTimer)
+                        }
+                    });
+                });
+
                 Livewire.hook('request', ({ fail }) => {
                     fail(({ status, preventDefault }) => {
                         if (status === 500) {
