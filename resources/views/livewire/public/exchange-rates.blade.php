@@ -26,9 +26,9 @@
             <span class="inline-block py-1.5 px-4 rounded-full bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/30 mb-8">
                 🚀 أسعار محدّثة لحظياً
             </span>
-            <h1 class="text-4xl lg:text-6xl font-black text-white leading-loose mb-6 drop-shadow-md">
+            <h1 class="text-4xl lg:text-6xl font-black text-white leading-relaxed mb-6 drop-shadow-md">
                 <span class="block mb-2">سعر صرف</span>
-                <span class="block mb-6 text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-400">الجنيه المصري</span>
+                <span class="block pb-4 pt-2 -mb-2 text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-400">الجنيه المصري</span>
                 <span class="block">الآن بين يديك!</span>
             </h1>
             <p class="text-lg text-slate-300 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
