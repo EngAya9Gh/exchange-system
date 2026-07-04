@@ -24,7 +24,7 @@
         <!-- Text Area -->
         <div class="w-full lg:w-1/2 text-center lg:text-right">
             <span class="inline-block py-1.5 px-4 rounded-full bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/30 mb-8">
-                🚀 أسعار محدّثة لحظياً
+                 أسعار محدّثة لحظياً
             </span>
             <h1 class="text-4xl lg:text-6xl font-black text-white leading-loose mb-6 drop-shadow-md">
                 <span class="block mb-2">سعر صرف</span>
