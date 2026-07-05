@@ -102,9 +102,9 @@ class ExchangeRateService
                     if (isset($rates[$currency])) {
                         // USD to Currency
                         $usdToTargetRate = $rates[$currency];
-                        // إذا كانت العملة المطلوبة هي الجنيه المصري، نضيف الهامش 0.015 على السعر النهائي
+                        // إذا كانت العملة المطلوبة هي الجنيه المصري، نضيف الهامش 0 على السعر النهائي
                         if ($currency === 'EGP') {
-                            $usdToTargetRate += 0.015;
+                            $usdToTargetRate += 0;
                         }
 
                         ExchangeRate::updateOrCreate(
@@ -134,12 +134,12 @@ class ExchangeRateService
                     // EUR to EGP
                     ExchangeRate::updateOrCreate(
                         ['from_currency' => 'EUR', 'to_currency' => 'EGP'],
-                        ['rate' => ($rates['EGP'] / $rates['EUR']) + 0.015, 'last_fetched_at' => Carbon::now()]
+                        ['rate' => ($rates['EGP'] / $rates['EUR']) + 0, 'last_fetched_at' => Carbon::now()]
                     );
                     // TRY to EGP
                     ExchangeRate::updateOrCreate(
                         ['from_currency' => 'TRY', 'to_currency' => 'EGP'],
-                        ['rate' => ($rates['EGP'] / $rates['TRY']) + 0.015, 'last_fetched_at' => Carbon::now()]
+                        ['rate' => ($rates['EGP'] / $rates['TRY']) + 0, 'last_fetched_at' => Carbon::now()]
                     );
                 }
 

@@ -15,7 +15,7 @@
             }
         });
     }
-}" class="bg-white rounded-[28px] shadow-soft border border-slate-50 p-8" wire:init="autoSyncRates">
+}" class="bg-white rounded-[28px] shadow-soft border border-slate-50 p-8">
     <h3 class="text-xl font-bold text-slate-800 border-b border-slate-50 pb-4 mb-6">
         {{ __('messages.new_financial_transfer_request') }}</h3>
 
