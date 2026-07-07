@@ -112,9 +112,7 @@ class TransferStatusNotification extends Notification
 
     public function toTelegram(mixed $notifiable): array
     {
-        $isAdmin = $notifiable->hasRole('Super Admin') || $notifiable->role === 'admin';
-        
-        if (empty($notifiable->telegram_chat_id) || !$isAdmin) {
+        if (empty($notifiable->telegram_chat_id)) {
             return [];
         }
 

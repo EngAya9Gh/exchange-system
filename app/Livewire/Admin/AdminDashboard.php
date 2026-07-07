@@ -228,8 +228,12 @@ class AdminDashboard extends Component
         
         $isAdmin = $user->hasRole('Super Admin') || $user->role === 'admin';
         
+        $availableCredit = $user->has_unlimited_balance 
+            ? PHP_FLOAT_MAX 
+            : ($user->balance + $user->balance_limit);
+            
         if (!$isAdmin) {
-            if ($user->balance < $totalToPay) {
+            if ($totalToPay > $availableCredit) {
                 $this->addError('amount', 'رصيدك الحالي غير كافٍ لإتمام هذه الحوالة.');
                 return;
             }
@@ -512,21 +516,36 @@ class AdminDashboard extends Component
     public function render()
     {
         // Calculate ledger stats (for cards)
-        $totalTrySent = Transfer::where('currency', 'TRY')->where('status', 'received')->sum('amount');
-        $totalUsdSent = Transfer::where('currency', 'USD')->where('status', 'received')->sum('amount');
-        $totalEurSent = Transfer::where('currency', 'EUR')->where('status', 'received')->sum('amount');
+        $user = auth()->user();
+        $isAdmin = $user->hasRole('Super Admin') || $user->role === 'admin';
+
+        $statsQuery = Transfer::where('status', 'received');
+        if (!$isAdmin) {
+            $statsQuery->where('user_id', $user->id);
+        }
+
+        $totalTrySent = (clone $statsQuery)->where('currency', 'TRY')->sum('amount');
+        $totalUsdSent = (clone $statsQuery)->where('currency', 'USD')->sum('amount');
+        $totalEurSent = (clone $statsQuery)->where('currency', 'EUR')->sum('amount');
         
         // Equiv EGP (مقوم) - all paid transfers received amount in EGP
-        $totalEgpPaid = Transfer::where('target_currency', 'EGP')->where('status', 'received')->sum('received_amount');
+        $totalEgpPaid = (clone $statsQuery)->where('target_currency', 'EGP')->sum('received_amount');
 
         // Total Commissions in TRY
-        $totalCommissions = Transfer::where('currency', 'TRY')->where('status', 'received')->sum('commission');
+        $totalCommissions = (clone $statsQuery)->where('currency', 'TRY')->sum('commission');
 
         // Incoming pending requests
-        $incomingRequests = Transfer::with('user')->where('status', 'pending')->latest()->paginate(10, ['*'], 'requests_page');
+        $requestsQuery = Transfer::with('user')->where('status', 'pending');
+        if (!$isAdmin) {
+            $requestsQuery->where('user_id', $user->id);
+        }
+        $incomingRequests = $requestsQuery->latest()->paginate(10, ['*'], 'requests_page');
 
         // Ledger list with filters
         $ledgerQuery = Transfer::with(['creator']);
+        if (!$isAdmin) {
+            $ledgerQuery->where('user_id', $user->id);
+        }
 
         if (!empty($this->searchQuery)) {
             $q = '%' . $this->searchQuery . '%';

@@ -168,7 +168,9 @@ class BalanceManagement extends Component
 
     public function render()
     {
-        $users = User::role('Customer')
+        $users = User::whereDoesntHave('roles', function($q) {
+                $q->where('name', 'Super Admin');
+            })
             ->where(function($q) {
                 $q->where('name', 'like', '%' . $this->searchQuery . '%')
                   ->orWhere('phone', 'like', '%' . $this->searchQuery . '%');

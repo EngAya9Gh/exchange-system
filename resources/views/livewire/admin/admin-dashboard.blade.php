@@ -115,36 +115,38 @@
             @endcan
             <div class="h-px bg-slate-100 my-2"></div>
             <!-- New Features -->
-            <button wire:click="$set('activeTab', 'deposit_requests')"
-                class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'deposit_requests' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
-                <svg class="w-5 h-5 ml-4 {{ $activeTab === 'deposit_requests' ? 'text-primary-600' : 'text-slate-400' }}"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z">
-                    </path>
-                </svg>
-                {{ __('messages.deposit_requests') }}
-            </button>
-            <button wire:click="$set('activeTab', 'balance_management')"
-                class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'balance_management' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
-                <svg class="w-5 h-5 ml-4 {{ $activeTab === 'balance_management' ? 'text-primary-600' : 'text-slate-400' }}"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
-                    </path>
-                </svg>
-                {{ __('messages.balance_and_limits') }}
-            </button>
-            <button wire:click="$set('activeTab', 'payments_log')"
-                class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'payments_log' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
-                <svg class="w-5 h-5 ml-4 {{ $activeTab === 'payments_log' ? 'text-primary-600' : 'text-slate-400' }}"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                    </path>
-                </svg>
-                {{ __('messages.payments_log') }}
-            </button>
+            @role('Super Admin')
+                <button wire:click="$set('activeTab', 'deposit_requests')"
+                    class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'deposit_requests' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
+                    <svg class="w-5 h-5 ml-4 {{ $activeTab === 'deposit_requests' ? 'text-primary-600' : 'text-slate-400' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z">
+                        </path>
+                    </svg>
+                    {{ __('messages.deposit_requests') }}
+                </button>
+                <button wire:click="$set('activeTab', 'balance_management')"
+                    class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'balance_management' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
+                    <svg class="w-5 h-5 ml-4 {{ $activeTab === 'balance_management' ? 'text-primary-600' : 'text-slate-400' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                    {{ __('messages.balance_and_limits') }}
+                </button>
+                <button wire:click="$set('activeTab', 'payments_log')"
+                    class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'payments_log' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
+                    <svg class="w-5 h-5 ml-4 {{ $activeTab === 'payments_log' ? 'text-primary-600' : 'text-slate-400' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    {{ __('messages.payments_log') }}
+                </button>
+            @endrole
         </nav>
 
         <!-- Help Center Card -->
@@ -211,26 +213,32 @@
                 </div>
 
                 <!-- Right Side Icons -->
-                <div class="flex items-center space-x-2 md:space-x-6 space-x-reverse">
-                    <button class="text-slate-400 hover:text-primary-600 transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
-                            </path>
-                        </svg>
-                    </button>
+                <div class="flex items-center space-x-1 md:space-x-4 space-x-reverse">
 
                     <livewire:notification-dropdown />
 
+                    @unless(auth()->user()->hasRole('Super Admin'))
+                        <div class="flex items-center px-3 py-1.5 md:px-5 md:py-2 mx-1 md:mx-2 bg-slate-50 border border-slate-200 rounded-2xl shadow-sm">
+                            <div class="flex flex-col items-end justify-center">
+                                <span class="text-[9px] md:text-[11px] font-bold text-slate-400 mb-0.5 uppercase tracking-wide">الرصيد المتاح</span>
+                                <span class="text-base md:text-xl font-black {{ auth()->user()->balance >= 0 ? 'text-emerald-600' : 'text-rose-600' }} flex items-center gap-1.5" dir="ltr">
+                                    <span class="text-base md:text-lg" title="TRY">🇹🇷</span>
+                                    {{ number_format(abs(auth()->user()->balance), 2) }}
+                                    <span class="text-[10px] md:text-xs">TRY</span>
+                                </span>
+                            </div>
+                        </div>
+                    @endunless
+
                     <a href="{{ route('profile') }}" title="{{ __('messages.profile') }}"
-                        class="flex items-center cursor-pointer gap-3 hover:opacity-80 transition bg-slate-50 hover:bg-slate-100 px-3 py-2 rounded-xl border border-slate-100">
+                        class="flex items-center cursor-pointer gap-2 md:gap-3 hover:opacity-80 transition bg-slate-50 hover:bg-slate-100 px-1.5 md:px-3 py-1.5 md:py-2 rounded-xl border border-slate-100">
                         <div class="text-left hidden md:block" dir="ltr">
                             <div class="text-sm font-bold text-slate-800">{{ auth()->user()->name }}</div>
                             <div class="text-[11px] font-bold text-slate-400 mt-0.5">{{ __('messages.system_admin') }}
                             </div>
                         </div>
                         <div
-                            class="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 shadow-sm border border-white flex items-center justify-center text-white font-bold">
+                            class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 shadow-sm border border-white flex items-center justify-center text-white font-bold text-sm md:text-base">
                             {{ mb_substr(auth()->user()->name, 0, 1) }}
                         </div>
                     </a>
@@ -238,8 +246,8 @@
                     <!-- Language Switcher -->
                     <div class="relative" x-data="{ openLang: false }" wire:ignore>
                         <button @click="openLang = !openLang" @click.away="openLang = false"
-                            class="px-3 py-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-all flex items-center gap-2 rounded-xl border border-slate-100 shadow-sm bg-white">
-                            <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="px-2 md:px-3 py-1.5 md:py-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-all flex items-center gap-1 md:gap-2 rounded-xl border border-slate-100 shadow-sm bg-white">
+                            <svg class="w-4 h-4 md:w-5 md:h-5 text-primary-500 hidden md:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
                                 </path>
@@ -248,9 +256,9 @@
                                 $currentLocale = app()->getLocale();
                                 $flags = ['ar' => '🇸🇦', 'en' => '🇬🇧', 'tr' => '🇹🇷'];
                             @endphp
-                            <span class="text-sm">{{ $flags[$currentLocale] ?? '🌐' }}</span>
-                            <span class="text-xs font-bold uppercase">{{ $currentLocale }}</span>
-                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span class="text-sm md:text-base">{{ $flags[$currentLocale] ?? '🌐' }}</span>
+                            <span class="text-xs font-bold uppercase hidden md:inline">{{ $currentLocale }}</span>
+                            <svg class="w-3 h-3 text-slate-400 hidden md:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M19 9l-7 7-7-7"></path>
                             </svg>
@@ -271,7 +279,7 @@
 
                     <!-- Logout Button -->
                     <button wire:click="logout"
-                        class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition flex items-center gap-2 mr-2"
+                        class="p-1 md:p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition flex items-center gap-1 md:gap-2 mr-1 md:mr-2"
                         title="{{ __('messages.logout_button') }}">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -927,6 +935,7 @@
                             <tr>
                                 <th class="px-4 py-4 font-bold text-center">#</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.number') }}</th>
+                                <th class="px-4 py-4 font-bold text-center">المنشئ / الحساب</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.recipient') }}</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.recipient_phone_number') }}</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.amount') }}</th>
@@ -947,6 +956,14 @@
                                             <div class="font-black text-slate-800 font-mono tracking-tight">{{ $tr->transfer_number }}</div>
                                             <div class="text-[10px] text-primary-600 font-bold mt-1 bg-primary-50 px-2 py-0.5 rounded inline-block uppercase tracking-widest">{{ __('messages.code_label') }} {{ $tr->secret_code }}</div>
                                         </div>
+                                    </td>
+                                    <td class="px-4 py-5 text-center">
+                                        <div class="text-sm font-bold text-slate-800">{{ $tr->user ? $tr->user->name : 'غير معروف' }}</div>
+                                        @if($tr->user)
+                                            <div class="text-[10px] text-slate-500 font-bold mt-0.5">
+                                                {{ $tr->user->hasRole('Agent') ? 'وكيل' : ($tr->user->hasRole('Customer') ? 'زبون' : 'إدارة') }}
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="px-4 py-5 text-center">
                                         <div class="text-sm font-bold text-slate-800">{{ $tr->recipient_name }}</div>
