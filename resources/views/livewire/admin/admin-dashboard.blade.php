@@ -678,7 +678,7 @@
                                     </div>
 
                                     <!-- Row 3: Currency, Amount & Wages -->
-                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-5 pt-2">
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-5 pt-2 items-end">
                                         <div>
                                             <label
                                                 class="block text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider">العملة</label>
@@ -767,32 +767,60 @@
                                     </div>
                                 </div>
 
-                                <!-- Calculations Section -->
-                                <div class="bg-gradient-to-r from-primary-50 to-rose-50 p-6 rounded-[24px]">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                        <div class="text-center">
-                                            <span class="block text-[10px] font-bold text-primary-400 mb-1 uppercase tracking-widest">{{ __('messages.exchange_rate_label') }}</span>
-                                            <span class="block font-black text-slate-800 text-lg">{{ number_format($exchange_rate, 4) }}</span>
-                                        </div>
-                                        <div class="text-center border-r border-primary-200/50">
-                                            <span class="block text-[10px] font-bold text-rose-400 mb-1 uppercase tracking-widest">{{ __('messages.fees') }} {{ __('messages.and_separator') }} {{ __('messages.commission_label') }}</span>
-                                            <span class="block font-black text-rose-500 text-lg">{{ number_format($commission, 2) }} <span class="text-xs">{{ $source_currency }}</span></span>
-                                        </div>
-                                    </div>
-                                </div>
+                                <!-- Summary Box / Calculations -->
+                                <div class="bg-gradient-to-br from-primary-50 to-rose-50 border border-primary-100/50 rounded-[24px] p-6 shadow-sm relative overflow-hidden mt-6">
+                                    <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/40 blur-xl"></div>
 
-                                <!-- Submit Action -->
-                                <div class="pt-6 flex justify-between items-center">
-                                    <div class="text-right">
-                                        <span class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{{ __('messages.total_to_collect') }}</span>
-                                        <span class="block text-3xl font-black text-slate-800">{{ number_format($total_to_pay, 2) }} <span class="text-base text-slate-400">{{ $source_currency }}</span></span>
+                                    <div class="space-y-4 relative z-10">
+                                        <h4 class="text-[11px] font-bold text-primary-500 uppercase tracking-widest border-b border-primary-200/50 pb-2 mb-2">
+                                            {{ __('messages.estimated_calculation_details', ['default' => 'تفاصيل الحسبة التقديرية']) }}
+                                        </h4>
+
+                                        <div class="flex justify-between items-center text-sm">
+                                            <span class="text-slate-500 font-bold">{{ __('messages.exchange_rate_label', ['default' => 'سعر الصرف المعتمد']) }}</span>
+                                            <span class="font-black text-slate-800">{{ number_format($exchange_rate, 4) }}</span>
+                                        </div>
+
+                                        <div class="flex justify-between items-center text-sm pt-3 border-t border-primary-200/50">
+                                            <span class="text-slate-500 font-bold">{{ __('messages.fees') }} {{ __('messages.and_separator') }} {{ __('messages.commission_label') }}</span>
+                                            <span class="font-black text-rose-500">{{ number_format($commission, 2) }} {{ $source_currency }}</span>
+                                        </div>
                                     </div>
-                                    <button type="submit" class="px-8 py-4 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-2xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex items-center justify-center">
-                                        <span class="flex items-center">
-                                            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                                            {{ __('messages.approve_and_send') }}
-                                        </span>
-                                    </button>
+
+                                    <div class="pt-6 relative z-10">
+                                        <div class="flex justify-between items-center mb-4">
+                                            <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">{{ __('messages.total_to_collect', ['default' => 'إجمالي المطلوب تحصيله']) }}</span>
+                                            <span class="font-black text-slate-800 text-2xl">{{ number_format($total_to_pay, 2) }} <span class="text-sm text-slate-500">{{ $source_currency }}</span></span>
+                                        </div>
+
+                                        @php
+                                            $user = auth()->user();
+                                            $isAdmin = $user->hasRole('Super Admin') || $user->role === 'admin';
+                                            $availableCredit = $user->has_unlimited_balance ? PHP_FLOAT_MAX : ($user->balance + $user->balance_limit);
+                                            $cannotAfford = !$isAdmin && ($total_to_pay > $availableCredit);
+                                        @endphp
+
+                                        @unless($isAdmin)
+                                            <div class="flex justify-between items-center mb-6 p-3 rounded-xl {{ $cannotAfford ? 'bg-rose-100 text-rose-700' : 'bg-emerald-50 text-emerald-700' }}">
+                                                <span class="text-sm font-bold">{{ __('messages.available_for_transfer_with_limit', ['default' => 'المتاح للتحويل (مع السقف):']) }}</span>
+                                                <span class="font-black text-lg">
+                                                    @if($user->has_unlimited_balance)
+                                                        {{ __('messages.unlimited', ['default' => 'مفتوح']) }}
+                                                    @else
+                                                        {{ number_format($availableCredit, 2) }} <span class="text-xs">TRY</span>
+                                                    @endif
+                                                </span>
+                                            </div>
+                                        @endunless
+
+                                        <!-- Submit Action -->
+                                        <button type="button" @unless($cannotAfford) @click="confirming = true" @endunless @if($cannotAfford) disabled @endif class="w-full py-4 bg-gradient-to-r from-primary-600 to-rose-600 hover:from-primary-700 hover:to-rose-700 text-white rounded-xl font-black text-lg shadow-soft transition-transform hover:-translate-y-1 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                                            <span class="flex items-center">
+                                                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                                                {{ __('messages.approve_and_send') }}
+                                            </span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- Alpine Confirmation Modal -->
