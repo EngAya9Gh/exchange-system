@@ -77,15 +77,18 @@
                             <p class="text-sm text-gray-500 mb-6">{{ __('messages.customer') }}: <span class="font-bold text-gray-900">{{ $manageUserName }}</span> | {{ __('messages.current_balance') }}: <span class="font-bold text-green-600">{{ number_format($manageUserBalance, 2) }}</span></p>
                             
                             <div class="mb-4 text-start">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">{{ __('messages.amount_to_add') }}</label>
-                                <input type="number" wire:model="depositAmount" step="0.01" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 font-bold text-lg" placeholder="500">
+                                <label class="block text-sm font-bold text-gray-700 mb-2">المبلغ (اكتب الرقم بدون أي إشارات)</label>
+                                <input type="number" wire:model="depositAmount" min="0" step="0.01" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 font-bold text-lg" placeholder="500">
                                 @error('depositAmount') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                             </div>
                         </div>
                     </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 flex justify-end gap-2 border-t border-gray-100">
-                        <button wire:click="closeModals" class="bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-xl shadow-sm transition">{{ __('messages.cancel') }}</button>
-                        <button wire:click="confirmDeposit" class="bg-emerald-500 text-white px-6 py-2 text-sm font-bold rounded-xl shadow-md hover:bg-emerald-600 transition hover:-translate-y-0.5">{{ __('messages.confirm_operation') }}</button>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 flex flex-col-reverse sm:flex-row justify-between gap-3 border-t border-gray-100">
+                        <button wire:click="closeModals" class="bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-xl shadow-sm transition w-full sm:w-auto">إلغاء</button>
+                        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <button wire:click="confirmWithdrawal" class="bg-rose-500 text-white px-6 py-2 text-sm font-bold rounded-xl shadow-md hover:bg-rose-600 transition hover:-translate-y-0.5 w-full sm:w-auto">سحب (خصم -)</button>
+                            <button wire:click="confirmDeposit" class="bg-emerald-500 text-white px-6 py-2 text-sm font-bold rounded-xl shadow-md hover:bg-emerald-600 transition hover:-translate-y-0.5 w-full sm:w-auto">إيداع (إضافة +)</button>
+                        </div>
                     </div>
                 </div>
             </div>

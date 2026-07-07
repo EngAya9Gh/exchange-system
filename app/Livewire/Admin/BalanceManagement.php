@@ -93,18 +93,34 @@ class BalanceManagement extends Component
     public function confirmDeposit()
     {
         $this->validate([
-            'depositAmount' => 'required|numeric|not_in:0',
+            'depositAmount' => 'required|numeric|min:0.01',
         ], [
             'depositAmount.required' => 'الرجاء إدخال المبلغ.',
-            'depositAmount.not_in' => 'المبلغ لا يمكن أن يكون صفراً.',
+            'depositAmount.min' => 'المبلغ يجب أن يكون أكبر من الصفر.',
         ]);
 
         $user = User::findOrFail($this->manageUserId);
         $user->balance += (float)$this->depositAmount;
         $user->save();
 
-        $action = (float)$this->depositAmount > 0 ? 'إضافة' : 'خصم';
-        session()->flash('success', "تم $action الرصيد بنجاح لـ {$this->manageUserName}.");
+        session()->flash('success', "تم إضافة الرصيد بنجاح لـ {$this->manageUserName}.");
+        $this->closeModals();
+    }
+
+    public function confirmWithdrawal()
+    {
+        $this->validate([
+            'depositAmount' => 'required|numeric|min:0.01',
+        ], [
+            'depositAmount.required' => 'الرجاء إدخال المبلغ.',
+            'depositAmount.min' => 'المبلغ يجب أن يكون أكبر من الصفر.',
+        ]);
+
+        $user = User::findOrFail($this->manageUserId);
+        $user->balance -= (float)$this->depositAmount;
+        $user->save();
+
+        session()->flash('success', "تم خصم الرصيد بنجاح من {$this->manageUserName}.");
         $this->closeModals();
     }
 
