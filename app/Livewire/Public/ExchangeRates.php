@@ -11,6 +11,7 @@ class ExchangeRates extends Component
     public $amount = 100;
     public $currency = 'TRY';
     public $egpRate = 0;
+    public $usdRate = 0;
     public $lastUpdated = null;
 
     public function mount()
@@ -22,6 +23,7 @@ class ExchangeRates extends Component
     {
         $rateService = app(ExchangeRateService::class);
         $this->egpRate = (float) $rateService->getRate($this->currency, 'EGP');
+        $this->usdRate = (float) $rateService->getRate('USD', 'EGP');
 
         $rateRecord = ExchangeRate::where('from_currency', $this->currency)
             ->where('to_currency', 'EGP')

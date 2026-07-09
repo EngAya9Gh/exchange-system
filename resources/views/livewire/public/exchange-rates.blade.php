@@ -69,6 +69,15 @@
                         <span class="text-5xl lg:text-6xl font-black text-white tracking-tighter">{{ number_format($egpRate, 4) }}</span>
                         <span class="text-xl font-bold text-slate-500 mb-1.5">EGP</span>
                     </div>
+                    
+                    @if($usdRate > 0)
+                        <div class="mt-3 flex items-center justify-center gap-2 text-slate-400">
+                            <span class="text-sm font-bold">1 دولار (USD) = </span>
+                            <span class="text-lg font-black text-emerald-400">{{ number_format($usdRate, 4) }}</span>
+                            <span class="text-xs font-bold">جنيه مصري</span>
+                        </div>
+                    @endif
+
                     <div class="mt-5 inline-flex items-center gap-2 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                         <span class="text-[11px] font-bold text-emerald-400">تم التحديث {{ $lastUpdated }}</span>
