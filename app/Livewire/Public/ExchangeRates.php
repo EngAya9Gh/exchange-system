@@ -9,6 +9,7 @@ use App\Models\ExchangeRate;
 class ExchangeRates extends Component
 {
     public $amount = 100;
+    public $egpAmount = 0;
     public $currency = 'TRY';
     public $egpRate = 0;
     public $usdRate = 0;
@@ -17,6 +18,41 @@ class ExchangeRates extends Component
     public function mount()
     {
         $this->fetchRates();
+        $this->calculateEgp();
+    }
+
+    public function updatedCurrency()
+    {
+        $this->fetchRates();
+        $this->calculateEgp();
+    }
+
+    public function updatedAmount()
+    {
+        $this->calculateEgp();
+    }
+
+    public function updatedEgpAmount()
+    {
+        $this->calculateSourceAmount();
+    }
+
+    public function calculateEgp()
+    {
+        if (is_numeric($this->amount)) {
+            $this->egpAmount = round((float) $this->amount * $this->egpRate, 2);
+        } else {
+            $this->egpAmount = 0;
+        }
+    }
+
+    public function calculateSourceAmount()
+    {
+        if (is_numeric($this->egpAmount) && $this->egpRate > 0) {
+            $this->amount = round((float) $this->egpAmount / $this->egpRate, 2);
+        } else {
+            $this->amount = 0;
+        }
     }
 
     public function fetchRates()
@@ -35,11 +71,6 @@ class ExchangeRates extends Component
         } else {
             $this->lastUpdated = 'الآن';
         }
-    }
-
-    public function getCalculatedEgpProperty()
-    {
-        return round((float) $this->amount * $this->egpRate, 2);
     }
 
     public function render()

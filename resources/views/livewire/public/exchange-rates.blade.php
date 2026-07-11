@@ -64,7 +64,7 @@
             <div class="relative bg-slate-800/60 backdrop-blur-2xl border border-slate-700/50 p-8 rounded-[2.5rem] shadow-2xl">
                 
                 <div class="text-center mb-8">
-                    <p class="text-slate-400 text-sm font-bold mb-3 uppercase tracking-wider">سعر صرف الليرة اليوم</p>
+                    <p class="text-slate-400 text-sm font-bold mb-3 uppercase tracking-wider">سعر صرف {{ $currency === 'TRY' ? 'الليرة' : ($currency === 'USD' ? 'الدولار' : 'اليورو') }} اليوم</p>
                     <div class="flex items-end justify-center gap-2">
                         <span class="text-5xl lg:text-6xl font-black text-white tracking-tighter">{{ number_format($egpRate, 4) }}</span>
                         <span class="text-xl font-bold text-slate-500 mb-1.5">EGP</span>
@@ -99,7 +99,9 @@
                         formatted = formatNumber($wire.amount);
                         $watch('$wire.amount', val => { if(document.activeElement !== $refs.input) formatted = formatNumber(val); });
                     ">
-                        <label class="block text-xs font-bold text-slate-400 mb-2">المبلغ بالليرة التركية (TRY)</label>
+                        <div class="flex justify-between items-end mb-2">
+                            <label class="block text-xs font-bold text-slate-400">المبلغ المراد تحويله</label>
+                        </div>
                         <div class="relative flex items-center">
                             <input x-ref="hidden" type="hidden" wire:model.live="amount">
                             <input x-ref="input" type="text" inputmode="decimal" x-model="formatted"
@@ -113,11 +115,18 @@
                                     let displayInt = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                                     formatted = parts.length > 1 ? displayInt + '.' + parts[1] : displayInt;
                                 "
-                                class="w-full bg-slate-900/50 border border-slate-700 text-white text-xl font-black rounded-2xl py-4 px-5 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all text-left shadow-inner" 
+                                class="w-full bg-slate-900/50 border border-slate-700 text-white text-xl font-black rounded-2xl py-4 pl-5 pr-[110px] focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all text-left shadow-inner" 
                                 dir="ltr" placeholder="1,000">
-                            <div class="absolute right-4 flex items-center gap-2 text-slate-400 bg-slate-800 px-3 py-1 rounded-xl">
-                                <span class="text-sm font-bold text-slate-300">TRY</span>
-                                <span class="text-lg">🇹🇷</span>
+                            
+                            <div class="absolute right-3 flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 transition-colors px-3 py-1.5 rounded-xl border border-slate-600 shadow-md cursor-pointer overflow-hidden group">
+                                <select wire:model.live="currency" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" dir="ltr">
+                                    <option value="TRY">TRY 🇹🇷</option>
+                                    <option value="USD">USD 🇺🇸</option>
+                                    <option value="EUR">EUR 🇪🇺</option>
+                                </select>
+                                <span class="text-sm font-bold text-white">{{ $currency }}</span>
+                                <span class="text-lg leading-none">{{ $currency === 'TRY' ? '🇹🇷' : ($currency === 'USD' ? '🇺🇸' : '🇪🇺') }}</span>
+                                <svg class="w-4 h-4 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
                             </div>
                         </div>
                     </div>
@@ -129,13 +138,36 @@
                         </div>
                     </div>
 
-                    <!-- Result output -->
-                    <div class="relative">
+                    <!-- Result output (EGP) -->
+                    <div class="relative" x-data="{
+                        formatted: '',
+                        formatNumber(val) {
+                            if (!val && val !== 0 && val !== '0') return '';
+                            let str = val.toString().replace(/[^0-9.]/g, '');
+                            let parts = str.split('.');
+                            let intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                            return parts.length > 1 ? intPart + '.' + parts[1] : intPart;
+                        }
+                    }" x-init="
+                        formatted = formatNumber($wire.egpAmount);
+                        $watch('$wire.egpAmount', val => { if(document.activeElement !== $refs.input) formatted = formatNumber(val); });
+                    ">
                         <label class="block text-xs font-bold text-slate-400 mb-2">المقابل بالجنيه المصري (EGP)</label>
                         <div class="relative flex items-center">
-                            <div class="w-full bg-red-500/10 border border-red-500/20 text-red-400 text-2xl font-black rounded-2xl py-4 px-5 text-left truncate shadow-inner" dir="ltr">
-                                {{ number_format($this->calculatedEgp, 2) }}
-                            </div>
+                            <input x-ref="hidden" type="hidden" wire:model.live.debounce.500ms="egpAmount">
+                            <input x-ref="input" type="text" inputmode="decimal" x-model="formatted"
+                                @input="
+                                    let val = $event.target.value.replace(/[^0-9.]/g, '');
+                                    let parts = val.split('.');
+                                    if (parts.length > 2) parts = [parts[0], parts.slice(1).join('')];
+                                    val = parts.join('.');
+                                    $refs.hidden.value = val;
+                                    $refs.hidden.dispatchEvent(new Event('input', { bubbles: true }));
+                                    let displayInt = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                    formatted = parts.length > 1 ? displayInt + '.' + parts[1] : displayInt;
+                                "
+                                class="w-full bg-red-500/10 border border-red-500/20 text-red-400 text-2xl font-black rounded-2xl py-4 px-5 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all text-left shadow-inner" 
+                                dir="ltr" placeholder="0">
                             <div class="absolute right-4 flex items-center gap-2 text-slate-400 bg-slate-800 px-3 py-1 rounded-xl border border-slate-700">
                                 <span class="text-sm font-bold text-slate-300">EGP</span>
                                 <span class="text-lg">🇪🇬</span>
