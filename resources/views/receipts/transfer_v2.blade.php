@@ -496,6 +496,10 @@
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode('https://wa.me/905392065497') }}" class="qr-img" alt="WhatsApp QR">
                 </div>
                 <div class="qr-box">
+                    <div class="qr-label" style="color: #ef4444;">أسعار الصرف</div>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode(url('/ar/rates')) }}" class="qr-img" alt="Exchange Rates">
+                </div>
+                <div class="qr-box">
                     <div class="qr-label">امسح للتسليم</div>
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode(route('admin.transfers.deliver', $transfer->transfer_number)) }}" class="qr-img" alt="Scan to deliver">
                 </div>

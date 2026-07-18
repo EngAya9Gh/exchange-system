@@ -331,6 +331,10 @@
                     <div class="header-label" style="margin-bottom: 5px; color: #25d366;">للتواصل واتساب</div>
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode('https://wa.me/905392065497') }}" alt="WhatsApp QR" style="width: 85px; height: 85px;">
                 </div>
+                <div class="qr-box" style="text-align: center; border: 2px dashed #ccc; padding: 10px; border-radius: 12px; background: #fff;">
+                    <div class="header-label" style="margin-bottom: 5px; color: #ef4444;">أسعار الصرف</div>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode(url('/ar/rates')) }}" alt="Exchange Rates" style="width: 85px; height: 85px;">
+                </div>
             </div>
         </div>
     </div>
