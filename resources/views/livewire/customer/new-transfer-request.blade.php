@@ -97,9 +97,11 @@
                                 let displayInt = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                                 formatted = parts.length > 1 ? displayInt + '.' + parts[1] : displayInt;
                             "
-                            @change="
+                            @input.debounce.600ms="
                                 let val = $event.target.value.replace(/[^0-9.]/g, '');
-                                $wire.set('amount', val || 0);
+                                if (val !== $wire.amount) {
+                                    $wire.set('amount', val || 0);
+                                }
                             "
                             id="amount"
                             class="w-full bg-white border-none text-primary-600 font-black text-xl sm:text-2xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition"
@@ -130,9 +132,11 @@
                                 let displayInt = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                                 formatted = parts.length > 1 ? displayInt + '.' + parts[1] : displayInt;
                             "
-                            @change="
+                            @input.debounce.600ms="
                                 let val = $event.target.value.replace(/[^0-9.]/g, '');
-                                $wire.set('received_amount', val || 0);
+                                if (val !== $wire.received_amount) {
+                                    $wire.set('received_amount', val || 0);
+                                }
                             "
                             id="received_amount"
                             class="w-full bg-white border-none text-emerald-600 font-black text-xl sm:text-2xl rounded-xl focus:ring-2 focus:ring-emerald-500 px-4 py-3 shadow-sm transition"
