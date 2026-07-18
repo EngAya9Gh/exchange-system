@@ -88,17 +88,18 @@
                         $watch('$wire.amount', val => { if(document.activeElement !== $refs.input) formatted = formatNumber(val); });
                     ">
                         <label for="amount" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.desired_transfer_amount') }}</label>
-                        <input x-ref="hidden" type="hidden" wire:model.live.debounce.500ms="amount">
                         <input x-ref="input" type="text" inputmode="decimal" x-model="formatted"
                             @input="
                                 let val = $event.target.value.replace(/[^0-9.]/g, '');
                                 let parts = val.split('.');
                                 if (parts.length > 2) parts = [parts[0], parts.slice(1).join('')];
                                 val = parts.join('.');
-                                $refs.hidden.value = val;
-                                $refs.hidden.dispatchEvent(new Event('input', { bubbles: true }));
                                 let displayInt = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                                 formatted = parts.length > 1 ? displayInt + '.' + parts[1] : displayInt;
+                            "
+                            @change="
+                                let val = $event.target.value.replace(/[^0-9.]/g, '');
+                                $wire.set('amount', val || 0);
                             "
                             id="amount"
                             class="w-full bg-white border-none text-primary-600 font-black text-xl sm:text-2xl rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3 shadow-sm transition"
@@ -120,17 +121,18 @@
                         $watch('$wire.received_amount', val => { if(document.activeElement !== $refs.input) formatted = formatNumber(val); });
                     ">
                         <label for="received_amount" class="block text-sm font-bold text-slate-700 mb-2">{{ __('messages.received_amount_in_egp') }}</label>
-                        <input x-ref="hidden" type="hidden" wire:model.live.debounce.500ms="received_amount">
                         <input x-ref="input" type="text" inputmode="decimal" x-model="formatted"
                             @input="
                                 let val = $event.target.value.replace(/[^0-9.]/g, '');
                                 let parts = val.split('.');
                                 if (parts.length > 2) parts = [parts[0], parts.slice(1).join('')];
                                 val = parts.join('.');
-                                $refs.hidden.value = val;
-                                $refs.hidden.dispatchEvent(new Event('input', { bubbles: true }));
                                 let displayInt = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                                 formatted = parts.length > 1 ? displayInt + '.' + parts[1] : displayInt;
+                            "
+                            @change="
+                                let val = $event.target.value.replace(/[^0-9.]/g, '');
+                                $wire.set('received_amount', val || 0);
                             "
                             id="received_amount"
                             class="w-full bg-white border-none text-emerald-600 font-black text-xl sm:text-2xl rounded-xl focus:ring-2 focus:ring-emerald-500 px-4 py-3 shadow-sm transition"
