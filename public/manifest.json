@@ -1,7 +1,7 @@
 {
     "name": "Teacher VC - نظام الحوالات",
     "short_name": "Teacher VC",
-    "start_url": "/",
+    "start_url": "/ar/rates",
     "display": "standalone",
     "background_color": "#f8f9fc",
     "theme_color": "#ffffff",
