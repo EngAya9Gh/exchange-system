@@ -11,7 +11,30 @@
         <div class="flex items-center gap-3">
             <img src="{{ asset('logo.png?v=2') }}" alt="Teacher VC" class="h-20 lg:h-24 object-contain drop-shadow-xl brightness-200">
         </div>
-        <div>
+        <div class="flex items-center gap-3" x-data="{
+            deferredPrompt: null,
+            showInstallPrompt: false,
+            init() {
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    this.deferredPrompt = e;
+                    this.showInstallPrompt = true;
+                });
+            },
+            async installApp() {
+                if (!this.deferredPrompt) return;
+                this.deferredPrompt.prompt();
+                const { outcome } = await this.deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    this.showInstallPrompt = false;
+                }
+                this.deferredPrompt = null;
+            }
+        }">
+            <button x-show="showInstallPrompt" @click="installApp()" style="display: none;" class="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <span class="hidden sm:inline">تنزيل التطبيق</span>
+            </button>
             <a href="{{ route('login') }}" class="px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-bold rounded-xl backdrop-blur-md transition-all shadow-lg hover:shadow-red-500/20">
                 تسجيل الدخول
             </a>

@@ -7,6 +7,11 @@
 
         <title>{{ config('app.name', 'Teacher VC') }}</title>
         <link rel="icon" type="image/png" href="{{ asset('logo.png?v=2') }}">
+        <link rel="manifest" href="{{ asset('manifest.json') }}">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="Teacher VC">
+        <link rel="apple-touch-icon" href="{{ asset('logo.png?v=2') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
