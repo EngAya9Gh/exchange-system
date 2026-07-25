@@ -43,7 +43,9 @@
             <div class="absolute inset-0 bg-white/1 backdrop-blur-[20px] -z-10 pointer-events-none border-t border-white/50"></div>
 
             <div class="flex justify-center mb-6 relative z-20">
-                <img src="{{ asset('logo.png?v=2') }}" alt="Teacher VC" class="h-28 object-contain drop-shadow-md">
+                <a href="{{ url('/ar/rates') }}">
+                    <img src="{{ asset('logo.png?v=2') }}" alt="Teacher VC" class="h-28 object-contain drop-shadow-md hover:scale-105 transition-transform duration-300 cursor-pointer">
+                </a>
             </div>
 
             <!-- Inner form container with subtle borders -->

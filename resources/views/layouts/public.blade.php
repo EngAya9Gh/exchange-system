@@ -7,7 +7,7 @@
 
         <title>{{ config('app.name', 'Teacher VC') }}</title>
         <link rel="icon" type="image/png" href="{{ asset('logo.png?v=2') }}">
-        <link rel="manifest" href="{{ asset('manifest.json') }}">
+        <link rel="manifest" href="{{ asset('manifest.json?v=2') }}">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="apple-mobile-web-app-title" content="Teacher VC">
@@ -20,6 +20,13 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js');
+                });
+            }
+        </script>
     </head>
     <body class="font-sans antialiased" style="font-family: 'Cairo', sans-serif;">
         {{ $slot }}
