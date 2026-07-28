@@ -52,14 +52,23 @@
                         <td class="px-6 py-4 font-bold text-gray-900">{{ $user->name }}</td>
                         <td class="px-6 py-4" dir="ltr">{{ $user->username }}</td>
                         <td class="px-6 py-4" dir="ltr">{{ $user->phone ?? '-' }}</td>
-                        <td class="px-6 py-4 font-bold text-green-600">
-                            {{ number_format($user->balance, 2) }}
-                            <div class="text-xs font-normal {{ $user->has_unlimited_balance ? 'text-gray-500' : 'text-red-500' }}">
-                                @if($user->has_unlimited_balance)
-                                    (سقف مفتوح)
-                                @else
-                                    الحد الأقصى: {{ number_format($user->balance_limit, 2) }}
-                                @endif
+                        <td class="px-6 py-4 font-bold text-center">
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="{{ $user->balance >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
+                                        {{ number_format(abs($user->balance), 2) }}
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $user->balance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
+                                        {{ $user->balance >= 0 ? 'دائن (له)' : 'مدين (عليه)' }}
+                                    </span>
+                                </div>
+                                <div class="text-xs font-normal {{ $user->has_unlimited_balance ? 'text-gray-500' : 'text-slate-500' }}">
+                                    @if($user->has_unlimited_balance)
+                                        (سقف مفتوح)
+                                    @else
+                                        الحد الأقصى: {{ number_format($user->balance_limit, 2) }}
+                                    @endif
+                                </div>
                             </div>
                         </td>
                         <td class="px-6 py-4">

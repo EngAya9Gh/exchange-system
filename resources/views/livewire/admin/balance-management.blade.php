@@ -33,7 +33,16 @@
                     <tr class="border-b border-gray-100 hover:bg-gray-50/50 transition">
                         <td class="px-6 py-4 font-bold text-gray-900">{{ $user->name }}</td>
                         <td class="px-6 py-4 font-bold font-mono text-gray-500" dir="ltr">{{ $user->phone }}</td>
-                        <td class="px-6 py-4 font-bold text-green-600">{{ number_format($user->balance, 2) }}</td>
+                        <td class="px-6 py-4 font-bold text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <span class="{{ $user->balance >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
+                                    {{ number_format(abs($user->balance), 2) }}
+                                </span>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $user->balance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }}">
+                                    {{ $user->balance >= 0 ? 'دائن (له)' : 'مدين (عليه)' }}
+                                </span>
+                            </div>
+                        </td>
                         <td class="px-6 py-4">
                             @if($user->has_unlimited_balance)
                                 <span class="text-gray-500 text-xs font-bold">{{ __('messages.unlimited_limit') }}</span>
@@ -74,7 +83,14 @@
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div class="mt-3 text-center sm:mt-0 sm:text-start w-full">
                             <h3 class="text-xl leading-6 font-black text-gray-900 mb-2" id="modal-title">{{ __('messages.deposit_withdraw_balance') }}</h3>
-                            <p class="text-sm text-gray-500 mb-6">{{ __('messages.customer') }}: <span class="font-bold text-gray-900">{{ $manageUserName }}</span> | {{ __('messages.current_balance') }}: <span class="font-bold text-green-600">{{ number_format($manageUserBalance, 2) }}</span></p>
+                            <p class="text-sm text-gray-500 mb-6">{{ __('messages.customer') }}: <span class="font-bold text-gray-900">{{ $manageUserName }}</span> | {{ __('messages.current_balance') }}: 
+                                <span class="font-bold {{ $manageUserBalance >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
+                                    {{ number_format(abs($manageUserBalance), 2) }}
+                                    <span class="text-xs {{ $manageUserBalance >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
+                                        {{ $manageUserBalance >= 0 ? '(دائن)' : '(مدين)' }}
+                                    </span>
+                                </span>
+                            </p>
                             
                             <div class="mb-4 text-start">
                                 <label class="block text-sm font-bold text-gray-700 mb-2">المبلغ (اكتب الرقم بدون أي إشارات)</label>
@@ -105,7 +121,14 @@
                     <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div class="mt-3 text-center sm:mt-0 sm:text-start w-full">
                             <h3 class="text-xl leading-6 font-black text-gray-900 mb-2" id="modal-title">{{ __('messages.record_payment') }}</h3>
-                            <p class="text-sm text-gray-500 mb-6">{{ __('messages.customer') }}: <span class="font-bold text-gray-900">{{ $manageUserName }}</span> | {{ __('messages.current_balance') }}: <span class="font-bold text-green-600">{{ number_format($manageUserBalance, 2) }}</span></p>
+                            <p class="text-sm text-gray-500 mb-6">{{ __('messages.customer') }}: <span class="font-bold text-gray-900">{{ $manageUserName }}</span> | {{ __('messages.current_balance') }}: 
+                                <span class="font-bold {{ $manageUserBalance >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
+                                    {{ number_format(abs($manageUserBalance), 2) }}
+                                    <span class="text-xs {{ $manageUserBalance >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
+                                        {{ $manageUserBalance >= 0 ? '(دائن)' : '(مدين)' }}
+                                    </span>
+                                </span>
+                            </p>
                             
                             <div class="mb-4 text-start">
                                 <label class="block text-sm font-bold text-gray-700 mb-2">{{ __('messages.payment_amount') }}</label>
