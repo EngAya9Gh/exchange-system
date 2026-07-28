@@ -90,6 +90,10 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 flex justify-center gap-2">
+                            <button wire:click="openStatementModal({{ $user->id }})" class="text-slate-600 hover:text-slate-800 font-bold" title="كشف الحساب">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            </button>
+                            |
                             <button wire:click="editUser({{ $user->id }})" class="text-primary-600 hover:text-primary-800">
                                 {{ __('messages.edit') }}
                             </button>
@@ -203,6 +207,98 @@
             </div>
         </div>
     </div>
+    @endif
+
+    <!-- Statement Modal -->
+    @if($showStatementModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-slate-900 bg-opacity-50 backdrop-blur-sm transition-opacity" wire:click="closeStatementModal"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div class="inline-block align-bottom bg-white rounded-[24px] text-start overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="mt-3 text-center sm:mt-0 sm:text-start w-full">
+                            <div class="flex justify-between items-center mb-6">
+                                <div>
+                                    <h3 class="text-xl leading-6 font-black text-gray-900 mb-2" id="modal-title">كشف حساب</h3>
+                                    <p class="text-sm text-gray-500">{{ __('messages.customer') }}: <span class="font-bold text-gray-900">{{ $statementUserName }}</span> | {{ __('messages.current_balance') }}: 
+                                        <span class="font-bold {{ $statementUserBalance >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
+                                            {{ number_format(abs($statementUserBalance), 2) }}
+                                            <span class="text-xs {{ $statementUserBalance >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
+                                                {{ $statementUserBalance >= 0 ? '(دائن)' : '(مدين)' }}
+                                            </span>
+                                        </span>
+                                    </p>
+                                </div>
+                                <button wire:click="closeStatementModal" class="text-gray-400 hover:text-gray-500">
+                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="overflow-x-auto max-h-[60vh] border border-gray-100 rounded-xl">
+                                <table class="w-full text-sm text-center text-gray-500">
+                                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0 shadow-sm">
+                                        <tr>
+                                            <th class="px-4 py-3">التاريخ والوقت</th>
+                                            <th class="px-4 py-3">نوع العملية</th>
+                                            <th class="px-4 py-3">المبلغ</th>
+                                            <th class="px-4 py-3">الرصيد بعد العملية</th>
+                                            <th class="px-4 py-3">البيان (ملاحظات)</th>
+                                            <th class="px-4 py-3">بواسطة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        @forelse($statementTransactions as $tx)
+                                            <tr class="hover:bg-gray-50/50 transition">
+                                                <td class="px-4 py-3 whitespace-nowrap font-mono text-xs text-gray-600" dir="ltr">{{ $tx->created_at->format('Y-m-d h:i A') }}</td>
+                                                <td class="px-4 py-3 font-bold">
+                                                    @if($tx->type === 'deposit')
+                                                        <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded">إيداع</span>
+                                                    @elseif($tx->type === 'withdrawal')
+                                                        <span class="bg-rose-100 text-rose-800 text-xs px-2 py-1 rounded">سحب</span>
+                                                    @elseif($tx->type === 'payment')
+                                                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">سداد دفعة</span>
+                                                    @else
+                                                        <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">تعديل رصيد</span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-4 py-3 font-bold whitespace-nowrap" dir="ltr">
+                                                    @if(in_array($tx->type, ['deposit', 'payment']) || ($tx->type === 'adjustment' && $tx->balance_after >= $tx->balance_before))
+                                                        <span class="text-emerald-600">+ {{ number_format($tx->amount, 2) }}</span>
+                                                    @else
+                                                        <span class="text-rose-600">- {{ number_format($tx->amount, 2) }}</span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-4 py-3 font-bold whitespace-nowrap" dir="ltr">
+                                                    <span class="{{ $tx->balance_after >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
+                                                        {{ number_format(abs($tx->balance_after), 2) }}
+                                                        <span class="text-[10px] font-normal">
+                                                            {{ $tx->balance_after >= 0 ? '(دائن)' : '(مدين)' }}
+                                                        </span>
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-3 text-gray-600 text-xs max-w-xs truncate" title="{{ $tx->notes }}">
+                                                    {{ $tx->notes ?? '-' }}
+                                                </td>
+                                                <td class="px-4 py-3 text-xs text-gray-400">
+                                                    {{ $tx->admin?->name ?? 'نظام' }}
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="6" class="px-4 py-8 text-center text-gray-400">لا توجد حركات مالية مسجلة لهذا المستخدم.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     @endif
 </div>
 

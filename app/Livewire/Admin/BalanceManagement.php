@@ -22,6 +22,10 @@ class BalanceManagement extends Component
     public $depositAmount = '';
     public $depositNote = '';
 
+    // Statement Modal
+    public $showStatementModal = false;
+    public $statementTransactions = [];
+
     // Settings Modal
     public $showSettingsModal = false;
     public $editHasUnlimited = false;
@@ -87,7 +91,26 @@ class BalanceManagement extends Component
         $this->showDepositModal = false;
         $this->showSettingsModal = false;
         $this->showPaymentModal = false;
+        $this->showStatementModal = false;
         $this->manageUserId = null;
+    }
+
+    public function openStatementModal($id)
+    {
+        $user = User::findOrFail($id);
+        $this->manageUserId = $user->id;
+        $this->manageUserName = $user->name;
+        $this->manageUserBalance = $user->balance;
+        
+        $this->statementTransactions = \App\Models\BalanceTransaction::where('user_id', $user->id)
+            ->with('admin')
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        $this->showStatementModal = true;
+        $this->showDepositModal = false;
+        $this->showSettingsModal = false;
+        $this->showPaymentModal = false;
     }
 
     public function confirmDeposit()
@@ -100,8 +123,19 @@ class BalanceManagement extends Component
         ]);
 
         $user = User::findOrFail($this->manageUserId);
+        $balanceBefore = $user->balance;
         $user->balance += (float)$this->depositAmount;
         $user->save();
+
+        \App\Models\BalanceTransaction::create([
+            'user_id' => $user->id,
+            'admin_id' => auth()->id(),
+            'type' => 'deposit',
+            'amount' => (float)$this->depositAmount,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $user->balance,
+            'notes' => 'إيداع يدوي',
+        ]);
 
         session()->flash('success', "تم إضافة الرصيد بنجاح لـ {$this->manageUserName}.");
         $this->closeModals();
@@ -117,8 +151,19 @@ class BalanceManagement extends Component
         ]);
 
         $user = User::findOrFail($this->manageUserId);
+        $balanceBefore = $user->balance;
         $user->balance -= (float)$this->depositAmount;
         $user->save();
+
+        \App\Models\BalanceTransaction::create([
+            'user_id' => $user->id,
+            'admin_id' => auth()->id(),
+            'type' => 'withdrawal',
+            'amount' => (float)$this->depositAmount,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $user->balance,
+            'notes' => 'سحب يدوي',
+        ]);
 
         session()->flash('success', "تم خصم الرصيد بنجاح من {$this->manageUserName}.");
         $this->closeModals();
@@ -135,6 +180,7 @@ class BalanceManagement extends Component
         try {
             \Illuminate\Support\Facades\DB::transaction(function () {
                 $user = User::findOrFail($this->manageUserId);
+                $balanceBefore = $user->balance;
                 $user->balance += (float)$this->paymentAmount;
                 $user->save();
 
@@ -145,6 +191,17 @@ class BalanceManagement extends Component
                     'amount' => $this->paymentAmount,
                     'payment_method' => $this->paymentMethod,
                     'notes' => $this->paymentNotes
+                ]);
+
+                // Register in BalanceTransaction Table
+                \App\Models\BalanceTransaction::create([
+                    'user_id' => $user->id,
+                    'admin_id' => auth()->id(),
+                    'type' => 'payment',
+                    'amount' => (float)$this->paymentAmount,
+                    'balance_before' => $balanceBefore,
+                    'balance_after' => $user->balance,
+                    'notes' => "تسجيل دفعة ({$this->paymentMethod}) - " . $this->paymentNotes,
                 ]);
 
                 // Send notification

@@ -33,6 +33,12 @@ class UserManagement extends Component
     public bool $receives_telegram_alerts = false;
 
     public bool $showFormModal = false;
+    
+    // Statement Modal
+    public bool $showStatementModal = false;
+    public array|\Illuminate\Database\Eloquent\Collection $statementTransactions = [];
+    public string $statementUserName = '';
+    public float $statementUserBalance = 0.0;
 
     public function updatedSearchQuery(): void
     {
@@ -108,6 +114,9 @@ class UserManagement extends Component
 
         if ($this->editingUserId) {
             $user = User::findOrFail($this->editingUserId);
+            
+            $balanceBefore = $user->balance;
+            
             $user->update($data);
             $user->syncRoles([$this->role]);
             
@@ -117,6 +126,19 @@ class UserManagement extends Component
                 $user->revokePermissionTo('receive_telegram_alerts');
             }
             
+            // Check if balance was manually changed
+            if ((float)$balanceBefore !== (float)$this->balance) {
+                \App\Models\BalanceTransaction::create([
+                    'user_id' => $user->id,
+                    'admin_id' => auth()->id(),
+                    'type' => 'adjustment',
+                    'amount' => abs((float)$this->balance - (float)$balanceBefore),
+                    'balance_before' => $balanceBefore,
+                    'balance_after' => $this->balance,
+                    'notes' => 'تعديل يدوي للرصيد من إدارة المستخدمين',
+                ]);
+            }
+            
             session()->flash('success', 'تم تحديث بيانات المستخدم بنجاح.');
         } else {
             $user = User::create($data);
@@ -124,6 +146,18 @@ class UserManagement extends Component
             
             if ($this->receives_telegram_alerts) {
                 $user->givePermissionTo('receive_telegram_alerts');
+            }
+            
+            if ((float)$this->balance != 0) {
+                \App\Models\BalanceTransaction::create([
+                    'user_id' => $user->id,
+                    'admin_id' => auth()->id(),
+                    'type' => 'adjustment',
+                    'amount' => abs((float)$this->balance),
+                    'balance_before' => 0,
+                    'balance_after' => $this->balance,
+                    'notes' => 'رصيد افتتاحي عند إنشاء الحساب',
+                ]);
             }
             
             session()->flash('success', 'تم إضافة المستخدم بنجاح.');
@@ -144,6 +178,25 @@ class UserManagement extends Component
 
         $user->update(['is_active' => !$user->is_active]);
         session()->flash('success', 'تم تغيير حالة المستخدم بنجاح.');
+    }
+
+    public function openStatementModal(int $id): void
+    {
+        $user = User::findOrFail($id);
+        $this->statementUserName = $user->name;
+        $this->statementUserBalance = (float) $user->balance;
+        
+        $this->statementTransactions = \App\Models\BalanceTransaction::where('user_id', $user->id)
+            ->with('admin')
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        $this->showStatementModal = true;
+    }
+
+    public function closeStatementModal(): void
+    {
+        $this->showStatementModal = false;
     }
 
     public function deleteUser(int $id): void
