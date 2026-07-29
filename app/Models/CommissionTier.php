@@ -10,8 +10,11 @@ class CommissionTier extends Model
     protected $fillable = [
         'min_amount',
         'max_amount',
+        'target_role',
         'commission_type',
         'commission_value',
+        'status'
+    ];
         'status'
     ];
 

@@ -1232,11 +1232,20 @@
                 <div class="bg-white rounded-3xl p-6 shadow-soft border border-slate-50 {{ !$enableAutomatedCommissions ? 'opacity-50 pointer-events-none' : '' }}">
                     <h3 class="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">{{ __('messages.add_new_commission_tier') }}</h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-2">{{ __('messages.from_amount_try') }}</label>
                             <input type="number" wire:model="tierMinAmount" class="w-full bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-primary-500 px-4 py-3 text-sm">
                             @error('tierMinAmount') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-2">الفئة المستهدفة</label>
+                            <select wire:model="tierTargetRole" class="w-full bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-primary-500 px-4 py-3 text-sm">
+                                <option value="all">الكل</option>
+                                <option value="agent">الوكلاء فقط</option>
+                                <option value="customer">الزبائن فقط</option>
+                            </select>
+                            @error('tierTargetRole') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-2">{{ __('messages.to_amount_try') }}</label>
@@ -1274,6 +1283,7 @@
                         <table class="min-w-full divide-y divide-slate-100">
                             <thead class="bg-slate-50">
                                 <tr>
+                                    <th class="px-6 py-4 text-right text-xs font-black text-slate-500 uppercase tracking-wider">الفئة المستهدفة</th>
                                     <th class="px-6 py-4 text-right text-xs font-black text-slate-500 uppercase tracking-wider">{{ __('messages.range_label') }}</th>
                                     <th class="px-6 py-4 text-right text-xs font-black text-slate-500 uppercase tracking-wider">{{ __('messages.type_label') }} {{ __('messages.commission_label') }}</th>
                                     <th class="px-6 py-4 text-right text-xs font-black text-slate-500 uppercase tracking-wider">{{ __('messages.value_label') }}</th>
@@ -1283,6 +1293,15 @@
                             <tbody class="bg-white divide-y divide-slate-100">
                                 @forelse($commissionTiers as $tier)
                                     <tr class="hover:bg-slate-50/50 transition">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if($tier->target_role === 'agent')
+                                                <span class="px-3 py-1 bg-amber-50 text-amber-600 rounded-lg text-xs font-bold">الوكلاء</span>
+                                            @elseif($tier->target_role === 'customer')
+                                                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold">الزبائن</span>
+                                            @else
+                                                <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold">الكل</span>
+                                            @endif
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-bold text-slate-800">{{ number_format($tier->min_amount, 2) }} - {{ number_format($tier->max_amount, 2) }} TRY</div>
                                         </td>
@@ -1307,7 +1326,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="px-6 py-8 text-center text-slate-500 text-sm font-bold">{{ __('messages.no_tiers_added_desc') }}</td>
+                                        <td colspan="5" class="px-6 py-8 text-center text-slate-500 text-sm font-bold">{{ __('messages.no_tiers_added_desc') }}</td>
                                     </tr>
                                 @endforelse
                             </tbody>

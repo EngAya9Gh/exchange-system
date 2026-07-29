@@ -67,6 +67,7 @@ class AdminDashboard extends Component
     public float $defaultCommission = 2.0;
     public $tierMinAmount = '';
     public $tierMaxAmount = '';
+    public $tierTargetRole = 'all'; // all, agent, customer
     public $tierCommissionType = 'fixed';
     public $tierCommissionValue = '';
 
@@ -490,6 +491,7 @@ class AdminDashboard extends Component
         $this->validate([
             'tierMinAmount' => 'required|numeric|min:0',
             'tierMaxAmount' => 'required|numeric|gt:tierMinAmount',
+            'tierTargetRole' => 'required|in:all,agent,customer',
             'tierCommissionType' => 'required|in:fixed,percentage',
             'tierCommissionValue' => 'required|numeric|min:0',
         ]);
@@ -497,12 +499,13 @@ class AdminDashboard extends Component
         CommissionTier::create([
             'min_amount' => $this->tierMinAmount,
             'max_amount' => $this->tierMaxAmount,
+            'target_role' => $this->tierTargetRole,
             'commission_type' => $this->tierCommissionType,
             'commission_value' => $this->tierCommissionValue,
             'status' => 'active',
         ]);
 
-        $this->reset(['tierMinAmount', 'tierMaxAmount', 'tierCommissionType', 'tierCommissionValue']);
+        $this->reset(['tierMinAmount', 'tierMaxAmount', 'tierTargetRole', 'tierCommissionType', 'tierCommissionValue']);
         session()->flash('commission_success', 'تم إضافة شريحة العمولة بنجاح.');
     }
 
