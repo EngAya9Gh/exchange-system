@@ -42,5 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, \Illuminate\Http\Request $request) {
+            return redirect()->back()->withInput($request->except('password'))->with('error', 'انتهت صلاحية الصفحة، يرجى المحاولة مجدداً.');
+        });
     })->create();
