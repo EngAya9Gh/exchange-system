@@ -15,9 +15,6 @@ class CommissionTier extends Model
         'commission_value',
         'status'
     ];
-        'status'
-    ];
-
     protected $casts = [
         'min_amount' => 'decimal:3',
         'max_amount' => 'decimal:3',
