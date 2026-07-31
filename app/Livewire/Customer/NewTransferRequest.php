@@ -157,6 +157,15 @@ class NewTransferRequest extends Component
             $user->balance -= $this->total_to_pay;
             $user->save();
 
+            \App\Models\BalanceTransaction::create([
+                'user_id' => $user->id,
+                'amount' => -$this->total_to_pay,
+                'balance_after' => $user->balance,
+                'type' => 'withdrawal',
+                'description' => 'قيمة الحوالة ورسومها (رقم ' . $transferNumber . ')',
+                'created_by' => $user->id,
+            ]);
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();

@@ -273,6 +273,15 @@ class AdminDashboard extends Component
             if (!$isAdmin) {
                 $user->balance -= $totalToPay;
                 $user->save();
+
+                \App\Models\BalanceTransaction::create([
+                    'user_id' => $user->id,
+                    'amount' => -$totalToPay,
+                    'balance_after' => $user->balance,
+                    'type' => 'withdrawal',
+                    'description' => 'قيمة الحوالة ورسومها (رقم ' . $transferNumber . ')',
+                    'created_by' => auth()->id(),
+                ]);
             }
             
             DB::commit();
@@ -330,6 +339,15 @@ class AdminDashboard extends Component
                     $refundAmount = $transfer->amount + $transfer->commission;
                     $transfer->user->balance += $refundAmount;
                     $transfer->user->save();
+
+                    \App\Models\BalanceTransaction::create([
+                        'user_id' => $transfer->user->id,
+                        'amount' => $refundAmount,
+                        'balance_after' => $transfer->user->balance,
+                        'type' => 'deposit',
+                        'description' => 'استرداد قيمة حوالة مرفوضة (رقم ' . $transfer->transfer_number . ')',
+                        'created_by' => auth()->id(),
+                    ]);
                 }
             }
             DB::commit();
