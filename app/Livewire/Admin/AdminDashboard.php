@@ -126,6 +126,26 @@ class AdminDashboard extends Component
         $this->calculateTotals();
     }
 
+    public function updatedSearchQuery(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedLedgerStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedLedgerDateFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedLedgerCurrencyFilter(): void
+    {
+        $this->resetPage();
+    }
+
 
 
     public function updatedReceivedAmount(): void
@@ -583,6 +603,10 @@ class AdminDashboard extends Component
                     ->orWhereHas('creator', function ($creatorQuery) use ($q) {
                         $creatorQuery->where('name', 'like', $q)
                                      ->orWhere('phone', 'like', $q);
+                    })
+                    ->orWhereHas('user', function ($userQuery) use ($q) {
+                        $userQuery->where('name', 'like', $q)
+                                  ->orWhere('phone', 'like', $q);
                     });
             });
         }
