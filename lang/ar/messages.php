@@ -86,7 +86,7 @@ return [
     'update_from_global_market' => 'تحديث من السوق العالمي',
     'ledger_title' => 'سجل الحركات والحوالات',
     'all_transfers_desc' => 'جميع الحوالات الصادرة والواردة لجميع الفروع',
-    'search_placeholder' => 'بحث بالاسم أو رقم الحوالة...',
+    'search_placeholder' => 'بحث برقم الحوالة، اسم أو هاتف المستفيد/المنشئ...',
     'all_statuses' => 'كل الحالات',
     'status_pending' => 'معلقة',
     'status_paid' => 'تم التسليم',

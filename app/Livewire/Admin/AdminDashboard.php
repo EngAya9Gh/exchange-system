@@ -576,8 +576,14 @@ class AdminDashboard extends Component
             $ledgerQuery->where(function ($sub) use ($q) {
                 $sub->where('transfer_number', 'like', $q)
                     ->orWhere('sender_name', 'like', $q)
+                    ->orWhere('sender_phone', 'like', $q)
                     ->orWhere('recipient_name', 'like', $q)
-                    ->orWhere('secret_code', 'like', $q);
+                    ->orWhere('recipient_phone', 'like', $q)
+                    ->orWhere('secret_code', 'like', $q)
+                    ->orWhereHas('creator', function ($creatorQuery) use ($q) {
+                        $creatorQuery->where('name', 'like', $q)
+                                     ->orWhere('phone', 'like', $q);
+                    });
             });
         }
 
