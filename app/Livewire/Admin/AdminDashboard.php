@@ -108,6 +108,8 @@ class AdminDashboard extends Component
 
     public function autoSyncRates(): void
     {
+        // تم إيقاف التحديث التلقائي بناءً على طلب الإدارة للحفاظ على التسعير اليدوي
+        /*
         $dbRate = \App\Models\ExchangeRate::first();
         // If rates haven't been updated in the last hour, sync them via Ajax
         if (!$dbRate || !$dbRate->updated_at || $dbRate->updated_at->diffInHours(\Carbon\Carbon::now()) >= 1) {
@@ -116,6 +118,7 @@ class AdminDashboard extends Component
             $this->loadRates();
             $this->calculateTotals();
         }
+        */
     }
 
     public function updatedSourceCurrency(): void

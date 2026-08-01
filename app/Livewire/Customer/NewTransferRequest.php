@@ -37,6 +37,8 @@ class NewTransferRequest extends Component
 
     public function autoSyncRates(): void
     {
+        // تم إيقاف التحديث التلقائي بناءً على طلب الإدارة للحفاظ على التسعير اليدوي
+        /*
         $dbRate = \App\Models\ExchangeRate::first();
         // If there are no rates or the last update was more than 1 hour ago
         if (!$dbRate || !$dbRate->updated_at || $dbRate->updated_at->diffInHours(\Carbon\Carbon::now()) >= 1) {
@@ -44,6 +46,7 @@ class NewTransferRequest extends Component
             $rateService->syncAllRates();
             $this->calculateTotals();
         }
+        */
     }
 
 
