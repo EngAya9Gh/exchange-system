@@ -13,3 +13,4 @@ Artisan::command('inspire', function () {
 // Schedule::call(function () {
 //     app(ExchangeRateService::class)->syncAllRates();
 // })->hourly();
+///
