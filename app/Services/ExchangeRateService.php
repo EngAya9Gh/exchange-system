@@ -109,12 +109,12 @@ class ExchangeRateService
 
                         ExchangeRate::updateOrCreate(
                             ['from_currency' => 'USD', 'to_currency' => $currency],
-                            ['rate' => $usdToTargetRate, 'last_fetched_at' => Carbon::now()]
+                            ['rate' => $usdToTargetRate, 'last_fetched_at' => Carbon::now(), 'updated_by' => 'تلقائي (نظام)']
                         );
                         // Currency to USD
                         ExchangeRate::updateOrCreate(
                             ['from_currency' => $currency, 'to_currency' => 'USD'],
-                            ['rate' => 1 / $rates[$currency], 'last_fetched_at' => Carbon::now()]
+                            ['rate' => 1 / $rates[$currency], 'last_fetched_at' => Carbon::now(), 'updated_by' => 'تلقائي (نظام)']
                         );
                     }
                 }
@@ -123,23 +123,23 @@ class ExchangeRateService
                     // EUR to TRY
                     ExchangeRate::updateOrCreate(
                         ['from_currency' => 'EUR', 'to_currency' => 'TRY'],
-                        ['rate' => $rates['TRY'] / $rates['EUR'], 'last_fetched_at' => Carbon::now()]
+                        ['rate' => $rates['TRY'] / $rates['EUR'], 'last_fetched_at' => Carbon::now(), 'updated_by' => 'تلقائي (نظام)']
                     );
                     // TRY to EUR
                     ExchangeRate::updateOrCreate(
                         ['from_currency' => 'TRY', 'to_currency' => 'EUR'],
-                        ['rate' => $rates['EUR'] / $rates['TRY'], 'last_fetched_at' => Carbon::now()]
+                        ['rate' => $rates['EUR'] / $rates['TRY'], 'last_fetched_at' => Carbon::now(), 'updated_by' => 'تلقائي (نظام)']
                     );
                     
                     // EUR to EGP
                     ExchangeRate::updateOrCreate(
                         ['from_currency' => 'EUR', 'to_currency' => 'EGP'],
-                        ['rate' => ($rates['EGP'] / $rates['EUR']) + 0, 'last_fetched_at' => Carbon::now()]
+                        ['rate' => ($rates['EGP'] / $rates['EUR']) + 0, 'last_fetched_at' => Carbon::now(), 'updated_by' => 'تلقائي (نظام)']
                     );
                     // TRY to EGP
                     ExchangeRate::updateOrCreate(
                         ['from_currency' => 'TRY', 'to_currency' => 'EGP'],
-                        ['rate' => ($rates['EGP'] / $rates['TRY']) + 0, 'last_fetched_at' => Carbon::now()]
+                        ['rate' => ($rates['EGP'] / $rates['TRY']) + 0, 'last_fetched_at' => Carbon::now(), 'updated_by' => 'تلقائي (نظام)']
                     );
                 }
 

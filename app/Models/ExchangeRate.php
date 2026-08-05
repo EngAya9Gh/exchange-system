@@ -11,7 +11,8 @@ class ExchangeRate extends Model
         'from_currency',
         'to_currency',
         'rate',
-        'last_fetched_at'
+        'last_fetched_at',
+        'updated_by'
     ];
 
     protected $casts = [

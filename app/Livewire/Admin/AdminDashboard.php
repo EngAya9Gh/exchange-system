@@ -217,7 +217,10 @@ class AdminDashboard extends Component
         if (isset($this->adjustedRates[$id])) {
             $rate = ExchangeRate::find($id);
             if ($rate) {
-                $rate->update(['rate' => $this->adjustedRates[$id]]);
+                $rate->update([
+                    'rate' => $this->adjustedRates[$id],
+                    'updated_by' => auth()->user()->name
+                ]);
                 session()->flash('rate_success', 'تم تحديث سعر الصرف بنجاح.');
             }
         }

@@ -1136,6 +1136,8 @@
                                 <th class="px-6 py-3">{{ __('messages.from_currency_header') }}</th>
                                 <th class="px-6 py-3">{{ __('messages.to_currency_header') }}</th>
                                 <th class="px-6 py-3">{{ __('messages.exchange_rate_label') }}{{ __('messages.current_label') }}</th>
+                                <th class="px-6 py-3">آخر تحديث بواسطة</th>
+                                <th class="px-6 py-3">وقت التحديث</th>
                                 <th class="px-6 py-3 text-center">{{ __('messages.actions') }}</th>
                             </tr>
                         </thead>
@@ -1146,6 +1148,18 @@
                                     <td class="px-6 py-4 font-bold">{{ $rate->to_currency }}</td>
                                     <td class="px-6 py-4">
                                         <input type="number" step="0.00001" wire:model="adjustedRates.{{ $rate->id }}" class="border-gray-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm text-sm font-bold w-32 py-1">
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if($rate->updated_by == 'تلقائي (نظام)')
+                                            <span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-md text-xs font-bold">{{ $rate->updated_by }}</span>
+                                        @elseif($rate->updated_by)
+                                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-bold">{{ $rate->updated_by }}</span>
+                                        @else
+                                            <span class="text-gray-400 text-xs">--</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-xs font-semibold text-gray-500">
+                                        {{ $rate->last_fetched_at ? $rate->last_fetched_at->format('Y-m-d H:i') : '--' }}
                                     </td>
                                     <td class="px-6 py-4 text-center">
                                         <button wire:click="updateRate({{ $rate->id }})" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-bold transition">
