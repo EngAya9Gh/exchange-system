@@ -9,7 +9,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// تحديث أسعار الصرف تلقائياً كل ساعة
-Schedule::call(function () {
-    app(ExchangeRateService::class)->syncAllRates();
-})->hourly();
+// تم إيقاف التحديث التلقائي لأسعار الصرف عبر الكرون للحفاظ على التسعير اليدوي
+// Schedule::call(function () {
+//     app(ExchangeRateService::class)->syncAllRates();
+// })->hourly();
