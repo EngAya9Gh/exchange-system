@@ -3,8 +3,12 @@
 # Navigate to the project directory
 cd /home/vcmoneytransfer/htdocs/vcmoneytransfer.com
 
-# Pull the latest changes from the main branch
-git pull origin main
+# Tell git this directory is safe (fixes the dubious ownership issue with Webhooks)
+git config --global --add safe.directory /home/vcmoneytransfer/htdocs/vcmoneytransfer.com
+
+# Force pull the latest changes from the main branch
+git fetch --all
+git reset --hard origin/main
 
 # Install PHP dependencies
 composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
