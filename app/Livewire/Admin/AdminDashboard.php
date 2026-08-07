@@ -302,11 +302,12 @@ class AdminDashboard extends Component
 
                 \App\Models\BalanceTransaction::create([
                     'user_id' => $user->id,
+                    'admin_id' => auth()->id(),
                     'amount' => -$totalToPay,
+                    'balance_before' => $user->balance + $totalToPay,
                     'balance_after' => $user->balance,
                     'type' => 'withdrawal',
-                    'description' => 'قيمة الحوالة ورسومها (رقم ' . $transferNumber . ')',
-                    'created_by' => auth()->id(),
+                    'notes' => 'قيمة الحوالة ورسومها (رقم ' . $transferNumber . ')',
                 ]);
             }
             
@@ -368,11 +369,12 @@ class AdminDashboard extends Component
 
                     \App\Models\BalanceTransaction::create([
                         'user_id' => $transfer->user->id,
+                        'admin_id' => auth()->id(),
                         'amount' => $refundAmount,
+                        'balance_before' => $transfer->user->balance - $refundAmount,
                         'balance_after' => $transfer->user->balance,
                         'type' => 'deposit',
-                        'description' => 'استرداد قيمة حوالة مرفوضة (رقم ' . $transfer->transfer_number . ')',
-                        'created_by' => auth()->id(),
+                        'notes' => 'استرداد قيمة حوالة مرفوضة (رقم ' . $transfer->transfer_number . ')',
                     ]);
                 }
             }
