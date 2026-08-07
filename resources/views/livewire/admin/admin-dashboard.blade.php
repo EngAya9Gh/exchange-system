@@ -971,6 +971,7 @@
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.transfer_date') }}</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.status') }}</th>
                                 <th class="px-4 py-4 font-bold text-center">{{ __('messages.receipt_date') }}</th>
+                                <th class="px-4 py-4 font-bold text-center">الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1034,10 +1035,26 @@
                                             @endif
                                         @else
                                             <span class="inline-flex items-center px-3 py-1 rounded-sm text-[10px] font-bold bg-amber-500 text-white shadow">
-                                                {{ __('messages.status_pending') }}
+                                                {{ $tr->status === 'new' ? 'جديدة' : __('messages.status_pending') }}
                                             </span>
+                                            @if($tr->undone_by)
+                                                <div class="text-[9px] text-purple-600 font-bold mt-1.5 bg-purple-50 px-2 py-1 rounded-md text-center max-w-[120px] mx-auto border border-purple-100 leading-tight" title="تراجع التسليم: {{ $tr->undoneBy->name ?? 'مجهول' }}">
+                                                    تراجع التسليم: <br>{{ $tr->undoneBy->name ?? 'مجهول' }}
+                                                    <div class="text-purple-400 mt-0.5 text-[8px]">{{ \Carbon\Carbon::parse($tr->undone_at)->format('Y-m-d H:i') }}</div>
+                                                </div>
+                                            @endif
                                         @endif
-                                        <div class="mt-2 flex space-x-2 space-x-reverse justify-center">
+                                    </td>
+                                    <td class="px-4 py-5 text-xs text-center">
+                                        @if($tr->delivered_at)
+                                            <div class="font-bold text-slate-600">{{ \Carbon\Carbon::parse($tr->delivered_at)->format('Y-m-d') }}</div>
+                                            <div class="text-slate-400 mt-0.5">{{ \Carbon\Carbon::parse($tr->delivered_at)->format('H:i:s') }}</div>
+                                        @else
+                                            <span class="text-slate-300">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-5 text-center">
+                                        <div class="flex space-x-2 space-x-reverse justify-center flex-wrap gap-y-2">
                                             <button wire:click="viewReceipt({{ $tr->id }})" wire:loading.attr="disabled" class="px-2 py-1 bg-purple-400 hover:bg-purple-500 text-white rounded text-[10px] font-bold transition flex items-center disabled:opacity-75 disabled:cursor-wait">
                                                 <span wire:loading.remove wire:target="viewReceipt({{ $tr->id }})" class="flex items-center">
                                                     <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
@@ -1062,6 +1079,27 @@
                                                 <button x-on:click="rejectId = {{ $tr->id }}; rejectModal = true" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-bold transition flex items-center">
                                                     <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                                     رفض
+                                                </button>
+                                            @endif
+                                            @if($tr->status === 'received')
+                                                <button x-on:click="
+                                                    Swal.fire({
+                                                        title: 'التراجع عن صرف الحوالة؟',
+                                                        text: 'ستعود هذه الحوالة إلى قيد الانتظار ولن تُعتبر مصروفة بعد الآن وسيتم تسجيل تراجعك عنها.',
+                                                        icon: 'warning',
+                                                        showCancelButton: true,
+                                                        confirmButtonColor: '#ef4444',
+                                                        cancelButtonColor: '#64748b',
+                                                        confirmButtonText: 'نعم، تراجع',
+                                                        cancelButtonText: 'إلغاء'
+                                                    }).then((result) => {
+                                                        if (result.isConfirmed) {
+                                                            $wire.undoTransfer({{ $tr->id }});
+                                                        }
+                                                    });
+                                                " class="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-[10px] font-bold transition flex items-center">
+                                                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                                                    تراجع
                                                 </button>
                                             @endif
                                             @if(auth()->user()->hasRole('Super Admin') || auth()->user()->role === 'admin')
@@ -1090,7 +1128,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-8 py-16 text-center text-slate-400 text-sm font-bold">
+                                    <td colspan="11" class="px-8 py-16 text-center text-slate-400 text-sm font-bold">
                                         <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
                                             <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                         </div>

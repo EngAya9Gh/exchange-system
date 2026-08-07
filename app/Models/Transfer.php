@@ -33,7 +33,9 @@ class Transfer extends Model
         'created_by',
         'paid_by',
         'transferred_at',
-        'delivered_at'
+        'delivered_at',
+        'undone_by',
+        'undone_at'
     ];
 
     protected $casts = [
@@ -59,5 +61,10 @@ class Transfer extends Model
     public function paidBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'paid_by');
+    }
+
+    public function undoneBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'undone_by');
     }
 }

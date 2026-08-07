@@ -466,6 +466,35 @@ class AdminDashboard extends Component
         $this->viewReceipt($transfer->id);
     }
 
+    public function undoTransfer(int $id): void
+    {
+        $transfer = Transfer::findOrFail($id);
+        
+        if ($transfer->status !== 'received') {
+            session()->flash('error', 'لا يمكن التراجع إلا عن الحوالات المصروفة.');
+            return;
+        }
+
+        try {
+            $previousStatus = $transfer->created_by ? 'new' : 'pending';
+
+            $transfer->update([
+                'status' => $previousStatus,
+                'undone_by' => auth()->id(),
+                'undone_at' => \Carbon\Carbon::now(),
+                'paid_by' => null,
+                'delivered_at' => null,
+                'admin_notes' => 'تم التراجع عن التسليم بواسطة ' . auth()->user()->name,
+            ]);
+
+            $this->dispatch('transfer-undone');
+            session()->flash('ledger_success', 'تم التراجع عن صرف الحوالة وإعادتها لقيد الانتظار بنجاح.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to undo transfer: " . $e->getMessage());
+            session()->flash('error', 'حدث خطأ أثناء محاولة التراجع.');
+        }
+    }
+
     #[On('open-transfer-receipt')]
     public function handleOpenTransferReceipt($id)
     {
