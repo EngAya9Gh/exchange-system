@@ -162,16 +162,18 @@ class NewTransferRequest extends Component
 
             \App\Models\BalanceTransaction::create([
                 'user_id' => $user->id,
+                'admin_id' => $user->id,
                 'amount' => -$this->total_to_pay,
+                'balance_before' => $user->balance + $this->total_to_pay,
                 'balance_after' => $user->balance,
                 'type' => 'withdrawal',
-                'description' => 'قيمة الحوالة ورسومها (رقم ' . $transferNumber . ')',
-                'created_by' => $user->id,
+                'notes' => 'قيمة الحوالة ورسومها (رقم ' . $transferNumber . ')',
             ]);
 
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error("Transfer Error: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
             session()->flash('error', 'حدث خطأ أثناء معالجة الطلب. يرجى المحاولة لاحقاً.');
             return;
         }
