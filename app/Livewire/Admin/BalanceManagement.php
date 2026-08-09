@@ -246,7 +246,8 @@ class BalanceManagement extends Component
             })
             ->where(function($q) {
                 $q->where('name', 'like', '%' . $this->searchQuery . '%')
-                  ->orWhere('phone', 'like', '%' . $this->searchQuery . '%');
+                  ->orWhere('phone', 'like', '%' . $this->searchQuery . '%')
+                  ->orWhere('email', 'like', '%' . $this->searchQuery . '%');
             })
             ->paginate(10);
 
