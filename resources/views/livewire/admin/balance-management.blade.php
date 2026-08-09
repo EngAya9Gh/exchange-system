@@ -31,7 +31,12 @@
             <tbody>
                 @forelse($users as $user)
                     <tr class="border-b border-gray-100 hover:bg-gray-50/50 transition">
-                        <td class="px-6 py-4 font-bold text-gray-900">{{ $user->name }}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-gray-900">{{ $user->name }}</div>
+                            @if($user->username)
+                                <div class="text-[10px] text-gray-400 font-mono mt-1">{{ $user->username }}</div>
+                            @endif
+                        </td>
                         <td class="px-6 py-4 font-bold font-mono text-gray-500" dir="ltr">{{ $user->phone }}</td>
                         <td class="px-6 py-4 font-bold text-center">
                             <div class="flex items-center justify-center gap-2">
