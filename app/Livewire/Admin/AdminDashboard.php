@@ -29,7 +29,7 @@ class AdminDashboard extends Component
 
     // Tabs state
     #[Url(history: true)]
-    public string $activeTab = 'dashboard'; // dashboard | new_transfer | ledger | rates | requests | commissions
+    public string $activeTab = 'dashboard'; // dashboard | new_transfer | ledger | rates | requests | transfer_commissions | billing_commissions
 
     // Manual form state
     public $sender_name = '';

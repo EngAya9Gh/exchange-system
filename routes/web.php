@@ -32,6 +32,7 @@ Route::group([
             Route::get('deposit-requests', \App\Livewire\Admin\DepositRequests::class)->name('deposit-requests');
             Route::get('balance-management', \App\Livewire\Admin\BalanceManagement::class)->name('balance-management');
             Route::get('payments-log', \App\Livewire\Admin\PaymentsLog::class)->name('payments-log');
+            Route::get('bill-payments-history', \App\Livewire\Admin\BillPaymentsHistory::class)->name('bill-payments-history');
         });
     });
 
@@ -64,6 +65,41 @@ Route::get('receipts/{number}', function ($number) {
 
     return view('receipts.transfer', compact('transfer', 'amountInWords'));
 })->name('receipt.view');
+
+// Public route to view bill payment receipt as a web page
+Route::get('bill-receipts/{reference}', function ($reference) {
+    $bill = \App\Models\BillPayment::with('user')->where('tahsilat_api_islem_id', $reference)->firstOrFail();
+    
+    $amountInWords = \App\Helpers\ArabicNumberToWords::convert((float) $bill->amount, 'ليرة تركية');
+
+    return view('receipts.bill_payment', compact('bill', 'amountInWords'));
+})->name('bill-receipt.view');
+
+// 🛠️ مسار مؤقت لعرض الفاتورة ببيانات تجريبية لمعاينة التصميم
+Route::get('bill-receipts-preview/test', function () {
+    $dummyUser = new \App\Models\User(['name' => 'شركة الصرافة والتسديدات السريعة']);
+    
+    $bill = new \App\Models\BillPayment([
+        'tahsilat_api_islem_id' => 'BILL_173456789_1234',
+        'abone_no' => '5391234567',
+        'fatura_no' => 'INV-987654321',
+        'amount' => 1500.50,
+        'commission' => 5.00,
+        'total_deducted' => 1505.50,
+        'api_status' => 'completed',
+        'api_status_message' => 'تم الدفع',
+    ]);
+    
+    // Set protected properties directly
+    $bill->created_at = now();
+    
+    // ربط المستخدم الوهمي
+    $bill->setRelation('user', $dummyUser);
+    
+    $amountInWords = \App\Helpers\ArabicNumberToWords::convert((float) $bill->amount, 'ليرة تركية');
+
+    return view('receipts.bill_payment', compact('bill', 'amountInWords'));
+});
 
 use App\Http\Controllers\TelegramWebhookController;
 
