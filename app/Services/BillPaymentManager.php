@@ -164,6 +164,15 @@ class BillPaymentManager
             }
 
             // Other API failures (duplicate, invalid institution, etc.)
+            Log::error('❌ فشل دفع الفاتورة من المزود:', [
+                'bill_id' => $bill->id,
+                'tahsilat_api_islem_id' => $tahsilatApiIslemId,
+                'abone_no' => $aboneNo,
+                'kurum_id' => $kurumId,
+                'amount' => $amount,
+                'api_response' => $apiResponse
+            ]);
+
             $this->refundBill($bill, 'فشل فوري من مزود الخدمة: ' . $apiResponse['message']);
 
             return ['success' => false, 'message' => 'فشل الدفع: ' . $apiResponse['message']];
