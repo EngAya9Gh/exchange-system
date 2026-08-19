@@ -44,10 +44,13 @@
                     @if($selectedCategory && isset($categorizedKurumlar[$selectedCategory]))
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto p-1">
                             @foreach($categorizedKurumlar[$selectedCategory] as $kurum)
+                                @php
+                                    $hasLogo = isset($existingLogos[$kurum['id']]);
+                                @endphp
                                 <button 
                                     type="button"
                                     wire:click="selectKurum('{{ $kurum['id'] }}')"
-                                    class="p-3 rounded-lg text-center transition-all flex items-center justify-center min-h-[60px] cursor-pointer border-0 outline-none"
+                                    class="p-2 rounded-lg text-right transition-all flex flex-row items-center gap-2 min-h-[60px] cursor-pointer border-0 outline-none"
                                     style="
                                         background-color: {{ $selectedKurumId == $kurum['id'] ? '#dc2626' : '#fef2f2' }};
                                         color: {{ $selectedKurumId == $kurum['id'] ? '#ffffff' : '#dc2626' }};
@@ -56,7 +59,13 @@
                                     "
                                     onmouseover="if({{ $selectedKurumId == $kurum['id'] ? 'false' : 'true' }}) { this.style.backgroundColor='#fee2e2'; }"
                                     onmouseout="if({{ $selectedKurumId == $kurum['id'] ? 'false' : 'true' }}) { this.style.backgroundColor='#fef2f2'; }">
-                                    <span class="block text-xs font-semibold break-words leading-tight">{{ $kurum['name'] }}</span>
+                                    
+                                    @if($hasLogo)
+                                        <div class="h-10 w-10 shrink-0 flex items-center justify-center bg-white rounded p-0.5">
+                                            <img src="{{ asset($existingLogos[$kurum['id']]) }}" alt="Logo" class="max-h-full max-w-full object-contain">
+                                        </div>
+                                    @endif
+                                    <span class="block text-[11px] font-semibold break-words leading-tight flex-1">{{ $kurum['name'] }}</span>
                                 </button>
                             @endforeach
                         </div>

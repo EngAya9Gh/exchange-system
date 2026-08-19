@@ -25,6 +25,7 @@ class BillPaymentsDashboard extends Component
     
     // API Balance (Visible to Super Admins)
     public $apiBalance = null;
+    public $existingLogos = [];
 
     // Filters
     public $statusFilter = 'all';
@@ -46,6 +47,8 @@ class BillPaymentsDashboard extends Component
         if (!empty($this->categorizedKurumlar)) {
             $this->selectedCategory = array_key_first($this->categorizedKurumlar);
         }
+        
+        $this->loadLogos();
 
         // Fetch API Balance for Super Admins
         if (auth()->check() && auth()->user()->hasRole('Super Admin')) {
@@ -55,6 +58,15 @@ class BillPaymentsDashboard extends Component
             // "GetDepositResult" typically contains "Balance" or similar.
             // Example: [ "Balance" => "1500.00", "ResponseCode" => "0000" ]
             $this->apiBalance = $depositResult['Deposit'] ?? $depositResult['Balance'] ?? 'غير متوفر';
+        }
+    }
+
+    public function loadLogos()
+    {
+        $settings = \App\Models\CompanySetting::all()->keyBy('company_code');
+        $this->existingLogos = [];
+        foreach ($settings as $code => $setting) {
+            $this->existingLogos[$code] = $setting->logo_path;
         }
     }
 
