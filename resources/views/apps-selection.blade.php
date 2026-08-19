@@ -23,7 +23,7 @@
                         <img src="{{ asset('images/transfers_illustration.jpg') }}" alt="Transfers" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     </div>
                     
-                    <h2 class="text-2xl sm:text-3xl font-black text-slate-800">نظام التحويلات المالية</h2>
+                    <h2 class="text-2xl sm:text-3xl font-black text-slate-800">تحويلات فودافون كاش</h2>
                 </a>
 
                 <!-- Invoices System Card -->
