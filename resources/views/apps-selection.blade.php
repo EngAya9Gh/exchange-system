@@ -20,7 +20,7 @@
                    class="group bg-white rounded-[32px] p-6 sm:p-10 shadow-soft border border-slate-100 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 flex flex-col items-center text-center">
                     
                     <div class="w-full h-32 sm:h-40 relative flex items-center justify-center mb-6 overflow-hidden rounded-2xl">
-                        <img src="{{ asset('images/vodafone_cash_illustration.jpg') }}" alt="Vodafone Cash" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-xl">
+                        <img src="{{ asset('images/vodafone_cash_illustration.jpg?v=2') }}" alt="Vodafone Cash" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-xl">
                     </div>
                     
                     <h2 class="text-2xl sm:text-3xl font-black text-slate-800">تحويلات فودافون كاش</h2>
@@ -31,7 +31,7 @@
                    class="group bg-white rounded-[32px] p-6 sm:p-10 shadow-soft border border-slate-100 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 flex flex-col items-center text-center">
                     
                     <div class="w-full h-32 sm:h-40 relative flex items-center justify-center mb-6 overflow-hidden rounded-2xl">
-                        <img src="{{ asset('images/invoices_illustration.jpg') }}" alt="Invoices" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-xl">
+                        <img src="{{ asset('images/invoices_illustration.jpg?v=2') }}" alt="Invoices" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-xl">
                     </div>
                     
                     <h2 class="text-2xl sm:text-3xl font-black text-slate-800">نظام تسديد الفواتير</h2>
