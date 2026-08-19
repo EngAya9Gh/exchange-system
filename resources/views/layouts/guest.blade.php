@@ -1,3 +1,4 @@
+@props(['maxWidth' => 'sm:max-w-md', 'padding' => 'px-10 py-10'])
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
     <head>
@@ -42,14 +43,24 @@
             <!-- Full Screen Glass Layer -->
             <div class="absolute inset-0 bg-white/1 backdrop-blur-[20px] -z-10 pointer-events-none border-t border-white/50"></div>
 
-            <div class="flex justify-center mb-6 relative z-20">
+            <div class="flex justify-center items-center mb-6 relative z-20 w-full {{ $maxWidth ?? 'sm:max-w-md' }}">
+                @auth
+                <div class="absolute left-0 top-1/2 -translate-y-1/2">
+                    <a href="{{ route('force-logout') }}" class="text-sm font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-2 sm:px-4 sm:py-2 rounded-xl transition flex items-center gap-2 shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        <span class="hidden sm:inline">{{ __('messages.logout_button') ?? 'تسجيل الخروج' }}</span>
+                    </a>
+                </div>
+                @endauth
                 <a href="{{ url('/ar/rates') }}">
                     <img src="{{ asset('logo.png?v=2') }}" alt="Teacher VC" class="h-28 object-contain drop-shadow-md hover:scale-105 transition-transform duration-300 cursor-pointer">
                 </a>
             </div>
 
             <!-- Inner form container with subtle borders -->
-            <div class="w-full sm:max-w-md mt-2 px-10 py-10 bg-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.05)] border border-white/60 sm:rounded-[32px] relative z-10">
+            <div class="w-full {{ $maxWidth ?? 'sm:max-w-md' }} mt-2 {{ $padding ?? 'px-10 py-10' }} bg-white/50 shadow-[0_8px_32px_rgba(0,0,0,0.05)] border border-white/60 sm:rounded-[32px] relative z-10">
                 {{ $slot }}
             </div>
         </div>

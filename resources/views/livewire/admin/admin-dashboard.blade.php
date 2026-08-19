@@ -41,6 +41,7 @@
 
         <!-- Navigation Links -->
         <nav class="flex-1 px-4 py-2 space-y-1.5 overflow-y-auto">
+            @if(in_array($systemContext, ['transfers', 'both']))
             <button wire:click="$set('activeTab', 'dashboard')"
                 class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'dashboard' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
                 <svg class="w-5 h-5 ml-4 {{ $activeTab === 'dashboard' ? 'text-primary-600' : 'text-slate-400' }}"
@@ -147,7 +148,10 @@
                     </svg>
                     {{ __('messages.payments_log') }}
                 </button>
-                <div class="h-px bg-slate-100 my-2"></div>
+            @endrole
+            @endif
+
+            @if(in_array($systemContext, ['invoices', 'both']))
                 <button wire:click="$set('activeTab', 'bill_payments')"
                     class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'bill_payments' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
                     <svg class="w-5 h-5 ml-4 {{ $activeTab === 'bill_payments' ? 'text-primary-600' : 'text-slate-400' }}"
@@ -180,7 +184,15 @@
                     </svg>
                     {{ __('messages.bill_payments_history') }}
                 </button>
-            @endrole
+            @endif
+            
+            @if($systemContext !== 'both')
+                <div class="h-px bg-slate-100 my-4"></div>
+                <a href="{{ route('apps') }}" wire:navigate class="w-full flex items-center justify-center px-4 py-3 rounded-2xl transition-all text-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 font-bold border border-indigo-100">
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    تغيير النظام
+                </a>
+            @endif
         </nav>
 
         <!-- Help Center Card -->
@@ -238,6 +250,9 @@
                         @if($activeTab === 'deposit_requests') <span class="text-primary-600 ml-2">{{ __('messages.deposit_requests_title') }}</span> @endif
                         @if($activeTab === 'balance_management') <span class="text-primary-600 ml-2">{{ __('messages.balance_and_limits') }}</span> @endif
                         @if($activeTab === 'payments_log') <span class="text-primary-600 ml-2">{{ __('messages.payments_log') }}</span> @endif
+                        @if($activeTab === 'bill_payments') <span class="text-primary-600 ml-2">{{ __('messages.bill_payments_system') ?? 'نظام تسديد الفواتير' }}</span> @endif
+                        @if($activeTab === 'billing_commissions') <span class="text-primary-600 ml-2">{{ __('messages.billing_commissions') ?? 'عمولات الفواتير' }}</span> @endif
+                        @if($activeTab === 'bill_payments_history') <span class="text-primary-600 ml-2">{{ __('messages.bill_payments_history') ?? 'سجل الفواتير' }}</span> @endif
                     </h1>
                     <p class="text-sm text-slate-400 font-medium mt-1">
                         @if($activeTab === 'dashboard')
@@ -302,7 +317,7 @@
                             class="absolute left-0 mt-2 w-36 bg-white border border-slate-100 rounded-xl shadow-lg z-50 overflow-hidden py-1">
                             @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
                                 <a rel="alternate" hreflang="{{ $localeCode }}"
-                                    href="{{ LaravelLocalization::getLocalizedURL($localeCode, route('admin.dashboard'), [], true) }}"
+                                    href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}"
                                     class="flex items-center gap-3 px-4 py-2 text-sm font-bold transition-colors {{ app()->getLocale() === $localeCode ? 'bg-primary-50 text-primary-600' : 'text-slate-600 hover:bg-slate-50 hover:text-primary-500' }}">
                                     <span class="text-lg">{{ $flags[$localeCode] ?? '🌐' }}</span>
                                     <span>{{ $properties['native'] }}</span>
@@ -346,6 +361,9 @@
                     @if($activeTab === 'deposit_requests') <span class="text-primary-600">طلبات شحن الرصيد</span> @endif
                     @if($activeTab === 'balance_management') <span class="text-primary-600">إدارة الأرصدة والسقوف</span> @endif
                     @if($activeTab === 'payments_log') <span class="text-primary-600">سجل المدفوعات</span> @endif
+                    @if($activeTab === 'bill_payments') <span class="text-primary-600">نظام تسديد الفواتير</span> @endif
+                    @if($activeTab === 'billing_commissions') <span class="text-primary-600">عمولات الفواتير</span> @endif
+                    @if($activeTab === 'bill_payments_history') <span class="text-primary-600">سجل الفواتير</span> @endif
                 </h1>
                 <p class="text-sm text-slate-400 font-medium mt-1">
                     @if($activeTab === 'dashboard')
@@ -357,8 +375,8 @@
 
         <!-- Scrollable Content -->
         <div class="flex-1 overflow-y-auto px-4 md:px-10 py-6 pb-20">
-            <!-- Telegram Link (Only show if not linked) -->
-            @if(empty(auth()->user()->telegram_chat_id))
+            <!-- Telegram Link (Only show if not linked and has permissions) -->
+            @if(auth()->user()->hasAnyRole(['Super Admin', 'Agent']) && empty(auth()->user()->telegram_chat_id))
                 <livewire:telegram-link />
             @endif
 

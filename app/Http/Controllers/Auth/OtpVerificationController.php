@@ -67,12 +67,11 @@ class OtpVerificationController extends Controller
         session(['2fa_verified' => true]);
         session(['last_activity_timestamp' => time()]);
 
-        // Redirect based on role
         if ($user->hasAnyRole(['Super Admin', 'Agent'])) {
             return redirect()->route('admin.dashboard');
-        } else {
-            return redirect()->route('dashboard');
         }
+
+        return redirect()->route('apps');
     }
 
     public function resend(Request $request)

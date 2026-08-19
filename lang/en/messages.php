@@ -3,6 +3,7 @@
 return [
     'welcome_to' => 'Welcome to Teacher VC',
     'hello_welcome_back' => 'Hello :name, welcome back',
+    'please_select_system' => 'Please select the system you want to access',
     'quick_stats' => 'Quick Stats About Your Balances',
     'new_transfer' => 'New Transfer',
     'manage_details_here' => 'Manage your details here.',

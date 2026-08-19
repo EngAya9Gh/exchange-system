@@ -54,7 +54,7 @@ class BillPaymentsDashboard extends Component
             // We need to parse whatever PayStore returns. For now we will store the raw response or try to parse it.
             // "GetDepositResult" typically contains "Balance" or similar.
             // Example: [ "Balance" => "1500.00", "ResponseCode" => "0000" ]
-            $this->apiBalance = $depositResult['Balance'] ?? $depositResult['balance'] ?? 'غير متوفر';
+            $this->apiBalance = $depositResult['Deposit'] ?? $depositResult['Balance'] ?? 'غير متوفر';
         }
     }
 

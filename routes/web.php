@@ -14,14 +14,31 @@ Route::group([
         return Route::post('/livewire-e92fe52f/update', $handle);
     });
 
+    Route::get('fatura-test-balance', function (\App\Services\FaturaApiService $api) {
+        return response()->json($api->getDeposit());
+    });
+
     // Public Promotional Rates Page
     Route::get('rates', \App\Livewire\Public\ExchangeRates::class)->name('rates.public');
     // Also add an alias for /egp
     Route::get('egp', \App\Livewire\Public\ExchangeRates::class)->name('egp.public');
 
     Route::middleware(['auth', 'verified'])->group(function () {
+        // App Selection Route
+        Route::view('apps', 'apps-selection')->name('apps');
+        
+        // Invoices System Route (accessible to all authenticated users as requested)
+        Route::get('invoices', function () {
+            if (auth()->user()->hasAnyRole(['Super Admin', 'Agent'])) {
+                return redirect()->route('admin.dashboard');
+            }
+            return view('dashboard', ['systemContext' => 'invoices']);
+        })->name('invoices.dashboard');
+        
         // Customer routes
-        Route::view('dashboard', 'dashboard')->name('dashboard');
+        Route::get('dashboard', function () {
+            return view('dashboard', ['systemContext' => 'transfers']);
+        })->name('dashboard');
         Route::view('profile', 'profile')->name('profile');
         Route::get('my-payments', \App\Livewire\Customer\CustomerPayments::class)->name('customer.payments');
 

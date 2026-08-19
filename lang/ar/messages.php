@@ -3,6 +3,7 @@
 return [
     'welcome_to' => 'مرحباً بك في Teacher VC',
     'hello_welcome_back' => 'أهلاً :name، مرحباً بعودتك',
+    'please_select_system' => 'الرجاء اختيار النظام الذي تود الدخول إليه',
     'quick_stats' => 'إحصائيات سريعة عن أرصدتك',
     'new_transfer' => 'حوالة جديدة',
     'manage_details_here' => 'أدر تفاصيلك من هنا',

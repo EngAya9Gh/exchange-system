@@ -5,7 +5,11 @@
             <div class="flex items-center gap-4">
                 <img src="{{ asset('logo.png?v=2') }}" alt="Logo" class="h-10 object-contain">
                 <h2 class="font-black text-xl sm:text-2xl text-slate-800 leading-tight">
-                    {{ __('messages.customer_portal') }}
+                    @if($systemContext === 'invoices')
+                        {{ __('messages.bill_payments_system') ?? 'بوابة نظام الفواتير' }}
+                    @else
+                        {{ __('messages.customer_portal') }}
+                    @endif
                 </h2>
             </div>
             <div class="flex flex-wrap justify-start sm:justify-end items-center gap-2 sm:gap-4 w-full sm:w-auto">
@@ -29,7 +33,7 @@
                         class="absolute left-0 mt-2 w-36 bg-white border border-slate-100 rounded-xl shadow-lg overflow-hidden py-1">
                         @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
                             <a rel="alternate" hreflang="{{ $localeCode }}"
-                                href="{{ LaravelLocalization::getLocalizedURL($localeCode, route('dashboard'), [], true) }}"
+                                href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}"
                                 class="flex items-center gap-3 px-4 py-2 text-sm font-bold transition-colors {{ app()->getLocale() === $localeCode ? 'bg-primary-50 text-primary-600' : 'text-slate-600 hover:bg-slate-50 hover:text-primary-500' }}">
                                 <span class="text-lg">{{ $flags[$localeCode] ?? '🌐' }}</span>
                                 <span>{{ $properties['native'] }}</span>
@@ -49,14 +53,20 @@
     </div>
 
     <div class="py-12" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6" x-data="{ activeTab: 'transfer' }">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6" x-data="{ activeTab: '{{ $systemContext === 'invoices' ? 'bill_payments' : 'transfer' }}' }">
             <!-- User Welcome Info -->
             <div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-6 sm:p-8 relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 sm:gap-0 transition-transform hover:-translate-y-1">
                 <div class="relative z-10">
                     <div class="flex items-center gap-2 mb-2">
                         <h3 class="text-xl sm:text-2xl font-black text-slate-800">{{ __('messages.welcome_name') }} {{ auth()->user()->name }}</h3>
                     </div>
-                    <p class="text-slate-500 font-medium text-xs sm:text-sm leading-relaxed">{{ __('messages.customer_portal_desc') }}</p>
+                    <p class="text-slate-500 font-medium text-xs sm:text-sm leading-relaxed">
+                        @if($systemContext === 'invoices')
+                            {{ __('messages.bill_payments_portal_desc') ?? 'بوابة نظام الفواتير. يمكنك تسديد الفواتير ومتابعة حالة الدفعات مباشرة.' }}
+                        @else
+                            {{ __('messages.customer_portal_desc') }}
+                        @endif
+                    </p>
                 </div>
                 
                 <div class="relative z-10 flex flex-col items-start sm:items-end w-full sm:w-auto bg-slate-50 sm:bg-transparent p-4 sm:p-0 rounded-xl sm:rounded-none">
@@ -72,24 +82,43 @@
 
             <!-- Dashboard Tabs Navigation -->
             <div class="flex space-x-2 space-x-reverse overflow-x-auto pb-2 border-b border-gray-200">
-                <button @click="activeTab = 'transfer'" 
-                        :class="activeTab === 'transfer' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                        class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                    {{ __('messages.new_transfer_tab') }}
-                </button>
+                @if($systemContext === 'transfers')
+                    <button @click="activeTab = 'transfer'" 
+                            :class="activeTab === 'transfer' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        {{ __('messages.new_transfer_tab') }}
+                    </button>
+                    <button @click="activeTab = 'history'" 
+                            :class="activeTab === 'history' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        {{ __('messages.transfer_history_tab') }}
+                    </button>
+                @endif
+
+                @if($systemContext === 'invoices')
+                    <button @click="activeTab = 'bill_payments'" 
+                            :class="activeTab === 'bill_payments' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                        {{ __('messages.query_pay_bill') }}
+                    </button>
+                    <button @click="activeTab = 'bill_history'" 
+                            :class="activeTab === 'bill_history' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        {{ __('messages.bill_payments_history') }}
+                    </button>
+                @endif
+
                 <button @click="activeTab = 'deposit'" 
                         :class="activeTab === 'deposit' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                         class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     {{ __('messages.add_balance_tab') }}
                 </button>
-                <button @click="activeTab = 'history'" 
-                        :class="activeTab === 'history' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                        class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                    {{ __('messages.transfer_history_tab') }}
-                </button>
+                
                 <button @click="activeTab = 'payments'" 
                         :class="activeTab === 'payments' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                         class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
@@ -99,16 +128,28 @@
             </div>
 
             <!-- Tab Contents -->
-            <div x-show="activeTab === 'transfer'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
-                <livewire:customer.new-transfer-request />
-            </div>
+            @if($systemContext === 'transfers')
+                <div x-show="activeTab === 'transfer'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+                    <livewire:customer.new-transfer-request />
+                </div>
+
+                <div x-show="activeTab === 'history'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+                    <livewire:customer.request-history />
+                </div>
+            @endif
+
+            @if($systemContext === 'invoices')
+                <div x-show="activeTab === 'bill_payments'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+                    <livewire:admin.bill-payments-dashboard />
+                </div>
+                
+                <div x-show="activeTab === 'bill_history'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+                    <livewire:admin.bill-payments-history />
+                </div>
+            @endif
 
             <div x-show="activeTab === 'deposit'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
                 <livewire:customer.deposit-funds />
-            </div>
-
-            <div x-show="activeTab === 'history'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
-                <livewire:customer.request-history />
             </div>
 
             <div x-show="activeTab === 'payments'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">

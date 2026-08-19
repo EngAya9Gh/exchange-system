@@ -27,9 +27,12 @@ class AdminDashboard extends Component
 {
     use WithPagination;
 
+    // Context state
+    public string $systemContext = 'transfers';
+
     // Tabs state
     #[Url(history: true)]
-    public string $activeTab = 'dashboard'; // dashboard | new_transfer | ledger | rates | requests | transfer_commissions | billing_commissions
+    public string $activeTab = ''; // Set dynamically in mount
 
     // Manual form state
     public $sender_name = '';
@@ -76,6 +79,21 @@ class AdminDashboard extends Component
 
     public function mount(): void
     {
+        $user = auth()->user();
+        if ($user && $user->hasAnyRole(['Super Admin', 'Agent'])) {
+            $this->systemContext = 'both';
+        } else {
+            $this->systemContext = request()->routeIs('invoices.*') ? 'invoices' : 'transfers';
+        }
+        
+        if (empty($this->activeTab)) {
+            $this->activeTab = $this->systemContext === 'invoices' ? 'bill_payments' : 'dashboard';
+        }
+
+        // If a simple customer tries to access the transfers admin dashboard directly, abort.
+        // Wait, the routes ensure only admins can hit /admin/dashboard, so that's covered by middleware.
+        // Invoices is accessible to all via /invoices route.
+
         $this->calculateTotals();
         $this->loadRates();
 

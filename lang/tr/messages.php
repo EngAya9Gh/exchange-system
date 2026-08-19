@@ -3,6 +3,7 @@
 return [
     'welcome_to' => 'Teacher VC\'e Hoş Geldiniz',
     'hello_welcome_back' => 'Merhaba :name, tekrar hoş geldin',
+    'please_select_system' => 'Lütfen erişmek istediğiniz sistemi seçin',
     'quick_stats' => 'Bakiyeleriniz Hakkında Hızlı İstatistikler',
     'new_transfer' => 'Yeni Transfer',
     'manage_details_here' => 'Ayrıntılarınızı buradan yönetin.',
