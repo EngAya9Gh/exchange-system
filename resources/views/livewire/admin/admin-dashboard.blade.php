@@ -193,6 +193,15 @@
                         </svg>
                         إدارة شعارات الفواتير
                     </button>
+                    <button wire:click="$set('activeTab', 'api_settings')"
+                        class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'api_settings' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
+                        <svg class="w-5 h-5 ml-4 {{ $activeTab === 'api_settings' ? 'text-primary-600' : 'text-slate-400' }}"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        إعدادات الـ API
+                    </button>
                 @endcan
             @endif
             
@@ -263,6 +272,7 @@
                         @if($activeTab === 'bill_payments') <span class="text-primary-600 ml-2">{{ __('messages.bill_payments_system') ?? 'نظام تسديد الفواتير' }}</span> @endif
                         @if($activeTab === 'billing_commissions') <span class="text-primary-600 ml-2">{{ __('messages.billing_commissions') ?? 'عمولات الفواتير' }}</span> @endif
                         @if($activeTab === 'bill_payments_history') <span class="text-primary-600 ml-2">{{ __('messages.bill_payments_history') ?? 'سجل الفواتير' }}</span> @endif
+                        @if($activeTab === 'api_settings') <span class="text-primary-600 ml-2">إعدادات الـ API للفواتير</span> @endif
                     </h1>
                     <p class="text-sm text-slate-400 font-medium mt-1">
                         @if($activeTab === 'dashboard')
@@ -374,6 +384,7 @@
                     @if($activeTab === 'bill_payments') <span class="text-primary-600">نظام تسديد الفواتير</span> @endif
                     @if($activeTab === 'billing_commissions') <span class="text-primary-600">عمولات الفواتير</span> @endif
                     @if($activeTab === 'bill_payments_history') <span class="text-primary-600">سجل الفواتير</span> @endif
+                    @if($activeTab === 'api_settings') <span class="text-primary-600">إعدادات الـ API</span> @endif
                 </h1>
                 <p class="text-sm text-slate-400 font-medium mt-1">
                     @if($activeTab === 'dashboard')
@@ -663,6 +674,13 @@
                 <!-- Bill Payments Tab -->
                 <div class="animate-fade-in-up">
                     <livewire:admin.bill-payments-dashboard />
+                </div>
+            @endif
+
+            @if ($activeTab === 'api_settings')
+                <!-- API Settings Tab -->
+                <div class="animate-fade-in-up">
+                    <livewire:admin.api-settings />
                 </div>
             @endif
 

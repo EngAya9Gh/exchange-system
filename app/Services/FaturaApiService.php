@@ -14,10 +14,10 @@ class FaturaApiService
 
     public function __construct()
     {
-        $this->baseUrl = env('FATURA_API_URL', 'http://bayi.bayiwebpanel.tech/ClientWebService');
-        $this->dealerCode = env('FATURA_API_DEALER_CODE', '');
-        $this->username = env('FATURA_API_USERNAME', '');
-        $this->password = env('FATURA_API_PASSWORD', '');
+        $this->baseUrl = \App\Models\Setting::where('key', 'FATURA_API_URL')->value('value') ?? env('FATURA_API_URL', 'http://bayi.bayiwebpanel.tech/ClientWebService');
+        $this->dealerCode = \App\Models\Setting::where('key', 'FATURA_API_DEALER_CODE')->value('value') ?? env('FATURA_API_DEALER_CODE', '');
+        $this->username = \App\Models\Setting::where('key', 'FATURA_API_USERNAME')->value('value') ?? env('FATURA_API_USERNAME', '');
+        $this->password = \App\Models\Setting::where('key', 'FATURA_API_PASSWORD')->value('value') ?? env('FATURA_API_PASSWORD', '');
     }
 
     /**
