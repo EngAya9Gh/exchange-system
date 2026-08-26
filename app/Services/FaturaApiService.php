@@ -123,7 +123,6 @@ class FaturaApiService
                 'BillInquiryId'   => (string) $billInquiryId,
                 'TransactionId'   => (string) $data['tahsilat_api_islem_id'],
                 'CompanyCode'     => (string) ($data['kurum_id'] ?? ''),
-                'BillOrderNumber' => (string) ($data['fatura_no'] ?? ''),
             ]);
             
             $resData = $result['BillPaymentResult'] ?? [];
