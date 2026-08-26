@@ -131,7 +131,6 @@ class FaturaApiService
                 'CompanyCode'     => (string) $data['kurum_id'],
                 'TransactionId'   => (string) $data['tahsilat_api_islem_id'],
                 'CustomerCode'    => $data['abone_no'],
-                'BillOrderNumber' => $data['fatura_no'] ?? '',
                 'BillAmount'      => $data['amount'],
                 'DueDate'         => $data['son_odeme_tarihi'] ?? date('Y-m-d'),
             ]);
