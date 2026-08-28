@@ -49,7 +49,22 @@ class FaturaApiService
         ]);
 
         try {
-            $response = Http::withOptions(['verify' => false])->asForm()->post($this->baseUrl, $data);
+            $request = Http::withOptions(['verify' => false]);
+            $cookieHeader = null;
+
+            if ($operation === 'BillPayment') {
+                $inquiryId = $data['request']['BillInquiryId'] ?? null;
+                if ($inquiryId) {
+                    $cookies = \Illuminate\Support\Facades\Cache::get('paystore_cookie_' . $inquiryId);
+                    if ($cookies) {
+                        $cookieArray = is_array($cookies) ? $cookies : [$cookies];
+                        $cookieHeader = implode('; ', array_map(function($c) { return explode(';', $c)[0]; }, $cookieArray));
+                        $request->withHeaders(['Cookie' => $cookieHeader]);
+                    }
+                }
+            }
+
+            $response = $request->asForm()->post($this->baseUrl, $data);
 
             $responseBody = $response->body();
             $responseJson = $response->json() ?? [];
@@ -58,9 +73,19 @@ class FaturaApiService
                 'status'   => $response->status(),
                 'body_raw' => $responseBody,
                 'body_json'=> $responseJson,
+                'sent_cookie' => $cookieHeader,
+                'received_cookies' => $response->headers()['Set-Cookie'] ?? null,
             ]);
 
             if ($response->successful()) {
+                if ($operation === 'BillInquiry') {
+                    $inquiryResult = $responseJson['BillInquiryResult'] ?? $responseJson;
+                    $inquiryId = $inquiryResult['BillInquiryId'] ?? null;
+                    $setCookie = $response->headers()['Set-Cookie'] ?? null;
+                    if ($inquiryId && $setCookie) {
+                        \Illuminate\Support\Facades\Cache::put('paystore_cookie_' . $inquiryId, $setCookie, now()->addMinutes(60));
+                    }
+                }
                 return $responseJson;
             }
 
