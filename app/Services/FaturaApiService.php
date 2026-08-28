@@ -49,7 +49,7 @@ class FaturaApiService
         ]);
 
         try {
-            $request = Http::withOptions(['verify' => false]);
+            $options = ['verify' => false];
             $cookieHeader = null;
 
             // Cookie storage directory (file-based, bypasses Cache driver issues)
@@ -87,14 +87,26 @@ class FaturaApiService
 
                 if ($cookieData && !empty($cookieData['cookies'])) {
                     $cookieArray = $cookieData['cookies'];
-                    $cookieHeader = implode('; ', array_map(function($c) { return explode(';', $c)[0]; }, $cookieArray));
-                    $request = $request->withHeaders(['Cookie' => $cookieHeader]);
-                    Log::channel('daily')->info("BillPayment: Sending cookie header", ['cookie' => $cookieHeader]);
+                    $cookieJar = new \GuzzleHttp\Cookie\CookieJar();
+                    $domain = parse_url($this->baseUrl, PHP_URL_HOST);
+                    
+                    foreach ($cookieArray as $cookieString) {
+                        $setCookie = \GuzzleHttp\Cookie\SetCookie::fromString($cookieString);
+                        if (!$setCookie->getDomain()) {
+                            $setCookie->setDomain($domain);
+                        }
+                        $cookieJar->setCookie($setCookie);
+                    }
+                    
+                    $options['cookies'] = $cookieJar;
+                    $cookieHeader = "Sent via Guzzle CookieJar (" . count($cookieArray) . " cookies)";
+                    Log::channel('daily')->info("BillPayment: Attached Guzzle CookieJar", ['cookies_raw' => $cookieArray]);
                 } else {
                     Log::warning("BillPayment: No cookie file found for BillInquiryId={$inquiryId}, CompanyCode={$companyCode}. PayStore may reject with 0188.");
                 }
             }
 
+            $request = Http::withOptions($options);
             $response = $request->asForm()->post($this->baseUrl, $data);
 
             $responseBody = $response->body();
