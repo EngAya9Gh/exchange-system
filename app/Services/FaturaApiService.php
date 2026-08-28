@@ -52,14 +52,22 @@ class FaturaApiService
             $request = Http::withOptions(['verify' => false]);
             $cookieHeader = null;
 
+            // PayStore's BillPayment flow is session-based:
+            // BillInquiry response includes Set-Cookie → must be sent back with BillPayment
             if ($operation === 'BillPayment') {
                 $inquiryId = $data['request']['BillInquiryId'] ?? null;
                 if ($inquiryId) {
-                    $cookies = \Illuminate\Support\Facades\Cache::get('paystore_cookie_' . $inquiryId);
+                    $cacheKey = 'paystore_cookie_' . $inquiryId;
+                    $cookies = \Illuminate\Support\Facades\Cache::get($cacheKey);
                     if ($cookies) {
                         $cookieArray = is_array($cookies) ? $cookies : [$cookies];
                         $cookieHeader = implode('; ', array_map(function($c) { return explode(';', $c)[0]; }, $cookieArray));
-                        $request->withHeaders(['Cookie' => $cookieHeader]);
+                        $request = $request->withHeaders(['Cookie' => $cookieHeader]);
+
+                        // Clean up cached cookie after retrieval (one-time use)
+                        \Illuminate\Support\Facades\Cache::forget($cacheKey);
+                    } else {
+                        Log::warning("BillPayment: No cached cookie found for BillInquiryId={$inquiryId}. PayStore may reject with 0188.");
                     }
                 }
             }
@@ -78,12 +86,16 @@ class FaturaApiService
             ]);
 
             if ($response->successful()) {
+                // Capture session cookie from BillInquiry to use in subsequent BillPayment
                 if ($operation === 'BillInquiry') {
                     $inquiryResult = $responseJson['BillInquiryResult'] ?? $responseJson;
                     $inquiryId = $inquiryResult['BillInquiryId'] ?? null;
                     $setCookie = $response->headers()['Set-Cookie'] ?? null;
                     if ($inquiryId && $setCookie) {
-                        \Illuminate\Support\Facades\Cache::put('paystore_cookie_' . $inquiryId, $setCookie, now()->addMinutes(60));
+                        \Illuminate\Support\Facades\Cache::put('paystore_cookie_' . $inquiryId, $setCookie, now()->addMinutes(30));
+                        Log::channel('daily')->info("BillInquiry: Cached session cookie for BillInquiryId={$inquiryId}");
+                    } elseif ($inquiryId && !$setCookie) {
+                        Log::warning("BillInquiry: No Set-Cookie header received for BillInquiryId={$inquiryId}");
                     }
                 }
                 return $responseJson;
