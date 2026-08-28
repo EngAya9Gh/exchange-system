@@ -62,7 +62,7 @@ class FaturaApiService
                 // Try primary key: by BillInquiryId
                 if ($inquiryId) {
                     $cacheKey = 'paystore_cookie_' . $inquiryId;
-                    $cookies = \Illuminate\Support\Facades\Cache::pull($cacheKey); // pull = get + forget
+                    $cookies = \Illuminate\Support\Facades\Cache::pull($cacheKey);
                     if ($cookies) {
                         $cookieFound = true;
                     }
@@ -92,19 +92,22 @@ class FaturaApiService
             $responseBody = $response->body();
             $responseJson = $response->json() ?? [];
 
+            // Use PSR-7 getHeader() for case-insensitive header access
+            $setCookieValues = $response->getHeader('Set-Cookie');
+
             Log::channel('daily')->info("=== Fatura API Response [{$operation}] ===", [
-                'status'   => $response->status(),
-                'body_raw' => $responseBody,
-                'body_json'=> $responseJson,
-                'sent_cookie' => $cookieHeader,
-                'received_cookies' => $response->headers()['Set-Cookie'] ?? null,
+                'status'        => $response->status(),
+                'body_raw'      => $responseBody,
+                'body_json'     => $responseJson,
+                'sent_cookie'   => $cookieHeader,
+                'set_cookie_values' => $setCookieValues,
+                'all_header_keys'   => array_keys($response->headers()),
             ]);
 
             if ($response->successful()) {
                 // Capture session cookie from BillInquiry to use in subsequent BillPayment
-                if ($operation === 'BillInquiry') {
-                    $setCookie = $response->headers()['Set-Cookie'] ?? null;
-                    if ($setCookie) {
+                if ($operation === 'BillInquiry' && !empty($setCookieValues)) {
+                    try {
                         $inquiryResult = $responseJson['BillInquiryResult'] ?? $responseJson;
                         $rootInquiryId = $inquiryResult['BillInquiryId'] ?? null;
                         $companyCode = $requestData['CompanyCode'] ?? null;
@@ -112,38 +115,42 @@ class FaturaApiService
 
                         // Cache under root BillInquiryId
                         if ($rootInquiryId) {
-                            \Illuminate\Support\Facades\Cache::put('paystore_cookie_' . $rootInquiryId, $setCookie, now()->addMinutes(30));
+                            \Illuminate\Support\Facades\Cache::put('paystore_cookie_' . $rootInquiryId, $setCookieValues, now()->addMinutes(30));
                             $cachedIds[] = $rootInquiryId;
                         }
 
                         // Cache under each bill's BillInquiryId (may differ from root)
                         $billList = $inquiryResult['BillList'] ?? [];
                         if (is_array($billList)) {
-                            // Normalize single bill to array
                             if (!empty($billList) && !isset($billList[0])) {
                                 $billList = [$billList];
                             }
                             foreach ($billList as $bill) {
                                 $billInqId = $bill['BillInquiryId'] ?? null;
                                 if ($billInqId && !in_array($billInqId, $cachedIds)) {
-                                    \Illuminate\Support\Facades\Cache::put('paystore_cookie_' . $billInqId, $setCookie, now()->addMinutes(30));
+                                    \Illuminate\Support\Facades\Cache::put('paystore_cookie_' . $billInqId, $setCookieValues, now()->addMinutes(30));
                                     $cachedIds[] = $billInqId;
                                 }
                             }
                         }
 
-                        // Fallback: cache under CompanyCode for extra reliability
+                        // Fallback: cache under CompanyCode
                         if ($companyCode) {
-                            \Illuminate\Support\Facades\Cache::put('paystore_cookie_company_' . $companyCode, $setCookie, now()->addMinutes(30));
+                            \Illuminate\Support\Facades\Cache::put('paystore_cookie_company_' . $companyCode, $setCookieValues, now()->addMinutes(30));
                         }
 
                         Log::channel('daily')->info("BillInquiry: Cached session cookie", [
                             'cached_inquiry_ids' => $cachedIds,
                             'company_code' => $companyCode,
+                            'cookie_count' => count($setCookieValues),
                         ]);
-                    } else {
-                        Log::warning("BillInquiry: No Set-Cookie header received from PayStore");
+                    } catch (\Exception $cacheEx) {
+                        Log::error("BillInquiry: Failed to cache cookie: " . $cacheEx->getMessage());
                     }
+                } elseif ($operation === 'BillInquiry') {
+                    Log::warning("BillInquiry: No Set-Cookie header received from PayStore", [
+                        'all_header_keys' => array_keys($response->headers()),
+                    ]);
                 }
                 return $responseJson;
             }
