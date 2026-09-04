@@ -87,26 +87,29 @@ class FaturaApiService
 
                 if ($cookieData && !empty($cookieData['cookies'])) {
                     $cookieArray = $cookieData['cookies'];
-                    $cookieJar = new \GuzzleHttp\Cookie\CookieJar();
-                    $domain = parse_url($this->baseUrl, PHP_URL_HOST);
+                    $rawCookies = [];
                     
                     foreach ($cookieArray as $cookieString) {
-                        $setCookie = \GuzzleHttp\Cookie\SetCookie::fromString($cookieString);
-                        if (!$setCookie->getDomain()) {
-                            $setCookie->setDomain($domain);
+                        $parts = explode(';', $cookieString);
+                        if (isset($parts[0])) {
+                            $rawCookies[] = trim($parts[0]);
                         }
-                        $cookieJar->setCookie($setCookie);
                     }
                     
-                    $options['cookies'] = $cookieJar;
-                    $cookieHeader = "Sent via Guzzle CookieJar (" . count($cookieArray) . " cookies)";
-                    Log::channel('daily')->info("BillPayment: Attached Guzzle CookieJar", ['cookies_raw' => $cookieArray]);
+                    if (!empty($rawCookies)) {
+                        $cookieHeaderStr = implode('; ', $rawCookies);
+                        $cookieHeader = "Sent via explicit Header (" . count($rawCookies) . " cookies)";
+                        Log::channel('daily')->info("BillPayment: Attached Cookie Header", ['cookie' => $cookieHeaderStr]);
+                    }
                 } else {
                     Log::warning("BillPayment: No cookie file found for BillInquiryId={$inquiryId}, CompanyCode={$companyCode}. PayStore may reject with 0188.");
                 }
             }
 
             $request = Http::withOptions($options);
+            if (isset($cookieHeaderStr)) {
+                $request = $request->withHeaders(['Cookie' => $cookieHeaderStr]);
+            }
             $response = $request->asForm()->post($this->baseUrl, $data);
 
             $responseBody = $response->body();
@@ -246,6 +249,7 @@ class FaturaApiService
                 'CustomerCode'    => $data['abone_no'],
                 'BillAmount'      => $data['amount'],
                 'DueDate'         => $data['son_odeme_tarihi'] ?? date('Y-m-d'),
+                'BillOrderNumber' => $data['bill_order_number'] ?? '',
             ]);
             
             // OwnBillPayment returns OwnBillPaymentResult (NOT BillPaymentResult)

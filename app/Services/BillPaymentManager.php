@@ -60,7 +60,7 @@ class BillPaymentManager
         }
 
         // 3. Generate unique transaction ID for API
-        $tahsilatApiIslemId = 'BILL_' . time() . '_' . rand(1000, 9999);
+        $tahsilatApiIslemId = time() . rand(1000, 9999);
 
         DB::beginTransaction();
         try {
