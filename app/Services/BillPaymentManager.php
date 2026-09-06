@@ -152,6 +152,8 @@ class BillPaymentManager
                     'current'  => $currentBalance,
                     'kurum_id' => $kurumId,
                     'abone_no' => $aboneNo,
+                    'api_message' => $apiResponse['message'] ?? 'No message',
+                    'api_message_en' => $apiResponse['message_en'] ?? 'No message EN',
                 ]);
 
                 return [
