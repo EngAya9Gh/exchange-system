@@ -45,9 +45,9 @@
                             @if($bill->api_status === 'pending')
                                 <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2.5 py-0.5 rounded-full border border-yellow-200">{{ __('messages.status_pending') }}</span>
                             @elseif($bill->api_status === 'completed')
-                                <span class="bg-success-50 text-success-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-success-200">{{ __('messages.status_completed') }}</span>
+                                <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-0.5 rounded-full border border-green-200">{{ __('messages.status_completed') }}</span>
                             @else
-                                <span class="bg-danger-50 text-danger-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-danger-200" title="{{ $bill->api_status_message }}">{{ __('messages.failed_refunded') }}</span>
+                                <span class="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-0.5 rounded-full border border-red-200" title="{{ $bill->api_status_message }}">{{ __('messages.failed_refunded') }}</span>
                             @endif
                         </td>
                         <td class="px-6 py-4 font-bold text-gray-500 text-xs">{{ $bill->created_at->format('Y-m-d H:i') }}</td>
