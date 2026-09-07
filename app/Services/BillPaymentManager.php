@@ -112,13 +112,14 @@ class BillPaymentManager
         ]);
 
         if ($apiResponse['success']) {
-            // API accepted it, it is now pending or processed. Update the API cost.
+            // API accepted it, mark as completed immediately
             $bill->update([
-                'api_cost' => $apiResponse['cost'],
-                'api_status_message' => 'API Accepted (Cost: ' . $apiResponse['cost'] . ')',
+                'api_status'         => 'completed',
+                'api_cost'           => $apiResponse['cost'],
+                'api_status_message' => 'تم سداد الفاتورة بنجاح (API Cost: ' . $apiResponse['cost'] . ')',
             ]);
             
-            return ['success' => true, 'message' => 'تم إرسال الفاتورة بنجاح. وحالتها الآن قيد المعالجة.', 'bill' => $bill];
+            return ['success' => true, 'message' => 'تم سداد الفاتورة بنجاح.', 'bill' => $bill];
         } else {
             // Check if failure is due to insufficient API balance (system-level issue, not user fault)
             if (!empty($apiResponse['insufficient_api_balance'])) {
