@@ -26,7 +26,7 @@ class BillPaymentsHistory extends Component
     public function render()
     {
         $user = auth()->user();
-        $isAdmin = $user->hasRole('Super Admin') || $user->role === 'admin';
+        $isAdmin = $user->hasAnyRole(['Super Admin', 'Admin']) || in_array(strtolower($user->role ?? ''), ['admin', 'super admin']);
 
         $query = BillPayment::with('user')->latest();
 
