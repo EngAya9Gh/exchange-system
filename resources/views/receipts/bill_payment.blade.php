@@ -163,6 +163,17 @@
         <div class="divider"></div>
 
         <div class="flex-row">
+            <span class="label">اسم الشركة:</span>
+            <span class="value">{{ $companyName }}</span>
+        </div>
+        <div class="flex-row">
+            <span class="label">نوع الفاتورة:</span>
+            <span class="value">{{ $categoryName }}</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="flex-row">
             <span class="label">رقم المشترك:</span>
             <span class="value">{{ $bill->abone_no }}</span>
         </div>

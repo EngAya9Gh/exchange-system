@@ -88,8 +88,12 @@ Route::get('bill-receipts/{reference}', function ($reference) {
     $bill = \App\Models\BillPayment::with('user')->where('tahsilat_api_islem_id', $reference)->firstOrFail();
     
     $amountInWords = \App\Helpers\ArabicNumberToWords::convert((float) $bill->amount, 'ليرة تركية');
+    
+    $companyDetails = \App\Helpers\FaturaCompanyHelper::getDetails($bill->kurum_id);
+    $companyName = $companyDetails['name'];
+    $categoryName = $companyDetails['category'];
 
-    return view('receipts.bill_payment', compact('bill', 'amountInWords'));
+    return view('receipts.bill_payment', compact('bill', 'amountInWords', 'companyName', 'categoryName'));
 })->name('bill-receipt.view');
 
 // 🛠️ مسار مؤقت لعرض الفاتورة ببيانات تجريبية لمعاينة التصميم
@@ -115,7 +119,10 @@ Route::get('bill-receipts-preview/test', function () {
     
     $amountInWords = \App\Helpers\ArabicNumberToWords::convert((float) $bill->amount, 'ليرة تركية');
 
-    return view('receipts.bill_payment', compact('bill', 'amountInWords'));
+    $companyName = 'شركة تجريبية للكهرباء';
+    $categoryName = 'تحصيل الكهرباء (Elektrik Tahsilatı)';
+
+    return view('receipts.bill_payment', compact('bill', 'amountInWords', 'companyName', 'categoryName'));
 });
 
 use App\Http\Controllers\TelegramWebhookController;
