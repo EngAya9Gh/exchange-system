@@ -46,10 +46,37 @@ class TelegramService
                 return false;
             }
 
+            // Forward message to WhatsApp group via Wakeel API
+            $this->sendToWhatsAppGroup($text);
+
             return true;
         } catch (\Exception $e) {
             Log::error('Telegram API Exception (sendMessage): ' . $e->getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Send message to WhatsApp Group via Wakeel API
+     */
+    protected function sendToWhatsAppGroup(string $text): void
+    {
+        $waApiKey = config('services.wakeel_whatsapp.api_key', env('WAKEEL_WHATSAPP_API_KEY'));
+        $waGroupId = config('services.wakeel_whatsapp.group_id', env('WAKEEL_WHATSAPP_GROUP_ID'));
+        
+        if (empty($waApiKey) || empty($waGroupId)) {
+            return;
+        }
+
+        try {
+            Http::timeout(10)
+                ->withToken($waApiKey)
+                ->post('https://provider.wakeel.cc/api/v1/message/send', [
+                    'phone' => $waGroupId,
+                    'text' => $text
+                ]);
+        } catch (\Exception $e) {
+            Log::error('WhatsApp Group API Exception: ' . $e->getMessage());
         }
     }
 
