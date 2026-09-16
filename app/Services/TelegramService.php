@@ -73,7 +73,7 @@ class TelegramService
                 ->withToken($waApiKey)
                 ->post('https://provider.wakeel.cc/api/v1/message/send', [
                     'phone' => $waGroupId,
-                    'text' => $text
+                    'message' => $text
                 ]);
         } catch (\Exception $e) {
             Log::error('WhatsApp Group API Exception: ' . $e->getMessage());
