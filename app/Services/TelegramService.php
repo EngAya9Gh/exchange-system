@@ -39,6 +39,7 @@ class TelegramService
         }
 
         try {
+            Log::info("Sending Telegram Message to {$chatId}: " . substr($text, 0, 50) . "...");
             $response = Http::timeout(15)->post($this->apiUrl . 'sendMessage', $payload);
             
             if (!$response->successful()) {
@@ -46,6 +47,7 @@ class TelegramService
                 return false;
             }
 
+            Log::info("Telegram Message Sent Successfully to {$chatId}");
             return true;
         } catch (\Exception $e) {
             Log::error('Telegram API Exception (sendMessage): ' . $e->getMessage());
@@ -66,12 +68,19 @@ class TelegramService
         }
 
         try {
-            Http::timeout(10)
+            Log::info("Sending WhatsApp Group Message: " . substr($text, 0, 50) . "...");
+            $response = Http::timeout(10)
                 ->withToken($waApiKey)
                 ->post('https://provider.wakeel.cc/api/v1/message/send', [
                     'phone' => $waGroupId,
                     'message' => $text
                 ]);
+                
+            if ($response->successful()) {
+                Log::info("WhatsApp Group Message Sent Successfully");
+            } else {
+                Log::error("WhatsApp Group API Error: " . $response->body());
+            }
         } catch (\Exception $e) {
             Log::error('WhatsApp Group API Exception: ' . $e->getMessage());
         }

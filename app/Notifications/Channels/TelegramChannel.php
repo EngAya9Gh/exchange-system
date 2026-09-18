@@ -41,7 +41,11 @@ class TelegramChannel
         }
 
         if (isset($message['forward_to_whatsapp']) && $message['forward_to_whatsapp']) {
-            $this->telegramService->sendToWhatsAppGroup($message['text']);
+            $cacheKey = "wa_forward_" . md5($message['text']);
+            if (!\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                $this->telegramService->sendToWhatsAppGroup($message['text']);
+                \Illuminate\Support\Facades\Cache::put($cacheKey, true, 60);
+            }
         }
 
         // Send any extra messages (like a standalone phone number)

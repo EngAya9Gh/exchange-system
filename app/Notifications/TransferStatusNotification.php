@@ -130,13 +130,17 @@ class TransferStatusNotification extends Notification
                 . "المبلغ المستلم: {$this->transfer->received_amount} {$this->transfer->target_currency}\n"
                 . "المستفيد: {$this->transfer->recipient_name}\n";
 
+            if ($this->transfer->recipient_phone) {
+                $message .= "رقم المستفيد:\n```{$this->transfer->recipient_phone}```\n";
+            }
+
             if ($this->transfer->secret_code) {
                 $message .= "🔑 الرمز السري: `{$this->transfer->secret_code}`\n";
             }
 
             // Try generating the receipt document immediately
             try {
-                $receiptService = app(ReceiptService::class);
+                $receiptService = app(\App\Services\ReceiptService::class);
                 $pdfUrl = $receiptService->generatePdf($this->transfer);
                 $document = url($pdfUrl);
             } catch (\Exception $e) {
@@ -197,10 +201,6 @@ class TransferStatusNotification extends Notification
                         ]
                     ]
                 ];
-            }
-
-            if ($this->transfer->recipient_phone) {
-                $extraMessages[] = ['text' => "{$this->transfer->recipient_phone}"];
             }
         } elseif ($document) {
             $replyMarkup = [
