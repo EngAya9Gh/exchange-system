@@ -34,7 +34,6 @@ php artisan route:clear
 php artisan config:cache
 php artisan event:cache
 php artisan view:cache
-php artisan route:cache
 
 # Restart queues (if using Supervisor for Laravel Horizon/Queue)
 # php artisan queue:restart
