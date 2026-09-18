@@ -26,7 +26,7 @@ class OtpVerificationController extends Controller
             ->where('expires_at', '>', Carbon::now())
             ->first();
 
-        if (!$existing && !empty($user->telegram_chat_id)) {
+        if (!$existing && (!empty($user->telegram_chat_id) || !empty($user->phone))) {
             $this->sendCode($user);
         }
 
@@ -82,8 +82,8 @@ class OtpVerificationController extends Controller
             return redirect()->route('login');
         }
 
-        if (empty($user->telegram_chat_id)) {
-            return back()->with('error', 'يجب ربط حسابك ببوت التلغرام أولاً لتتمكن من استلام الرمز.');
+        if (empty($user->telegram_chat_id) && empty($user->phone)) {
+            return back()->with('error', 'يجب ربط حسابك ببوت التلغرام أو إضافة رقم هاتف لاستلام الرمز.');
         }
 
         $this->sendCode($user);

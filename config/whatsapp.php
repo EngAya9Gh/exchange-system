@@ -20,5 +20,9 @@ return [
             'api_url' => env('WHATSAPP_BAILEYS_API_URL'),
             'api_key' => env('WHATSAPP_BAILEYS_API_KEY'),
         ],
+
+        'wakeel' => [
+            'api_key' => env('WAKEEL_WHATSAPP_API_KEY'),
+        ],
     ],
 ];

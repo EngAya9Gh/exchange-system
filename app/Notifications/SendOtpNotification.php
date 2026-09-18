@@ -25,10 +25,14 @@ class SendOtpNotification extends Notification
      */
     public function via(mixed $notifiable): array
     {
+        $channels = [];
         if (!empty($notifiable->telegram_chat_id)) {
-            return [TelegramChannel::class];
+            $channels[] = TelegramChannel::class;
         }
-        return [WhatsAppChannel::class];
+        if (!empty($notifiable->phone)) {
+            $channels[] = WhatsAppChannel::class;
+        }
+        return $channels;
     }
 
     public function toTelegram(mixed $notifiable): array

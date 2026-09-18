@@ -60,6 +60,33 @@ class WhatsAppManager
                     (string) ($config['api_url'] ?? ''),
                     (string) ($config['api_key'] ?? '')
                 );
+            case 'wakeel':
+                return new class(
+                    (string) ($config['api_key'] ?? '')
+                ) implements \App\Services\WhatsApp\Contracts\WhatsAppProviderInterface {
+                    public function __construct(protected string $apiKey) {}
+                    
+                    public function send(string $to, string $message, ?array $media = null): bool
+                    {
+                        try {
+                            $response = \Illuminate\Support\Facades\Http::timeout(10)
+                                ->withToken($this->apiKey)
+                                ->post('https://provider.wakeel.cc/api/v1/message/send', [
+                                    'phone' => $to,
+                                    'message' => $message
+                                ]);
+                            if ($response->successful()) {
+                                \Illuminate\Support\Facades\Log::info("WhatsApp Wakeel Message Sent Successfully to {$to}");
+                                return true;
+                            }
+                            \Illuminate\Support\Facades\Log::error("WhatsApp Wakeel API Error: " . $response->body());
+                            return false;
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::error('WhatsApp Wakeel API Exception: ' . $e->getMessage());
+                            return false;
+                        }
+                    }
+                };
             default:
                 throw new InvalidArgumentException("WhatsApp provider [{$name}] is not supported.");
         }
