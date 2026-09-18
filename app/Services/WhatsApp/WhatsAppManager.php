@@ -69,10 +69,17 @@ class WhatsAppManager
                     public function send(string $to, string $message, ?array $media = null): bool
                     {
                         try {
+                            // Clean phone for Wakeel API (keep @g.us for groups, strip + or 00 for personal)
+                            $cleanTo = $to;
+                            if (!str_contains($cleanTo, '@g.us')) {
+                                $cleanTo = preg_replace('/^00/', '', $cleanTo);
+                                $cleanTo = preg_replace('/[^0-9]/', '', $cleanTo);
+                            }
+
                             $response = \Illuminate\Support\Facades\Http::timeout(30)
                                 ->withToken($this->apiKey)
                                 ->post('https://provider.wakeel.cc/api/v1/message/send', [
-                                    'phone' => $to,
+                                    'phone' => $cleanTo,
                                     'message' => $message
                                 ]);
                             if ($response->successful()) {
