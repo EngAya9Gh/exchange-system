@@ -131,7 +131,7 @@ class TransferStatusNotification extends Notification
                 . "المستفيد: {$this->transfer->recipient_name}\n";
 
             if ($this->transfer->recipient_phone) {
-                $message .= "رقم المستفيد:\n```{$this->transfer->recipient_phone}```\n";
+                $message .= "رقم المستفيد: `{$this->transfer->recipient_phone}`\n";
             }
 
             if ($this->transfer->secret_code) {

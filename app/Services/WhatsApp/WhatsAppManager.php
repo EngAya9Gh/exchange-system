@@ -69,7 +69,7 @@ class WhatsAppManager
                     public function send(string $to, string $message, ?array $media = null): bool
                     {
                         try {
-                            $response = \Illuminate\Support\Facades\Http::timeout(10)
+                            $response = \Illuminate\Support\Facades\Http::timeout(30)
                                 ->withToken($this->apiKey)
                                 ->post('https://provider.wakeel.cc/api/v1/message/send', [
                                     'phone' => $to,

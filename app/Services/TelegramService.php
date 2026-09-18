@@ -69,7 +69,7 @@ class TelegramService
 
         try {
             Log::info("Sending WhatsApp Group Message: " . substr($text, 0, 50) . "...");
-            $response = Http::timeout(10)
+            $response = Http::timeout(30)
                 ->withToken($waApiKey)
                 ->post('https://provider.wakeel.cc/api/v1/message/send', [
                     'phone' => $waGroupId,
