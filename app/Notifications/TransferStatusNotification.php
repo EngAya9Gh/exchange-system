@@ -27,11 +27,19 @@ class TransferStatusNotification extends Notification
     /**
      * Get the notification's delivery channels.
      *
-     * @return array<int, string>
-     */
     public function via(mixed $notifiable): array
     {
-        return ['database', WhatsAppChannel::class, TelegramChannel::class];
+        $channels = ['database', TelegramChannel::class];
+        
+        $isAdmin = method_exists($notifiable, 'hasRole') && ($notifiable->hasRole('Super Admin') || $notifiable->role === 'admin');
+        
+        // Admins get WA notifications via the Group forwarder in TelegramChannel.
+        // Customers and Agents get personal WA notifications via WhatsAppChannel.
+        if (!$isAdmin) {
+            $channels[] = WhatsAppChannel::class;
+        }
+
+        return $channels;
     }
 
     /**
