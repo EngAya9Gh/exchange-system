@@ -41,9 +41,11 @@ class TelegramChannel
         }
 
         if (isset($message['forward_to_whatsapp']) && $message['forward_to_whatsapp']) {
-            $cacheKey = "wa_forward_" . md5($message['text']);
+            // Use a dedicated group_text if available, otherwise fall back to Telegram text
+            $groupText = $message['group_text'] ?? $message['text'];
+            $cacheKey = "wa_forward_" . md5($groupText);
             if (!\Illuminate\Support\Facades\Cache::has($cacheKey)) {
-                $this->telegramService->sendToWhatsAppGroup($message['text']);
+                $this->telegramService->sendToWhatsAppGroup($groupText);
                 \Illuminate\Support\Facades\Cache::put($cacheKey, true, 60);
             }
         }

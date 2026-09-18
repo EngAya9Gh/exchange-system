@@ -159,6 +159,20 @@ class TransferStatusNotification extends Notification
                 $message .= "🔑 الرمز السري: `{$this->transfer->secret_code}`\n";
             }
 
+            // Build a clean group text for WhatsApp group (no TG markdown, just flags & copyable phone)
+            $flags = ['TRY' => '🇹🇷', 'USD' => '🇺🇸', 'EUR' => '🇪🇺', 'EGP' => '🇪🇬'];
+            $sourceFlag = $flags[$this->transfer->currency] ?? '';
+            $targetFlag = $flags[$this->transfer->target_currency] ?? '🇪🇬';
+
+            $groupText = "🔔 *حوالة جديدة بانتظار المراجعة*\n\n"
+                . "المبلغ: *{$this->transfer->amount} {$this->transfer->currency}* {$sourceFlag}\n"
+                . "سعر الصرف: *{$this->transfer->exchange_rate}*\n"
+                . "المبلغ المستلم: *{$this->transfer->received_amount} {$this->transfer->target_currency}* {$targetFlag}\n";
+
+            if ($this->transfer->recipient_phone) {
+                $groupText .= "رقم المستفيد:\n```{$this->transfer->recipient_phone}```";
+            }
+
             // Try generating the receipt document immediately
             try {
                 $receiptService = app(\App\Services\ReceiptService::class);
@@ -237,6 +251,7 @@ class TransferStatusNotification extends Notification
             'to' => $notifiable->telegram_chat_id,
             'text' => $message,
             'forward_to_whatsapp' => true,
+            'group_text' => $groupText ?? $message,
         ];
 
         if ($replyMarkup) {
