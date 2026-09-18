@@ -94,13 +94,24 @@ class TransferStatusNotification extends Notification
         $branchName = $this->transfer->branch ? $this->transfer->branch->name : 'غير محدد';
 
         if ($this->statusType === 'created') {
-            $message = "تم تسجيل الحوالة بنجاح\n"
-                . "رقم الحوالة: *{$this->transfer->transfer_number}*\n"
-                . "المبلغ المرسل: *{$this->transfer->source_amount} {$this->transfer->source_currency}*\n"
-                . "المبلغ المستلم بالجنيه المصري: *{$this->transfer->received_amount} {$this->transfer->target_currency}*\n"
-                . "الرمز السري للاستلام (مكون من 5 أرقام): *{$this->transfer->secret_code}*\n"
-                . "الفرع المستهدف: *{$branchName}*\n"
-                . "يرجى تقديم الرمز السري عند الاستلام.";
+            $flags = [
+                'TRY' => '🇹🇷',
+                'USD' => '🇺🇸',
+                'EUR' => '🇪🇺',
+                'EGP' => '🇪🇬',
+            ];
+            $sourceFlag = $flags[$this->transfer->currency] ?? '';
+            $targetFlag = $flags[$this->transfer->target_currency] ?? '🇪🇬';
+
+            $message = "✅ *تم تسجيل الحوالة بنجاح*\n\n"
+                . "المبلغ: *{$this->transfer->amount} {$this->transfer->currency}* {$sourceFlag}\n"
+                . "سعر الصرف: *{$this->transfer->exchange_rate}*\n"
+                . "المبلغ المستلم: *{$this->transfer->received_amount} {$this->transfer->target_currency}* {$targetFlag}\n";
+
+            if ($this->transfer->recipient_phone) {
+                $message .= "رقم المستفيد:\n```{$this->transfer->recipient_phone}```";
+            }
+
         } elseif ($this->statusType === 'paid') {
             $message = "تم تسليم الحوالة  بنجاح للمستفيد\n"
                 . "رقم الحوالة: *{$this->transfer->transfer_number}*\n"

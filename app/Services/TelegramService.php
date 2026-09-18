@@ -60,8 +60,8 @@ class TelegramService
      */
     public function sendToWhatsAppGroup(string $text): void
     {
-        $waApiKey = config('services.wakeel_whatsapp.api_key', env('WAKEEL_WHATSAPP_API_KEY'));
-        $waGroupId = config('services.wakeel_whatsapp.group_id', env('WAKEEL_WHATSAPP_GROUP_ID'));
+        $waApiKey = config('whatsapp.providers.wakeel.api_key');
+        $waGroupId = config('whatsapp.providers.wakeel.group_id');
         
         if (empty($waApiKey) || empty($waGroupId)) {
             return;

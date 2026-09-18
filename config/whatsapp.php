@@ -23,6 +23,7 @@ return [
 
         'wakeel' => [
             'api_key' => env('WAKEEL_WHATSAPP_API_KEY'),
+            'group_id' => env('WAKEEL_WHATSAPP_GROUP_ID'),
         ],
     ],
 ];
