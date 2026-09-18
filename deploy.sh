@@ -23,14 +23,18 @@ npm run build
 # Run database migrations
 php artisan migrate --force
 
-# Clear and rebuild caches
+# Clear all existing caches
 php artisan optimize:clear
-php artisan config:cache
-
-php artisan event:cache
-php artisan config:clear 
 php artisan cache:clear
+php artisan config:clear
+php artisan view:clear
+php artisan route:clear
+
+# Rebuild caches for production
+php artisan config:cache
+php artisan event:cache
 php artisan view:cache
+php artisan route:cache
 
 # Restart queues (if using Supervisor for Laravel Horizon/Queue)
 # php artisan queue:restart
