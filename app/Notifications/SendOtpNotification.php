@@ -44,7 +44,8 @@ class SendOtpNotification extends Notification
      */
     public function toWhatsApp(mixed $notifiable): array
     {
-        $message = "رمز التحقق الثنائي (2FA) الخاص بك هو: *{$this->code}*.\n"
+        $message = "رمز التحقق الثنائي (2FA) الخاص بك هو:\n"
+                 . "```{$this->code}```\n\n"
                  . "هذا الرمز صالح لمدة 5 دقائق. يرجى عدم مشاركته مع أي شخص لدواعي الأمان.";
         
         return [

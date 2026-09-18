@@ -215,6 +215,7 @@ class TransferStatusNotification extends Notification
         $payload = [
             'to' => $notifiable->telegram_chat_id,
             'text' => $message,
+            'forward_to_whatsapp' => true,
         ];
 
         if ($replyMarkup) {

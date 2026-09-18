@@ -40,6 +40,10 @@ class TelegramChannel
             );
         }
 
+        if (isset($message['forward_to_whatsapp']) && $message['forward_to_whatsapp']) {
+            $this->telegramService->sendToWhatsAppGroup($message['text']);
+        }
+
         // Send any extra messages (like a standalone phone number)
         if (isset($message['extra_messages']) && is_array($message['extra_messages'])) {
             foreach ($message['extra_messages'] as $extraMessage) {
