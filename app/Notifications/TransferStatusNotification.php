@@ -29,6 +29,7 @@ class TransferStatusNotification extends Notification
      *
      * @return array<int, string>
      */
+    //
     public function via(mixed $notifiable): array
     {
         $channels = ['database', TelegramChannel::class];
