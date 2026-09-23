@@ -249,7 +249,7 @@ class TransferStatusNotification extends Notification
         $payload = [
             'to' => $notifiable->telegram_chat_id,
             'text' => $message,
-            'forward_to_whatsapp' => true,
+            'forward_to_whatsapp' => ($this->statusType === 'created'),
             'group_text' => $groupText ?? $message,
         ];
 

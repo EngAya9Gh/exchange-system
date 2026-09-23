@@ -76,27 +76,39 @@ class TelegramWebhookController extends Controller
         $fromId = $callbackQuery['from']['id'] ?? null;
         $fromName = $callbackQuery['from']['first_name'] ?? 'إداري';
 
+        Log::info("Telegram Callback Query Received: ", ['data' => $data, 'chatId' => $chatId]);
+
         if (!$chatId || !$data) return;
 
         // Parse action
         // Example data: approve_transfer_123 or reject_transfer_123
         $parts = explode('_', $data);
-        if (count($parts) < 3) return;
+        if (count($parts) < 3) {
+            Log::info("Telegram Callback Invalid Format: " . $data);
+            return;
+        }
 
         $action = $parts[0]; // approve or reject
         $entity = $parts[1]; // transfer
         $id = $parts[2];
 
-        if ($entity !== 'transfer') return;
+        if ($entity !== 'transfer') {
+            Log::info("Telegram Callback Entity not transfer: " . $entity);
+            return;
+        }
 
         $transfer = Transfer::find($id);
 
         if (!$transfer) {
+            Log::info("Telegram Callback Transfer Not Found: ID " . $id);
             $this->telegramService->answerCallbackQuery($callbackQueryId, '⚠️ الحوالة غير موجودة.', true);
             return;
         }
 
+        Log::info("Telegram Callback Processing Transfer ID {$id}. Current status: {$transfer->status}");
+
         if ($transfer->status !== 'pending' && $transfer->status !== 'new') {
+            Log::info("Telegram Callback Transfer already processed. Status: " . $transfer->status);
             $this->telegramService->answerCallbackQuery($callbackQueryId, '⚠️ هذه الحوالة تمت معالجتها مسبقاً!', true);
             // Optionally, edit message to remove buttons
             $this->removeInlineKeyboard($chatId, $messageId, $callbackQuery['message']['text'], "تمت المعالجة مسبقاً.");
