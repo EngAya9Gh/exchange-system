@@ -140,4 +140,20 @@ Route::get('/force-logout', function () {
     return redirect('/login');
 })->name('force-logout');
 
+// Temporary route to register Telegram webhook on production
+Route::get('/setup-telegram-webhook', function () {
+    $url = url('/webhook/telegram');
+    $token = config('services.telegram-bot-api.token', env('TELEGRAM_BOT_TOKEN'));
+    
+    if (empty($token)) {
+        return "Telegram Bot Token is missing in .env!";
+    }
+    
+    $response = \Illuminate\Support\Facades\Http::get("https://api.telegram.org/bot{$token}/setWebhook", [
+        'url' => $url,
+    ]);
+    
+    return $response->json();
+});
+
 require __DIR__.'/auth.php';
