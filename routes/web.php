@@ -140,9 +140,15 @@ Route::get('/force-logout', function () {
     return redirect('/login');
 })->name('force-logout');
 
-// Temporary route to register Telegram webhook on production
-Route::get('/setup-telegram-webhook', function () {
+Route::get('/setup-telegram-webhook', function (\Illuminate\Http\Request $request) {
+    // By default, point to the Laravel webhook
     $url = url('/webhook/telegram');
+    
+    // If ?test=1 is passed, point to the raw PHP test script
+    if ($request->has('test')) {
+        $url = url('/webhook_test.php');
+    }
+    
     $token = config('services.telegram.bot_token', env('TELEGRAM_BOT_TOKEN'));
     
     if (empty($token)) {

@@ -20,7 +20,15 @@ class NewTransferRequestNotification extends Notification
 
     public function via(mixed $notifiable): array
     {
-        return ['database', WhatsAppChannel::class, TelegramChannel::class];
+        $channels = ['database', TelegramChannel::class];
+        
+        // Don't send to admin's personal WhatsApp, they already get it in Telegram
+        $isAdmin = $notifiable->hasRole('Super Admin') || $notifiable->role === 'admin';
+        if (!empty($notifiable->phone) && !$isAdmin) {
+            $channels[] = WhatsAppChannel::class;
+        }
+
+        return $channels;
     }
 
     public function toArray(mixed $notifiable): array
@@ -77,9 +85,20 @@ class NewTransferRequestNotification extends Notification
         $message .= "اسم المستفيد: {$this->transfer->recipient_name}\n";
         $message .= "📱 *رقم المستفيد*: `{$this->transfer->recipient_phone}`\n";
 
+        $flags = ['TRY' => '🇹🇷', 'USD' => '🇺🇸', 'EUR' => '🇪🇺', 'EGP' => '🇪🇬'];
+        $targetFlag = $flags[$this->transfer->target_currency] ?? '🇪🇬';
+        
+        $groupText = "";
+        if ($this->transfer->recipient_phone) {
+            $groupText .= "```{$this->transfer->recipient_phone}```\n";
+        }
+        $groupText .= "*{$this->transfer->received_amount} {$this->transfer->target_currency}* {$targetFlag}";
+
         return [
             'to' => $to,
             'text' => $message,
+            'forward_to_whatsapp' => true,
+            'group_text' => $groupText,
             'reply_markup' => [
                 'inline_keyboard' => [
                     [
