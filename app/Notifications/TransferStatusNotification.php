@@ -165,14 +165,12 @@ class TransferStatusNotification extends Notification
             $sourceFlag = $flags[$this->transfer->currency] ?? '';
             $targetFlag = $flags[$this->transfer->target_currency] ?? '🇪🇬';
 
-            $groupText = "🔔 *حوالة جديدة بانتظار المراجعة*\n\n"
-                . "المبلغ: *{$this->transfer->amount} {$this->transfer->currency}* {$sourceFlag}\n"
-                . "سعر الصرف: *{$this->transfer->exchange_rate}*\n"
-                . "المبلغ المستلم: *{$this->transfer->received_amount} {$this->transfer->target_currency}* {$targetFlag}\n";
-
+            $groupText = "";
             if ($this->transfer->recipient_phone) {
-                $groupText .= "رقم المستفيد:\n```{$this->transfer->recipient_phone}```";
+                $groupText .= "```{$this->transfer->recipient_phone}```\n";
             }
+            $groupText .= "*{$this->transfer->received_amount} {$this->transfer->target_currency}* {$targetFlag}";
+
 
             // Try generating the receipt document immediately
             try {

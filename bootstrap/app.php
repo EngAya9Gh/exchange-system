@@ -11,6 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Exclude Telegram Webhook from CSRF
+        $middleware->validateCsrfTokens(except: [
+            'webhook/telegram',
+        ]);
+        
         // Trust all proxies (Cloudflare, Nginx, cPanel) so APP_URL is auto-detected
         $middleware->trustProxies(at: '*', headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
             \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
