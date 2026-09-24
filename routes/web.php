@@ -127,10 +127,15 @@ Route::get('bill-receipts-preview/test', function () {
 
 use App\Http\Controllers\TelegramWebhookController;
 
-// Telegram Webhook
+// Telegram Webhook — must be excluded from ALL auth/session middlewares
 Route::post('/webhook/telegram', [TelegramWebhookController::class, 'handle'])
     ->name('webhook.telegram')
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+    ->withoutMiddleware([
+        \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+        \App\Http\Middleware\EnsureTwoFactorVerified::class,
+        \App\Http\Middleware\AutoLogoutOnIdle::class,
+        \Illuminate\Auth\Middleware\Authenticate::class,
+    ]);
 
 // Fallback route to force logout if JS is broken
 Route::get('/force-logout', function () {
