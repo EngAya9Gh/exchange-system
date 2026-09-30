@@ -165,7 +165,8 @@ class TransferStatusNotification extends Notification
             $sourceFlag = $flags[$this->transfer->currency] ?? '';
             $targetFlag = $flags[$this->transfer->target_currency] ?? '🇪🇬';
 
-            $groupText = "";
+            $senderName = $this->transfer->user->name ?? 'غير محدد';
+            $groupText = "👤 *{$senderName}*\n";
             if ($this->transfer->recipient_phone) {
                 $groupText .= "```{$this->transfer->recipient_phone}```\n";
             }

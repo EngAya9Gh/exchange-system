@@ -125,17 +125,6 @@ Route::get('bill-receipts-preview/test', function () {
     return view('receipts.bill_payment', compact('bill', 'amountInWords', 'companyName', 'categoryName'));
 });
 
-use App\Http\Controllers\TelegramWebhookController;
-
-// Telegram Webhook — must be excluded from ALL auth/session middlewares
-Route::post('/webhook/telegram', [TelegramWebhookController::class, 'handle'])
-    ->name('webhook.telegram')
-    ->withoutMiddleware([
-        \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
-        \App\Http\Middleware\EnsureTwoFactorVerified::class,
-        \App\Http\Middleware\AutoLogoutOnIdle::class,
-        \Illuminate\Auth\Middleware\Authenticate::class,
-    ]);
 
 // Fallback route to force logout if JS is broken
 Route::get('/force-logout', function () {
@@ -146,12 +135,12 @@ Route::get('/force-logout', function () {
 })->name('force-logout');
 
 Route::get('/setup-telegram-webhook', function (\Illuminate\Http\Request $request) {
-    // By default, point to the Laravel webhook
-    $url = url('/webhook/telegram');
+    // Points to the standalone PHP file that bypasses ALL Laravel middleware
+    $url = url('/telegram-webhook.php');
     
-    // If ?test=1 is passed, point to the raw PHP test script
-    if ($request->has('test')) {
-        $url = url('/webhook_test.php');
+    // If ?laravel=1 is passed, use the Laravel route instead
+    if ($request->has('laravel')) {
+        $url = url('/webhook/telegram');
     }
     
     $token = config('services.telegram.bot_token', env('TELEGRAM_BOT_TOKEN'));
@@ -164,7 +153,7 @@ Route::get('/setup-telegram-webhook', function (\Illuminate\Http\Request $reques
         'url' => $url,
     ]);
     
-    return $response->json();
+    return array_merge($response->json(), ['webhook_url' => $url]);
 });
 
 require __DIR__.'/auth.php';
