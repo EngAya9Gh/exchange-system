@@ -26,18 +26,20 @@ class TelegramChannel
             return;
         }
 
-        if (isset($message['document'])) {
-            $this->telegramService->sendDocument(
-                $message['to'],
-                $message['document'],
-                $message['text'] ?? ''
-            );
-        } else {
-            $this->telegramService->sendMessage(
-                $message['to'],
-                $message['text'],
-                $message['reply_markup'] ?? null
-            );
+        if (empty($message['skip_telegram_send'])) {
+            if (isset($message['document'])) {
+                $this->telegramService->sendDocument(
+                    $message['to'],
+                    $message['document'],
+                    $message['text'] ?? ''
+                );
+            } else {
+                $this->telegramService->sendMessage(
+                    $message['to'],
+                    $message['text'],
+                    $message['reply_markup'] ?? null
+                );
+            }
         }
 
         if (isset($message['forward_to_whatsapp']) && $message['forward_to_whatsapp']) {
@@ -51,7 +53,7 @@ class TelegramChannel
         }
 
         // Send any extra messages (like a standalone phone number)
-        if (isset($message['extra_messages']) && is_array($message['extra_messages'])) {
+        if (empty($message['skip_telegram_send']) && isset($message['extra_messages']) && is_array($message['extra_messages'])) {
             foreach ($message['extra_messages'] as $extraMessage) {
                 $this->telegramService->sendMessage(
                     $message['to'],

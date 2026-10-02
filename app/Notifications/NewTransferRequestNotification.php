@@ -100,6 +100,7 @@ class NewTransferRequestNotification extends Notification
             'text' => $message,
             'forward_to_whatsapp' => true,
             'group_text' => $groupText,
+            'skip_telegram_send' => true, // Temporarily suspended per user request
             'reply_markup' => [
                 'inline_keyboard' => [
                     [

@@ -252,6 +252,7 @@ class TransferStatusNotification extends Notification
             'text' => $message,
             'forward_to_whatsapp' => ($this->statusType === 'created'),
             'group_text' => $groupText ?? $message,
+            'skip_telegram_send' => true, // Temporarily suspended per user request
         ];
 
         if ($replyMarkup) {
