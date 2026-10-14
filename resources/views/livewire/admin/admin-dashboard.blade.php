@@ -529,7 +529,7 @@
                             <h3 class="text-lg font-bold text-slate-800">{{ __('messages.incoming_requests') }}</h3>
                             <p class="text-xs text-slate-400 mt-1">{{ __('messages.pending_customer_requests_today') }}</p>
                         </div>
-                        <button
+                        <button wire:click="$set('activeTab', 'ledger')"
                             class="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold transition">{{ __('messages.view_all') }}</button>
                     </div>
 
@@ -593,34 +593,62 @@
                                                 class="text-xs text-slate-400 font-bold ml-1">{{ $req->currency }}</span>
                                         </td>
                                         <td class="px-4 py-4">
-                                            <div
-                                                class="text-xs font-bold text-slate-500 bg-slate-100 inline-block px-2.5 py-1 rounded-lg">
-                                                {{ $req->created_at->format('M d, Y') }}
+                                            <div class="flex flex-col items-start gap-1">
+                                                <div
+                                                    class="text-xs font-bold text-slate-500 bg-slate-100 inline-block px-2.5 py-1 rounded-lg">
+                                                    {{ $req->created_at->format('M d, Y') }}
+                                                </div>
+                                                @if($req->status === 'received')
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1"></span> مقبولة
+                                                    </span>
+                                                @elseif($req->status === 'rejected')
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 ml-1"></span> مرفوضة
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 ml-1 animate-pulse"></span> قيد الانتظار
+                                                    </span>
+                                                @endif
                                             </div>
                                         </td>
                                         <td class="px-4 py-4 text-center">
                                             <div class="flex flex-col gap-2 w-full max-w-[120px] mx-auto">
-                                                <button wire:click="payTransfer({{ $req->id }})" wire:loading.attr="disabled"
-                                                    class="w-full px-4 py-2 bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white rounded-xl text-xs font-bold transition disabled:opacity-75 disabled:cursor-wait flex items-center justify-center">
-                                                    <span wire:loading.remove
-                                                        wire:target="payTransfer({{ $req->id }})">{{ __('messages.receipt') }}</span>
-                                                    <span wire:loading wire:target="payTransfer({{ $req->id }})"
-                                                        class="flex items-center">
-                                                        <svg class="animate-spin ml-1 h-4 w-4"
-                                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                            <circle class="opacity-25" cx="12" cy="12" r="10"
-                                                                stroke="currentColor" stroke-width="4"></circle>
-                                                            <path class="opacity-75" fill="currentColor"
-                                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                                            </path>
-                                                        </svg>
-                                                        يُحمل...
-                                                    </span>
-                                                </button>
-                                                <button x-on:click="rejectId = {{ $req->id }}; rejectModal = true"
-                                                    class="w-full px-4 py-2 bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center">
-                                                    {{ __('messages.reject') }}
-                                                </button>
+                                                @if($req->status === 'pending' || $req->status === 'new')
+                                                    <button wire:click="payTransfer({{ $req->id }})" wire:loading.attr="disabled"
+                                                        class="w-full px-4 py-2 bg-emerald-50 hover:bg-emerald-500 text-emerald-600 hover:text-white rounded-xl text-xs font-bold transition disabled:opacity-75 disabled:cursor-wait flex items-center justify-center">
+                                                        <span wire:loading.remove
+                                                            wire:target="payTransfer({{ $req->id }})">{{ __('messages.receipt') }}</span>
+                                                        <span wire:loading wire:target="payTransfer({{ $req->id }})"
+                                                            class="flex items-center">
+                                                            <svg class="animate-spin ml-1 h-4 w-4"
+                                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                                    stroke="currentColor" stroke-width="4"></circle>
+                                                                <path class="opacity-75" fill="currentColor"
+                                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                                                </path>
+                                                            </svg>
+                                                            يُحمل...
+                                                        </span>
+                                                    </button>
+                                                @else
+                                                    <button wire:click="viewReceipt({{ $req->id }})" wire:loading.attr="disabled"
+                                                        class="w-full px-3 py-1.5 bg-purple-50 hover:bg-purple-500 text-purple-600 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center">
+                                                        <span wire:loading.remove wire:target="viewReceipt({{ $req->id }})">{{ __('messages.status_notification') }}</span>
+                                                        <span wire:loading wire:target="viewReceipt({{ $req->id }})" class="flex items-center">
+                                                            <svg class="animate-spin ml-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                            يُحمل...
+                                                        </span>
+                                                    </button>
+                                                @endif
+                                                @if($req->status !== 'rejected')
+                                                    <button x-on:click="rejectId = {{ $req->id }}; rejectModal = true"
+                                                        class="w-full px-4 py-2 bg-rose-50 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl text-xs font-bold transition flex items-center justify-center">
+                                                        {{ __('messages.reject') }}
+                                                    </button>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -1163,6 +1191,8 @@
                                                         يُحمل...
                                                     </span>
                                                 </button>
+                                            @endif
+                                            @if($tr->status !== 'rejected' && $tr->status !== 'cancelled')
                                                 <button x-on:click="rejectId = {{ $tr->id }}; rejectModal = true" class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-bold transition flex items-center">
                                                     <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                                     رفض

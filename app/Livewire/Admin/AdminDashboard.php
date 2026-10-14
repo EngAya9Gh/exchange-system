@@ -369,6 +369,11 @@ class AdminDashboard extends Component
     {
         $transfer = Transfer::findOrFail($id);
         
+        if ($transfer->status === 'rejected') {
+            session()->flash('error', 'هذه الحوالة تم رفضها مسبقاً.');
+            return;
+        }
+        
         DB::beginTransaction();
         try {
             $transfer->update([
@@ -630,8 +635,11 @@ class AdminDashboard extends Component
         // Total Commissions in TRY
         $totalCommissions = (clone $statsQuery)->where('currency', 'TRY')->sum('commission');
 
-        // Incoming pending requests
-        $requestsQuery = Transfer::with('user')->where('status', 'pending');
+        // Incoming customer requests (pending or received requests from customers)
+        $requestsQuery = Transfer::with('user')->where(function ($q) {
+            $q->where('status', 'pending')
+              ->orWhereNull('created_by');
+        });
         if (!$isAdmin) {
             $requestsQuery->where('user_id', $user->id);
         }

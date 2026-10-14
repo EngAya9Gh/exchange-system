@@ -37,14 +37,14 @@ class NewTransferRequestNotification extends Notification
             'title' => 'طلب حوالة جديد',
             'message' => "طلب تحويل جديد بمبلغ {$this->transfer->amount} {$this->transfer->currency} من {$this->transfer->user->name}.",
             'request_id' => $this->transfer->id,
-            'status' => 'pending',
-            'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', // Clock icon
+            'status' => 'received',
+            'icon' => 'M5 13l4 4L19 7', // Check icon
         ];
     }
 
     public function toWhatsApp(mixed $notifiable): array
     {
-        $message = "🔔 *طلب حوالة جديد (بانتظار المراجعة)*\n\n";
+        $message = "🔔 *طلب حوالة جديد (مقبول)*\n\n";
         $message .= "الزبون: {$this->transfer->user->name}\n";
         $message .= "المبلغ المطلوب: {$this->transfer->amount} {$this->transfer->currency}\n";
         $message .= "سعر الصرف: {$this->transfer->exchange_rate}\n";
@@ -77,7 +77,7 @@ class NewTransferRequestNotification extends Notification
             return [];
         }
 
-        $message = "🔔 *طلب حوالة جديد (بانتظار المراجعة)*\n\n";
+        $message = "🔔 *طلب حوالة جديد (مقبول)*\n\n";
         $message .= "الزبون: {$this->transfer->user->name}\n";
         $message .= "المبلغ المطلوب: {$this->transfer->amount} {$this->transfer->currency}\n";
         $message .= "سعر الصرف: {$this->transfer->exchange_rate}\n";

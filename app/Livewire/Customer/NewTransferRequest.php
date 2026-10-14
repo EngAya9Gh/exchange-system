@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Notifications\NewTransferRequestNotification;
 use App\Services\CommissionCalculator;
 use App\Services\ExchangeRateService;
+use App\Services\SecretCodeGenerator;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -133,6 +135,9 @@ class NewTransferRequest extends Component
             return;
         }
 
+        $codeGen = app(SecretCodeGenerator::class);
+        $secretCode = $codeGen->generate();
+
         DB::beginTransaction();
         try {
             $transferNumber = 'RD' . time() . rand(100, 999);
@@ -153,7 +158,11 @@ class NewTransferRequest extends Component
                 'commission' => $this->commission,
                 'received_amount' => $this->received_amount,
                 'net_amount' => $this->received_amount,
-                'status' => 'pending',
+                'secret_code' => $secretCode,
+                'status' => 'received',
+                'transferred_at' => Carbon::now(),
+                'delivered_at' => Carbon::now(),
+                'admin_notes' => 'مقبول تلقائياً',
             ]);
 
             // Deduct from user balance
@@ -191,7 +200,7 @@ class NewTransferRequest extends Component
         $this->reset(['sender_name', 'sender_phone', 'recipient_name', 'recipient_phone', 'destination', 'address', 'notes', 'amount']);
         $this->calculateTotals();
 
-        session()->flash('success', 'تم إرسال طلب التحويل بنجاح! سيتم مراجعته من قبل الإدارة.');
+        session()->flash('success', 'تم إرسال وقبول طلب التحويل بنجاح!');
         $this->dispatch('request-created');
         $this->js("window.open('/receipts/{$transferNumber}', '_blank');");
     }

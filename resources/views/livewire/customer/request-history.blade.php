@@ -44,13 +44,9 @@
                             <div class="text-slate-400 mt-0.5">{{ $request->created_at->format('h:i A') }}</div>
                         </td>
                         <td class="px-8 py-5 text-center">
-                            @if($request->status === 'new')
+                            @if($request->status === 'new' || $request->status === 'received' || $request->status === 'paid')
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-1.5"></span> {{ __('messages.status_approved') }}
-                                </span>
-                            @elseif($request->status === 'received' || $request->status === 'paid')
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-purple-50 text-purple-600 border border-purple-100">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-purple-500 ml-1.5"></span> {{ __('messages.status_paid') }}
                                 </span>
                             @elseif($request->status === 'rejected')
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">
