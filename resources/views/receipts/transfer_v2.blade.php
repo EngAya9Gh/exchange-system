@@ -294,24 +294,76 @@
             border-radius: 8px;
             background-color: #fff;
         }
-        .qr-phone {
-            margin-top: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #166534;
-            direction: ltr;
-            font-family: 'Cairo', monospace, sans-serif;
-            display: inline-flex;
+        /* WhatsApp Support Bar */
+        .whatsapp-support-bar {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 10px 16px;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+        .ws-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .ws-icon-circle {
+            width: 32px;
+            height: 32px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(34, 197, 94, 0.25);
         }
-        .qr-phone a {
-            color: inherit;
+        .ws-icon-circle svg {
+            width: 18px;
+            height: 18px;
+            fill: #ffffff;
+        }
+        .ws-text-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .ws-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #14532d;
+            line-height: 1.3;
+        }
+        .ws-subtitle {
+            font-size: 11px;
+            color: #15803d;
+            font-weight: 600;
+        }
+        .ws-phone-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: #ffffff;
+            border: 1.5px solid #86efac;
+            color: #15803d;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 800;
             text-decoration: none;
+            direction: ltr;
+            font-family: 'Cairo', monospace, sans-serif;
+            letter-spacing: 0.5px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
         }
-        .qr-phone a:hover {
-            text-decoration: underline;
+        .ws-phone-btn:hover {
+            background-color: #22c55e;
+            color: #ffffff;
+            border-color: #22c55e;
         }
 
         /* Colored Shapes at bottom */
@@ -320,34 +372,35 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 40px;
+            height: 35px;
             z-index: 0;
+            pointer-events: none;
         }
         .shape-black {
             position: absolute;
             bottom: 0;
             right: -20px;
-            width: 60%;
-            height: 60px;
+            width: 55%;
+            height: 45px;
             background-color: #1a202c;
             border-top-left-radius: 100px;
-            transform: rotate(-5deg);
+            transform: rotate(-4deg);
         }
         .shape-red {
             position: absolute;
             bottom: -10px;
             left: -20px;
-            width: 50%;
-            height: 50px;
+            width: 45%;
+            height: 40px;
             background-color: #8b1e28;
             border-top-right-radius: 100px;
-            transform: rotate(5deg);
+            transform: rotate(4deg);
         }
         
         .content-wrapper {
             position: relative;
             z-index: 1;
-            padding-bottom: 30px;
+            padding-bottom: 45px;
         }
 
         /* Actions Container */
@@ -432,9 +485,18 @@
             </div>
         @endif
         <div class="content-wrapper" style="position: relative; z-index: 10;">
-            <!-- Logo -->
-            <div class="logo-container" style="text-align: left;">
-                <img src="{{ asset('logo.png?v=2') }}" alt="Logo" style="max-height: 50px; object-fit: contain;">
+            <!-- Header Top Bar (Logo & WhatsApp Hotline) -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+                <a href="https://wa.me/905392065497" target="_blank" style="text-decoration: none; display: inline-flex; align-items: center; gap: 7px; background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 5px 12px; border-radius: 20px; color: #166534; font-size: 12px; font-weight: 700;">
+                    <svg style="width: 15px; height: 15px; fill: #22c55e;" viewBox="0 0 24 24">
+                        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                    </svg>
+                    <span style="color: #4b5563; font-weight: 600;">خدمة العملاء:</span>
+                    <span dir="ltr" style="font-family: monospace, sans-serif; letter-spacing: 0.3px;">00905392065497</span>
+                </a>
+                <div class="logo-container" style="margin-bottom: 0;">
+                    <img src="{{ asset('logo.png?v=2') }}" alt="Logo" style="max-height: 48px; object-fit: contain;">
+                </div>
             </div>
 
             <!-- Header Info -->
@@ -508,22 +570,37 @@
                 </ul>
             </div>
 
+            <!-- Dedicated WhatsApp Customer Support Bar -->
+            <div class="whatsapp-support-bar">
+                <div class="ws-info">
+                    <div class="ws-icon-circle">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                        </svg>
+                    </div>
+                    <div class="ws-text-group">
+                        <span class="ws-title">خدمة العملاء والاستفسار (واتساب)</span>
+                        <span class="ws-subtitle">تواصل معنا مباشرة عبر تطبيق واتساب</span>
+                    </div>
+                </div>
+                <a href="https://wa.me/905392065497" target="_blank" class="ws-phone-btn">
+                    <span>00905392065497</span>
+                </a>
+            </div>
+
             <!-- QR Codes -->
             <div class="qr-section">
                 <div class="qr-box">
-                    <div class="qr-label" style="color: #25d366;">للتواصل واتساب</div>
+                    <div class="qr-label" style="color: #16a34a;">للتواصل واتساب</div>
                     <a href="https://wa.me/905392065497" target="_blank" style="text-decoration: none; display: inline-block;">
                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode('https://wa.me/905392065497') }}" class="qr-img" alt="WhatsApp QR">
                     </a>
-                    <div class="qr-phone">
-                        <a href="https://wa.me/905392065497" target="_blank">
-                            00905392065497
-                        </a>
-                    </div>
                 </div>
                 <div class="qr-box">
                     <div class="qr-label" style="color: #ef4444;">أسعار الصرف</div>
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode(url('/ar/rates')) }}" class="qr-img" alt="Exchange Rates">
+                    <a href="{{ url('/ar/rates') }}" target="_blank" style="text-decoration: none; display: inline-block;">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode(url('/ar/rates')) }}" class="qr-img" alt="Exchange Rates">
+                    </a>
                 </div>
                 <div class="qr-box">
                     <div class="qr-label">امسح للتسليم</div>
