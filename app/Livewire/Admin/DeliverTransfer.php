@@ -58,7 +58,7 @@ class DeliverTransfer extends Component
             
             $rate = $rateService->getRate($this->transfer->currency, 'EGP');
             $commission = $commissionService->calculate((float) $this->transfer->amount);
-            $received = $this->transfer->amount * $rate;
+            $received = (float) round((float) $this->transfer->amount * $rate);
             
             $this->transfer->update([
                 'target_currency' => 'EGP',

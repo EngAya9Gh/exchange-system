@@ -73,7 +73,7 @@ Route::get('receipts/{number}', function ($number) {
         case 'EUR': $currencyName = 'يورو'; break;
     }
 
-    $amountInWords = \App\Helpers\ArabicNumberToWords::convert((float) $transfer->received_amount, $currencyName);
+    $amountInWords = \App\Helpers\ArabicNumberToWords::convert((float) round((float) $transfer->received_amount), $currencyName);
 
     return view('receipts.transfer_v2', compact('transfer', 'amountInWords'));
 })->name('receipt.view');

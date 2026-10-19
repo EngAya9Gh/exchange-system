@@ -102,7 +102,7 @@ class NewTransferRequest extends Component
 
         $this->commission = $commissionService->calculate((float)$this->amount);
         
-        $this->received_amount = round((float)$this->amount * $this->exchange_rate, 2);
+        $this->received_amount = (float) round((float)$this->amount * $this->exchange_rate);
         $this->total_to_pay = (float)$this->amount + $this->commission;
     }
 

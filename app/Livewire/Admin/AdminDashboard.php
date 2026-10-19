@@ -216,7 +216,9 @@ class AdminDashboard extends Component
             $this->commission = empty($this->manual_fee) ? 0.0 : (float)$this->manual_fee;
         }
         
-        $this->received_amount = round((float)$this->amount * $this->exchange_rate, 2);
+        $this->received_amount = ($this->target_currency === 'EGP')
+            ? (float) round((float)$this->amount * $this->exchange_rate)
+            : round((float)$this->amount * $this->exchange_rate, 2);
         $this->total_to_pay = (float)$this->amount + $this->commission;
     }
 
@@ -455,7 +457,7 @@ class AdminDashboard extends Component
             
             $rate = $rateService->getRate($transfer->currency, 'EGP');
             $commission = $commissionService->calculate((float) $transfer->amount);
-            $received = $transfer->amount * $rate;
+            $received = (float) round((float)$transfer->amount * $rate);
             
             $codeGen = app(SecretCodeGenerator::class);
             

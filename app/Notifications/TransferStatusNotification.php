@@ -94,6 +94,11 @@ class TransferStatusNotification extends Notification
         // Fetch relationship if not loaded
         $branchName = $this->transfer->branch ? $this->transfer->branch->name : 'غير محدد';
 
+        $receivedAmountFormatted = (string) (int) round((float) $this->transfer->received_amount);
+        $sourceAmountFormatted = (fmod((float) $this->transfer->amount, 1) === 0.0)
+            ? (string) (int) $this->transfer->amount
+            : (string) (float) $this->transfer->amount;
+
         if ($this->statusType === 'created') {
             $flags = [
                 'TRY' => '🇹🇷',
@@ -105,9 +110,9 @@ class TransferStatusNotification extends Notification
             $targetFlag = $flags[$this->transfer->target_currency] ?? '🇪🇬';
 
             $message = "✅ *تم تسجيل الحوالة بنجاح*\n\n"
-                . "المبلغ: *{$this->transfer->amount} {$this->transfer->currency}* {$sourceFlag}\n"
+                . "المبلغ: *{$sourceAmountFormatted} {$this->transfer->currency}* {$sourceFlag}\n"
                 . "سعر الصرف: *{$this->transfer->exchange_rate}*\n"
-                . "المبلغ المستلم: *{$this->transfer->received_amount} {$this->transfer->target_currency}* {$targetFlag}\n";
+                . "المبلغ المستلم: *{$receivedAmountFormatted} {$this->transfer->target_currency}* {$targetFlag}\n";
 
             if ($this->transfer->recipient_phone) {
                 $message .= "رقم المستفيد:\n```{$this->transfer->recipient_phone}```";
@@ -116,7 +121,7 @@ class TransferStatusNotification extends Notification
         } elseif ($this->statusType === 'paid') {
             $message = "تم تسليم الحوالة  بنجاح للمستفيد\n"
                 . "رقم الحوالة: *{$this->transfer->transfer_number}*\n"
-                . "المبلغ المدفوع: *{$this->transfer->received_amount} {$this->transfer->target_currency}*";
+                . "المبلغ المدفوع: *{$receivedAmountFormatted} {$this->transfer->target_currency}*";
         } elseif ($this->statusType === 'cancelled' || $this->statusType === 'rejected') {
             $action = $this->statusType === 'rejected' ? 'رفض' : 'إلغاء';
             $message = "تم {$action} الحوالة رقم *{$this->transfer->transfer_number}*.";
@@ -143,13 +148,17 @@ class TransferStatusNotification extends Notification
         $replyMarkup = null;
         $extraMessages = [];
         $branchName = $this->transfer->branch ? $this->transfer->branch->name : 'غير محدد';
+        $receivedAmountFormatted = (string) (int) round((float) $this->transfer->received_amount);
+        $sourceAmountFormatted = (fmod((float) $this->transfer->amount, 1) === 0.0)
+            ? (string) (int) $this->transfer->amount
+            : (string) (float) $this->transfer->amount;
 
         if ($this->statusType === 'created') {
             $message = "✅ *تم إنشاء الحوالة بنجاح!*\n\n"
                 . "رقم الحوالة: `{$this->transfer->transfer_number}`\n"
-                . "المبلغ: {$this->transfer->amount} {$this->transfer->currency}\n"
+                . "المبلغ: {$sourceAmountFormatted} {$this->transfer->currency}\n"
                 . "سعر الصرف: {$this->transfer->exchange_rate}\n"
-                . "المبلغ المستلم: {$this->transfer->received_amount} {$this->transfer->target_currency}\n"
+                . "المبلغ المستلم: {$receivedAmountFormatted} {$this->transfer->target_currency}\n"
                 . "المستفيد: {$this->transfer->recipient_name}\n";
 
             if ($this->transfer->recipient_phone) {
@@ -170,7 +179,7 @@ class TransferStatusNotification extends Notification
             if ($this->transfer->recipient_phone) {
                 $groupText .= "```{$this->transfer->recipient_phone}```\n";
             }
-            $groupText .= "*{$this->transfer->received_amount} {$this->transfer->target_currency}* {$targetFlag}";
+            $groupText .= "*{$receivedAmountFormatted} {$this->transfer->target_currency}* {$targetFlag}";
 
 
             // Try generating the receipt document immediately
@@ -185,7 +194,7 @@ class TransferStatusNotification extends Notification
         } elseif ($this->statusType === 'paid') {
             $message = "💵 *تم تسليم الحوالة بنجاح!*\n\n"
                 . "رقم الحوالة: `{$this->transfer->transfer_number}`\n"
-                . "المبلغ المدفوع: {$this->transfer->received_amount} {$this->transfer->target_currency}";
+                . "المبلغ المدفوع: {$receivedAmountFormatted} {$this->transfer->target_currency}";
                 
             try {
                 $receiptService = app(\App\Services\ReceiptService::class);

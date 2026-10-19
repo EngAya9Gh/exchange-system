@@ -60,9 +60,7 @@ class RecipientWhatsAppService
      */
     public function buildMessage(Transfer $transfer): string
     {
-        $amountValue = (float) $transfer->received_amount;
-        $decimals = (fmod($amountValue, 1) !== 0.0) ? 2 : 0;
-        $amount = number_format($amountValue, $decimals, '.', ',');
+        $amount = (string) (int) round((float) $transfer->received_amount);
 
         $flag = '🇪🇬';
         $currencyName = 'جنية مصري';

@@ -44,11 +44,16 @@ class NewTransferRequestNotification extends Notification
 
     public function toWhatsApp(mixed $notifiable): array
     {
+        $receivedAmountFormatted = (string) (int) round((float) $this->transfer->received_amount);
+        $sourceAmountFormatted = (fmod((float) $this->transfer->amount, 1) === 0.0)
+            ? (string) (int) $this->transfer->amount
+            : (string) (float) $this->transfer->amount;
+
         $message = "🔔 *طلب حوالة جديد (مقبول)*\n\n";
         $message .= "الزبون: {$this->transfer->user->name}\n";
-        $message .= "المبلغ المطلوب: {$this->transfer->amount} {$this->transfer->currency}\n";
+        $message .= "المبلغ المطلوب: {$sourceAmountFormatted} {$this->transfer->currency}\n";
         $message .= "سعر الصرف: {$this->transfer->exchange_rate}\n";
-        $message .= "المبلغ المستلم: {$this->transfer->received_amount} EGP\n";
+        $message .= "المبلغ المستلم: {$receivedAmountFormatted} EGP\n";
         $message .= "اسم المستفيد: {$this->transfer->recipient_name}\n";
         $message .= "📱 *رقم فودافون كاش*: {$this->transfer->recipient_phone}\n\n";
         $message .= "يمكنك نسخ الرقم أعلاه وتنفيذ التحويل مباشرة.";
@@ -77,11 +82,16 @@ class NewTransferRequestNotification extends Notification
             return [];
         }
 
+        $receivedAmountFormatted = (string) (int) round((float) $this->transfer->received_amount);
+        $sourceAmountFormatted = (fmod((float) $this->transfer->amount, 1) === 0.0)
+            ? (string) (int) $this->transfer->amount
+            : (string) (float) $this->transfer->amount;
+
         $message = "🔔 *طلب حوالة جديد (مقبول)*\n\n";
         $message .= "الزبون: {$this->transfer->user->name}\n";
-        $message .= "المبلغ المطلوب: {$this->transfer->amount} {$this->transfer->currency}\n";
+        $message .= "المبلغ المطلوب: {$sourceAmountFormatted} {$this->transfer->currency}\n";
         $message .= "سعر الصرف: {$this->transfer->exchange_rate}\n";
-        $message .= "المبلغ المستلم: {$this->transfer->received_amount} EGP\n";
+        $message .= "المبلغ المستلم: {$receivedAmountFormatted} EGP\n";
         $message .= "اسم المستفيد: {$this->transfer->recipient_name}\n";
         $message .= "📱 *رقم المستفيد*: `{$this->transfer->recipient_phone}`\n";
 
@@ -93,7 +103,7 @@ class NewTransferRequestNotification extends Notification
         if ($this->transfer->recipient_phone) {
             $groupText .= "```{$this->transfer->recipient_phone}```\n";
         }
-        $groupText .= "*{$this->transfer->received_amount} {$this->transfer->target_currency}* {$targetFlag}";
+        $groupText .= "*{$receivedAmountFormatted} {$this->transfer->target_currency}* {$targetFlag}";
 
         return [
             'to' => $to,
