@@ -354,6 +354,13 @@ class AdminDashboard extends Component
             Log::error("Failed to notify admins: " . $e->getMessage());
         }
 
+        // Notify recipient on WhatsApp
+        try {
+            app(\App\Services\WhatsApp\RecipientWhatsAppService::class)->sendTransferMessage($transfer);
+        } catch (\Exception $e) {
+            Log::error("Failed to notify recipient on WhatsApp: " . $e->getMessage());
+        }
+
         // Show receipt modal
         $this->viewReceipt($transfer->id);
 

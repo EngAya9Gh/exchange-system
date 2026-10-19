@@ -197,6 +197,13 @@ class NewTransferRequest extends Component
             \Illuminate\Support\Facades\Log::error("Failed to send telegram notification: " . $e->getMessage());
         }
 
+        // Send WhatsApp notification to recipient
+        try {
+            app(\App\Services\WhatsApp\RecipientWhatsAppService::class)->sendTransferMessage($transfer);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to send WhatsApp to recipient: " . $e->getMessage());
+        }
+
         $this->reset(['sender_name', 'sender_phone', 'recipient_name', 'recipient_phone', 'destination', 'address', 'notes', 'amount']);
         $this->calculateTotals();
 
