@@ -75,12 +75,7 @@ Route::get('receipts/{number}', function ($number) {
 
     $amountInWords = \App\Helpers\ArabicNumberToWords::convert((float) $transfer->received_amount, $currencyName);
 
-    $theme = request('theme', '1');
-    if ($theme == '2') {
-        return view('receipts.transfer_v2', compact('transfer', 'amountInWords'));
-    }
-
-    return view('receipts.transfer', compact('transfer', 'amountInWords'));
+    return view('receipts.transfer_v2', compact('transfer', 'amountInWords'));
 })->name('receipt.view');
 
 // Public route to view bill payment receipt as a web page
