@@ -206,14 +206,7 @@
         .delivery-text {
             color: #333;
             font-size: 14px;
-            margin-bottom: 5px;
-        }
-        .delivery-phone {
-            color: #555;
-            font-size: 13px;
             margin-bottom: 15px;
-            direction: ltr;
-            text-align: right;
         }
 
         .source-date-row {
@@ -236,6 +229,11 @@
             color: #222;
             font-weight: bold;
             font-size: 14px;
+        }
+        .sd-source-value {
+            color: #111;
+            font-weight: 700;
+            font-size: 15px;
         }
 
         /* Notes */
@@ -546,12 +544,11 @@
                 <div class="delivery-content">
                     <div class="delivery-title">عنوان التسليم:</div>
                     <div class="delivery-text">{{ $transfer->destination }} - {{ $transfer->address ?: 'عنوان التسليم غير محدد' }}</div>
-                    <div class="delivery-phone">{{ $transfer->recipient_phone }}</div>
                     
                     <div class="source-date-row">
                         <div class="sd-item">
                             <span class="sd-label">المصدر:</span>
-                            <span class="sd-value">{{ $transfer->user_id ?? '---' }}</span>
+                            <span class="sd-value sd-source-value">مركز الاستاذ للاتصالات</span>
                         </div>
                         <div class="sd-item">
                             <span class="sd-label">التاريخ:</span>

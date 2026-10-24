@@ -22,6 +22,12 @@ class BalanceManagement extends Component
     public $depositAmount = '';
     public $depositNote = '';
 
+    // Summary Modal
+    public $showSummaryModal = false;
+    public $summaryData = [];
+    public $lastSummaryData = [];
+    public $openedFromStatementUserId = null;
+
     // Statement Modal
     public $showStatementModal = false;
     public $statementTransactions = [];
@@ -92,7 +98,71 @@ class BalanceManagement extends Component
         $this->showSettingsModal = false;
         $this->showPaymentModal = false;
         $this->showStatementModal = false;
+        $this->showSummaryModal = false;
         $this->manageUserId = null;
+        $this->summaryData = [];
+    }
+
+    public function closeSummaryModal()
+    {
+        $this->showSummaryModal = false;
+        $this->summaryData = [];
+        $this->manageUserId = null;
+        $this->depositAmount = '';
+        $this->depositNote = '';
+
+        if ($this->openedFromStatementUserId) {
+            $userId = $this->openedFromStatementUserId;
+            $this->openedFromStatementUserId = null;
+            $this->openStatementModal($userId);
+        }
+    }
+
+    public function reopenLastSummary()
+    {
+        if (!empty($this->lastSummaryData)) {
+            $this->summaryData = $this->lastSummaryData;
+            $this->showSummaryModal = true;
+        }
+    }
+
+    public function dismissLastSummaryBanner()
+    {
+        $this->lastSummaryData = [];
+    }
+
+    public function openTransactionSummary($transactionId)
+    {
+        $tx = \App\Models\BalanceTransaction::with('user', 'admin')->findOrFail($transactionId);
+
+        $typeText = match($tx->type) {
+            'deposit' => 'إيداع رصيد (إضافة +)',
+            'withdrawal' => 'سحب رصيد (خصم -)',
+            'payment' => 'سداد دفعة (+)',
+            default => 'تعديل رصيد',
+        };
+
+        $this->openedFromStatementUserId = $tx->user_id;
+
+        $this->summaryData = [
+            'type' => $tx->type,
+            'type_text' => $typeText,
+            'user_name' => $tx->user?->name ?? 'غير محدد',
+            'user_phone' => $tx->user?->phone,
+            'amount' => (float)$tx->amount,
+            'balance_before' => (float)$tx->balance_before,
+            'balance_after' => (float)$tx->balance_after,
+            'date' => $tx->created_at->format('Y-m-d h:i A'),
+            'transaction_id' => $tx->id,
+            'notes' => $tx->notes,
+        ];
+        $this->lastSummaryData = $this->summaryData;
+
+        $this->showStatementModal = false;
+        $this->showDepositModal = false;
+        $this->showPaymentModal = false;
+        $this->showSettingsModal = false;
+        $this->showSummaryModal = true;
     }
 
     public function openStatementModal($id)
@@ -127,7 +197,7 @@ class BalanceManagement extends Component
         $user->balance += (float)$this->depositAmount;
         $user->save();
 
-        \App\Models\BalanceTransaction::create([
+        $transaction = \App\Models\BalanceTransaction::create([
             'user_id' => $user->id,
             'admin_id' => auth()->id(),
             'type' => 'deposit',
@@ -137,8 +207,22 @@ class BalanceManagement extends Component
             'notes' => 'إيداع يدوي',
         ]);
 
+        $this->summaryData = [
+            'type' => 'deposit',
+            'type_text' => 'إيداع رصيد (إضافة +)',
+            'user_name' => $user->name,
+            'user_phone' => $user->phone,
+            'amount' => (float)$this->depositAmount,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $user->balance,
+            'date' => now()->format('Y-m-d h:i A'),
+            'transaction_id' => $transaction->id,
+        ];
+        $this->lastSummaryData = $this->summaryData;
+
         session()->flash('success', "تم إضافة الرصيد بنجاح لـ {$this->manageUserName}.");
-        $this->closeModals();
+        $this->showDepositModal = false;
+        $this->showSummaryModal = true;
     }
 
     public function confirmWithdrawal()
@@ -155,7 +239,7 @@ class BalanceManagement extends Component
         $user->balance -= (float)$this->depositAmount;
         $user->save();
 
-        \App\Models\BalanceTransaction::create([
+        $transaction = \App\Models\BalanceTransaction::create([
             'user_id' => $user->id,
             'admin_id' => auth()->id(),
             'type' => 'withdrawal',
@@ -165,8 +249,22 @@ class BalanceManagement extends Component
             'notes' => 'سحب يدوي',
         ]);
 
+        $this->summaryData = [
+            'type' => 'withdrawal',
+            'type_text' => 'سحب رصيد (خصم -)',
+            'user_name' => $user->name,
+            'user_phone' => $user->phone,
+            'amount' => (float)$this->depositAmount,
+            'balance_before' => $balanceBefore,
+            'balance_after' => $user->balance,
+            'date' => now()->format('Y-m-d h:i A'),
+            'transaction_id' => $transaction->id,
+        ];
+        $this->lastSummaryData = $this->summaryData;
+
         session()->flash('success', "تم خصم الرصيد بنجاح من {$this->manageUserName}.");
-        $this->closeModals();
+        $this->showDepositModal = false;
+        $this->showSummaryModal = true;
     }
 
     public function confirmPayment()
