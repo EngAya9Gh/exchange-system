@@ -24,6 +24,8 @@ return [
         'wakeel' => [
             'api_key' => env('WAKEEL_WHATSAPP_API_KEY'),
             'group_id' => env('WAKEEL_WHATSAPP_GROUP_ID'),
+            // "Tele CARD" group: receives new SIM package orders
+            'sim_group_id' => env('WAKEEL_SIM_WHATSAPP_GROUP_ID', '120363431257235608@g.us'),
         ],
     ],
 ];

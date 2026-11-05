@@ -6,16 +6,17 @@ namespace App\Notifications;
 
 use App\Models\SimOrder;
 use App\Models\SimPackage;
-use App\Notifications\Channels\TelegramChannel;
 use App\Notifications\Channels\WhatsAppChannel;
-use App\Notifications\Concerns\EscapesTelegramMarkdown;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
-/** Sent to the order owner when an admin activates or rejects their SIM package order. */
+/**
+ * Sent to the order owner when an admin activates or rejects their SIM package order:
+ * in-app (bell) + WhatsApp to the owner's own phone. No Telegram.
+ */
 class SimOrderStatusNotification extends Notification
 {
-    use Queueable, EscapesTelegramMarkdown;
+    use Queueable;
 
     public function __construct(
         protected SimOrder $order,
@@ -24,7 +25,7 @@ class SimOrderStatusNotification extends Notification
 
     public function via(mixed $notifiable): array
     {
-        return ['database', TelegramChannel::class, WhatsAppChannel::class];
+        return ['database', WhatsAppChannel::class];
     }
 
     protected function replacements(): array
@@ -64,21 +65,6 @@ class SimOrderStatusNotification extends Notification
             'to' => $notifiable->phone,
             'message' => __("messages.{$key}", $this->replacements()),
             'media' => null,
-        ];
-    }
-
-    public function toTelegram(mixed $notifiable): array
-    {
-        if (empty($notifiable->telegram_chat_id)) {
-            return [];
-        }
-
-        $key = $this->isCompleted() ? 'sim_order_completed_whatsapp' : 'sim_order_rejected_whatsapp';
-        $replacements = array_map(fn ($value) => $this->tg((string) $value), $this->replacements());
-
-        return [
-            'to' => $notifiable->telegram_chat_id,
-            'text' => __("messages.{$key}", $replacements),
         ];
     }
 }

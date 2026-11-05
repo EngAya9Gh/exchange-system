@@ -9,6 +9,7 @@ use App\Models\SimPackage;
 use App\Models\User;
 use App\Notifications\NewSimOrderNotification;
 use App\Notifications\SimOrderStatusNotification;
+use App\Services\WhatsApp\SimOrderGroupNotifier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -185,6 +186,13 @@ class SimOrderService
             }
         } catch (\Throwable $e) {
             Log::error('Failed to notify managers about SIM order ' . $order->order_number . ': ' . $e->getMessage());
+        }
+
+        // One WhatsApp message to the "Tele CARD" group (like the Vodafone Cash transfers group)
+        try {
+            app(SimOrderGroupNotifier::class)->sendNewOrder($order);
+        } catch (\Throwable $e) {
+            Log::error('Failed to post SIM order ' . $order->order_number . ' to WhatsApp group: ' . $e->getMessage());
         }
     }
 

@@ -11,9 +11,13 @@ use App\Models\SimOrder;
 use App\Models\SimPackage;
 use App\Models\User;
 use App\Notifications\NewSimOrderNotification;
+use App\Notifications\Channels\TelegramChannel;
+use App\Notifications\Channels\WhatsAppChannel;
 use App\Notifications\SimOrderStatusNotification;
 use App\Services\SimOrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -34,6 +38,11 @@ class SimPackagesTest extends TestCase
         putenv('ROUTING_LOCALE=ar');
 
         parent::setUp();
+
+        // Never reach the real WhatsApp group from tests (.env holds the real Wakeel key)
+        Http::preventStrayRequests();
+        Http::fake(['provider.wakeel.cc/*' => Http::response(['status' => true], 200)]);
+        config(['whatsapp.providers.wakeel.api_key' => 'test-key']);
 
         Notification::fake();
         app()->setLocale('ar');
@@ -360,27 +369,67 @@ class SimPackagesTest extends TestCase
         $this->assertSame('1,100', SimPackage::formatPrice(1100));
         $this->assertSame('299.50', SimPackage::formatPrice('299.5'));
     }
-    public function test_notification_payloads_render_and_escape_telegram_markdown(): void
+    public function test_new_order_is_posted_once_to_the_tele_card_whatsapp_group(): void
     {
-        $this->customer->forceFill(['name' => 'Shop_*One*', 'telegram_chat_id' => '111', 'phone' => '+905320000000'])->save();
-        $this->admin->forceFill(['telegram_chat_id' => '222'])->save();
+        $this->customer->forceFill(['name' => 'Shop One'])->save();
+        $secondManager = User::factory()->create();
+        $secondManager->assignRole('Super Admin');
 
-        $order = $this->service->placeOrder($this->customer, $this->package(350)->id, '05321234567', 'Ali_Veli');
+        app()->setLocale('tr'); // the group message is always Arabic
+        $order = $this->service->placeOrder($this->customer, $this->package(350)->id, '5051234567', 'Ali', 'urgent');
 
-        $new = new NewSimOrderNotification($order->fresh());
-        $this->assertStringContainsString('05321234567', $new->toArray($this->admin)['message']);
-        $tg = $new->toTelegram($this->admin);
-        $this->assertSame('222', $tg['to']);
-        $this->assertStringContainsString('Shop\\_\\*One\\*', $tg['text']);
-        $this->assertStringContainsString('Ali\\_Veli', $tg['text']);
-        $this->assertStringContainsString('*Tele CARD*', $tg['text']);
-        $this->assertSame('FİZİKSEL Turkiye_10gb_30gun', $order->package->supplier_code);
+        Http::assertSentCount(1); // one group message, not one per admin
+        Http::assertSent(function (Request $request) use ($order) {
+            $message = $request['message'];
 
-        $this->service->reject($order, $this->admin, 'Bad_number');
+            return $request->url() === 'https://provider.wakeel.cc/api/v1/message/send'
+                && $request->hasHeader('Authorization', 'Bearer test-key')
+                && $request['phone'] === '120363431257235608@g.us'
+                && str_contains($message, 'طلب باقة جديد - Tele CARD')
+                && str_contains($message, '*Shop One*')
+                && str_contains($message, "```5051234567```")
+                && str_contains($message, 'باقة تركيا 10 جيجا - 30 يوم (فيزيائية)')
+                && str_contains($message, 'FİZİKSEL Turkiye_10gb_30gun')
+                && str_contains($message, '*350 ₺*')
+                && str_contains($message, $order->order_number)
+                && str_contains($message, 'الزبون: Ali')
+                && str_contains($message, 'ملاحظات: urgent');
+        });
+
+        // Admins still get the in-app (bell) notification, but nothing goes to Telegram
+        Notification::assertSentTo([$this->admin, $secondManager], NewSimOrderNotification::class,
+            fn ($notification, $channels) => $channels === ['database']);
+    }
+
+    public function test_group_message_problems_never_block_the_order(): void
+    {
+        // Wakeel down
+        Http::fake(['provider.wakeel.cc/*' => Http::response('error', 500)]);
+        $this->service->placeOrder($this->customer, $this->package(270)->id, '5051234567');
+
+        // Wakeel not configured: no request at all
+        config(['whatsapp.providers.wakeel.api_key' => null]);
+        $this->service->placeOrder($this->customer, $this->package(270)->id, '5051234568');
+
+        $this->assertSame(2, SimOrder::count());
+        $this->assertEquals(460, $this->customer->fresh()->balance);
+        Http::assertSentCount(1);
+    }
+
+    public function test_status_notifications_go_to_whatsapp_not_telegram(): void
+    {
+        $this->customer->forceFill(['phone' => '+905320000000', 'telegram_chat_id' => '111'])->save();
+        $order = $this->service->placeOrder($this->customer, $this->package(350)->id, '5051234567');
+
+        $this->service->reject($order, $this->admin, 'Bad number');
         $status = new SimOrderStatusNotification($order->fresh(), SimOrder::STATUS_REJECTED);
+
+        $this->assertSame(['database', WhatsAppChannel::class], $status->via($this->customer));
+        $this->assertNotContains(TelegramChannel::class, (new NewSimOrderNotification($order))->via($this->admin));
         $this->assertStringContainsString('350 ₺', $status->toArray($this->customer)['message']);
-        $this->assertStringContainsString('Bad_number', $status->toWhatsApp($this->customer)['message']);
-        $this->assertStringContainsString('Bad\\_number', $status->toTelegram($this->customer)['text']);
+        $whatsApp = $status->toWhatsApp($this->customer);
+        $this->assertSame('+905320000000', $whatsApp['to']);
+        $this->assertStringContainsString('Bad number', $whatsApp['message']);
 
         app()->setLocale('tr');
         $this->assertSame('Paket Talebi Reddedildi', $status->toArray($this->customer)['title']);
