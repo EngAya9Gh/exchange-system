@@ -390,6 +390,8 @@ return [
     'sim_region' => 'المنطقة',
     'sim_region_local' => 'باقات تركيا',
     'sim_region_europe' => 'باقات أوروبا',
+    'sim_network' => 'الشبكة',
+    'sim_network_hint' => 'اسم الشبكة كما يظهر في لوحة المورد (مثال: Tele CARD أو eSIM).',
     'sim_type' => 'نوع الشريحة',
     'sim_type_physical' => 'شريحة فيزيائية',
     'sim_type_esim' => 'eSIM إلكترونية',

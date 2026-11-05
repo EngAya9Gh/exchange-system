@@ -23,6 +23,7 @@ class SimOrder extends Model
         'package_name_tr',
         'region',
         'sim_type',
+        'network_name',
         'price',
         'charged_amount',
         'phone_number',

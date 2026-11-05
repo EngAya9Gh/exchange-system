@@ -390,6 +390,8 @@ return [
     'sim_region' => 'Region',
     'sim_region_local' => 'Turkey Packages',
     'sim_region_europe' => 'Europe Packages',
+    'sim_network' => 'Network',
+    'sim_network_hint' => 'Network name as shown on the supplier panel (e.g. Tele CARD or eSIM).',
     'sim_type' => 'SIM Type',
     'sim_type_physical' => 'Physical SIM',
     'sim_type_esim' => 'eSIM',

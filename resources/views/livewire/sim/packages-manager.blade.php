@@ -34,6 +34,7 @@
                             <tr>
                                 <th class="px-4 py-3 text-start">#</th>
                                 <th class="px-4 py-3 text-start">{{ __('messages.sim_name_ar') }} / {{ __('messages.sim_name_tr') }}</th>
+                                <th class="px-4 py-3 text-start whitespace-nowrap">{{ __('messages.sim_network') }}</th>
                                 <th class="px-4 py-3 text-start whitespace-nowrap">{{ __('messages.sim_type') }}</th>
                                 <th class="px-4 py-3 text-start whitespace-nowrap">{{ __('messages.sim_price') }}</th>
                                 <th class="px-4 py-3 text-start whitespace-nowrap">{{ __('messages.sim_supplier_code') }}</th>
@@ -50,6 +51,7 @@
                                         <div class="text-xs text-slate-500 mt-0.5" dir="ltr">{{ $package->name_tr }}</div>
                                         <div class="text-[11px] text-slate-400 mt-1">{{ __('messages.sim_orders_count', ['count' => $package->orders_count]) }}</div>
                                     </td>
+                                    <td class="px-4 py-3 whitespace-nowrap font-bold text-slate-700" dir="ltr">{{ $package->network_name ?: '—' }}</td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <span class="text-[11px] font-bold px-2 py-0.5 rounded-full {{ $package->isEsim() ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-800' }}">
                                             {{ $package->isEsim() ? __('messages.sim_type_esim') : __('messages.sim_type_physical') }}
@@ -89,7 +91,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-4 py-8 text-center text-slate-400 font-bold">{{ __('messages.sim_no_packages') }}</td>
+                                    <td colspan="8" class="px-4 py-8 text-center text-slate-400 font-bold">{{ __('messages.sim_no_packages') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -124,6 +126,18 @@
                                 <option value="{{ SimPackage::TYPE_ESIM }}">{{ __('messages.sim_type_esim') }}</option>
                             </select>
                             @error('simType') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ __('messages.sim_network') }}</label>
+                            <input type="text" dir="ltr" wire:model="networkName" maxlength="100" list="sim-known-networks"
+                                placeholder="Tele CARD" class="{{ $inputClass }} font-bold">
+                            <datalist id="sim-known-networks">
+                                @foreach($knownNetworks as $network)
+                                    <option value="{{ $network }}"></option>
+                                @endforeach
+                            </datalist>
+                            <p class="text-[11px] text-slate-400 mt-1">{{ __('messages.sim_network_hint') }}</p>
+                            @error('networkName') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ __('messages.sim_data_gb') }}</label>

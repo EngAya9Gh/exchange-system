@@ -12,6 +12,8 @@ return new class extends Migration
             $table->id();
             $table->string('region', 20);    // local | europe
             $table->string('sim_type', 20);  // physical | esim
+            // Network / operator the package runs on, as named on the supplier panel (e.g. "Tele CARD", "eSIM")
+            $table->string('network_name', 100)->nullable();
             $table->unsignedInteger('data_gb');
             $table->unsignedInteger('validity_days');
             $table->decimal('price', 15, 2);

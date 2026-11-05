@@ -59,6 +59,7 @@ class SimOrderService
                 'package_name_tr' => $package->name_tr,
                 'region' => $package->region,
                 'sim_type' => $package->sim_type,
+                'network_name' => $package->network_name,
                 'price' => $price,
                 'charged_amount' => $isExempt ? 0 : $price,
                 'phone_number' => $phoneNumber,

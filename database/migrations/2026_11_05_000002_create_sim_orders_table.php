@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('package_name_tr');
             $table->string('region', 20);
             $table->string('sim_type', 20);
+            $table->string('network_name', 100)->nullable();
             $table->decimal('price', 15, 2);
             // What was actually taken from the user's balance (0 for Super Admin orders)
             $table->decimal('charged_amount', 15, 2)->default(0);

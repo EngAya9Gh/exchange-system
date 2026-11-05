@@ -13,6 +13,7 @@ class PackagesManager extends Component
 
     public string $region = SimPackage::REGION_LOCAL;
     public string $simType = SimPackage::TYPE_PHYSICAL;
+    public string $networkName = '';
     public $dataGb = '';
     public $validityDays = 30;
     public $price = '';
@@ -39,6 +40,7 @@ class PackagesManager extends Component
         return [
             'region' => ['required', 'in:' . implode(',', SimPackage::REGIONS)],
             'simType' => ['required', 'in:' . implode(',', SimPackage::TYPES)],
+            'networkName' => ['nullable', 'string', 'max:100'],
             'dataGb' => ['required', 'integer', 'min:1', 'max:10000'],
             'validityDays' => ['required', 'integer', 'min:1', 'max:3650'],
             'price' => ['required', 'numeric', 'min:1', 'max:1000000'],
@@ -69,6 +71,7 @@ class PackagesManager extends Component
         return [
             'region' => __('messages.sim_region'),
             'simType' => __('messages.sim_type'),
+            'networkName' => __('messages.sim_network'),
             'dataGb' => __('messages.sim_data_gb'),
             'validityDays' => __('messages.sim_validity_days'),
             'price' => __('messages.sim_price'),
@@ -98,6 +101,7 @@ class PackagesManager extends Component
         $this->editingId = $package->id;
         $this->region = $package->region;
         $this->simType = $package->sim_type;
+        $this->networkName = (string) $package->network_name;
         $this->dataGb = $package->data_gb;
         $this->validityDays = $package->validity_days;
         $this->price = (float) $package->price;
@@ -121,6 +125,7 @@ class PackagesManager extends Component
         $data = [
             'region' => $this->region,
             'sim_type' => $this->simType,
+            'network_name' => trim($this->networkName) ?: null,
             'data_gb' => (int) $this->dataGb,
             'validity_days' => (int) $this->validityDays,
             'price' => round((float) $this->price, 2),
@@ -169,7 +174,7 @@ class PackagesManager extends Component
     {
         $this->resetValidation();
         $this->reset([
-            'editingId', 'region', 'simType', 'dataGb', 'validityDays', 'price',
+            'editingId', 'region', 'simType', 'networkName', 'dataGb', 'validityDays', 'price',
             'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'isActive', 'sortOrder',
         ]);
     }
@@ -180,6 +185,7 @@ class PackagesManager extends Component
 
         return view('livewire.sim.packages-manager', [
             'packagesByRegion' => $packages->groupBy('region'),
+            'knownNetworks' => SimPackage::withTrashed()->whereNotNull('network_name')->distinct()->orderBy('network_name')->pluck('network_name'),
         ]);
     }
 }

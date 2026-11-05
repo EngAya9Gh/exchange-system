@@ -22,6 +22,7 @@ class SimPackage extends Model
     protected $fillable = [
         'region',
         'sim_type',
+        'network_name',
         'data_gb',
         'validity_days',
         'price',

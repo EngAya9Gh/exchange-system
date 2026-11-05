@@ -77,6 +77,10 @@ class SimPackagesTest extends TestCase
         $this->assertSame('Türkiye 5 GB - 30 Gün (E-SIM)', $esim->name_tr);
 
         $this->assertSame(180, $this->package(1100)->validity_days);
+
+        // Network names as on the supplier panel
+        $this->assertSame(5, SimPackage::where('region', 'local')->where('network_name', 'Tele CARD')->count());
+        $this->assertSame(4, SimPackage::where('region', 'europe')->where('network_name', 'eSIM')->count());
         $this->assertSame([270, 350, 550, 900, 1100], SimPackage::where('region', 'local')->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
         $this->assertSame([500, 750, 1000, 1500], SimPackage::where('region', 'europe')->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
     }
@@ -189,10 +193,11 @@ class SimPackagesTest extends TestCase
         $package = $this->package(900);
         $order = $this->service->placeOrder($this->customer, $package->id, '05321234567');
 
-        $package->update(['price' => 950, 'name_ar' => 'اسم جديد']);
+        $package->update(['price' => 950, 'name_ar' => 'اسم جديد', 'network_name' => 'Other']);
 
         $order->refresh();
         $this->assertEquals(900, $order->price);
+        $this->assertSame('Tele CARD', $order->network_name);
         $this->assertSame('باقة تركيا 50 جيجا - شهر (فيزيائية)', $order->package_name_ar);
     }
 
@@ -244,7 +249,10 @@ class SimPackagesTest extends TestCase
         Livewire::actingAs($this->customer)
             ->test(BuyPackage::class)
             ->assertDontSee('باقة أوروبا 25 جيجا')
+            ->assertSeeHtml('<span dir="ltr">Tele CARD</span>')
             ->call('selectRegion', 'europe')
+            ->assertSeeHtml('<span dir="ltr">eSIM</span>')
+            ->assertDontSeeHtml('<span dir="ltr">Tele CARD</span>')
             ->assertSee('باقة أوروبا 25 جيجا - 30 يوم (eSIM)')
             ->assertDontSee('باقة تركيا 5 جيجا');
     }
@@ -299,12 +307,14 @@ class SimPackagesTest extends TestCase
             ->set('dataGb', 50)
             ->set('validityDays', 30)
             ->set('price', 2500)
+            ->set('networkName', '  eSIM ')
             ->call('save')
             ->assertHasNoErrors();
 
         $created = SimPackage::where('price', 2500)->sole();
         $this->assertSame('باقة أوروبا 50 جيجا - 30 يوم (eSIM)', $created->name_ar);
         $this->assertSame('Avrupa 50 GB - 30 Gün (E-SIM)', $created->name_tr);
+        $this->assertSame('eSIM', $created->network_name);
 
         Livewire::actingAs($this->admin)
             ->test(PackagesManager::class)
@@ -332,6 +342,7 @@ class SimPackagesTest extends TestCase
         $this->assertSame('222', $tg['to']);
         $this->assertStringContainsString('Shop\\_\\*One\\*', $tg['text']);
         $this->assertStringContainsString('Ali\\_Veli', $tg['text']);
+        $this->assertStringContainsString('*Tele CARD*', $tg['text']);
         $this->assertStringContainsString('E-SİM Turkiye_5gb_30gun', $order->package->supplier_code);
 
         $this->service->reject($order, $this->admin, 'Bad_number');

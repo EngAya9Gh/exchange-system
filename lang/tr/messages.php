@@ -389,6 +389,8 @@ return [
     'sim_region' => 'Bölge',
     'sim_region_local' => 'Türkiye Paketleri',
     'sim_region_europe' => 'Avrupa Paketleri',
+    'sim_network' => 'Şebeke',
+    'sim_network_hint' => 'Tedarikçi panelinde görünen şebeke adı (örnek: Tele CARD veya eSIM).',
     'sim_type' => 'Hat Tipi',
     'sim_type_physical' => 'Fiziksel SIM',
     'sim_type_esim' => 'E-SIM',

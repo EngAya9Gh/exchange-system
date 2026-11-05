@@ -53,6 +53,9 @@ class NewSimOrderNotification extends Notification
         $text .= __('messages.sim_order_number') . ": `{$order->order_number}`\n";
         $text .= __('messages.sim_ordered_by') . ': ' . $this->tg($order->user->name ?? '') . "\n";
         $text .= __('messages.sim_package') . ': ' . $this->tg($order->localized_package_name) . "\n";
+        if ($order->network_name) {
+            $text .= '📶 ' . __('messages.sim_network') . ': *' . $this->tg($order->network_name) . "*\n";
+        }
         $text .= __('messages.sim_type') . ': ' . $this->tg($type) . "\n";
         $text .= '📱 ' . __('messages.sim_phone') . ": `{$order->phone_number}`\n";
         if ($order->customer_name) {

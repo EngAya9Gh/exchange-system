@@ -63,6 +63,9 @@
                         <td class="px-4 py-4 min-w-[220px]">
                             <div class="font-bold text-slate-800">{{ $order->localized_package_name }}</div>
                             <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                                @if($order->network_name)
+                                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-800 text-white" dir="ltr" title="{{ __('messages.sim_network') }}">{{ $order->network_name }}</span>
+                                @endif
                                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {{ $order->isEsim() ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-800' }}">
                                     {{ $order->isEsim() ? __('messages.sim_type_esim') : __('messages.sim_type_physical') }}
                                 </span>

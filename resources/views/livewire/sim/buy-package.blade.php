@@ -24,6 +24,10 @@
                     <button type="button" wire:click="selectRegion('{{ $key }}')"
                         class="flex-1 lg:flex-none px-4 py-2.5 rounded-xl text-sm font-bold transition whitespace-nowrap {{ $region === $key ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
                         <span class="text-base">{{ $meta['flag'] }}</span> {{ $meta['label'] }}
+                        @php $regionNetworks = $packagesByRegion->get($key, collect())->pluck('network_name')->filter()->unique()->implode(' / '); @endphp
+                        @if($regionNetworks)
+                            <span class="text-[11px] font-semibold opacity-70" dir="ltr">· {{ $regionNetworks }}</span>
+                        @endif
                     </button>
                 @endforeach
             </div>
@@ -45,6 +49,12 @@
                 @php $isSelected = $selectedPackageId === $package->id; @endphp
                 <button type="button" wire:key="sim-pkg-{{ $package->id }}" wire:click="selectPackage({{ $package->id }})"
                     class="relative text-start rounded-2xl border-2 p-5 transition-all flex flex-col {{ $isSelected ? 'border-primary-500 bg-primary-50 shadow-md ring-4 ring-primary-100' : 'border-slate-100 bg-white hover:border-rose-200 hover:shadow-sm' }}">
+                    @if($package->network_name)
+                        <div class="flex items-center gap-1.5 mb-3 text-xs font-black text-slate-700" title="{{ __('messages.sim_network') }}">
+                            <svg class="w-4 h-4 text-primary-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
+                            <span dir="ltr">{{ $package->network_name }}</span>
+                        </div>
+                    @endif
                     <div class="flex items-start justify-between gap-3 mb-3 w-full">
                         <div>
                             <div class="text-3xl font-black text-slate-800 leading-none" dir="ltr">
@@ -141,6 +151,9 @@
                 <div class="bg-slate-50 rounded-2xl border border-slate-100 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <div class="text-sm font-black text-slate-800">{{ $selectedPackage->localized_name }}</div>
+                        @if($selectedPackage->network_name)
+                            <div class="text-xs font-bold text-slate-600 mt-1">{{ __('messages.sim_network') }}: <span dir="ltr">{{ $selectedPackage->network_name }}</span></div>
+                        @endif
                         <div class="text-xs font-bold text-slate-500 mt-1">
                             @if($isExemptFromCharge)
                                 {{ __('messages.sim_admin_no_charge') }}
