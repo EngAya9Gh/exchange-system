@@ -713,6 +713,11 @@ class AdminDashboard extends Component
         // Commissions
         $commissionTiers = CommissionTier::orderBy('min_amount')->get();
 
+        // SIM orders waiting for activation (sidebar badge for SIM managers)
+        $simPendingCount = $user->can('manage_sims')
+            ? \App\Models\SimOrder::where('status', \App\Models\SimOrder::STATUS_PENDING)->count()
+            : 0;
+
         return view('livewire.admin.admin-dashboard', compact(
             'totalTrySent',
             'totalUsdSent',
@@ -722,7 +727,8 @@ class AdminDashboard extends Component
             'incomingRequests',
             'transfers',
             'exchangeRates',
-            'commissionTiers'
+            'commissionTiers',
+            'simPendingCount'
         ));
     }
 }

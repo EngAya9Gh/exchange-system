@@ -7,6 +7,8 @@
                 <h2 class="font-black text-xl sm:text-2xl text-slate-800 leading-tight">
                     @if($systemContext === 'invoices')
                         {{ __('messages.bill_payments_system') ?? 'بوابة نظام الفواتير' }}
+                    @elseif($systemContext === 'sims')
+                        {{ __('messages.sim_packages_system') }}
                     @else
                         {{ __('messages.customer_portal') }}
                     @endif
@@ -19,6 +21,8 @@
                     <span class="text-sm font-bold">
                         @if($systemContext === 'invoices')
                             {{ __('messages.transfer_system') ?? 'نظام الحوالات' }}
+                        @elseif($systemContext === 'sims')
+                            {{ __('messages.change_system') }}
                         @else
                             {{ __('messages.bill_payments_system') ?? 'نظام الفواتير' }}
                         @endif
@@ -65,7 +69,7 @@
     </div>
 
     <div class="py-12" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6" x-data="{ activeTab: '{{ $systemContext === 'invoices' ? 'bill_payments' : 'transfer' }}' }">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6" x-data="{ activeTab: '{{ match($systemContext) { 'invoices' => 'bill_payments', 'sims' => 'sim_buy', default => 'transfer' } }}' }">
             <!-- User Welcome Info -->
             <div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-6 sm:p-8 relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 sm:gap-0 transition-transform hover:-translate-y-1">
                 <div class="relative z-10">
@@ -75,6 +79,8 @@
                     <p class="text-slate-500 font-medium text-xs sm:text-sm leading-relaxed">
                         @if($systemContext === 'invoices')
                             {{ __('messages.bill_payments_portal_desc') ?? 'بوابة نظام الفواتير. يمكنك تسديد الفواتير ومتابعة حالة الدفعات مباشرة.' }}
+                        @elseif($systemContext === 'sims')
+                            {{ __('messages.sim_packages_portal_desc') }}
                         @else
                             {{ __('messages.customer_portal_desc') }}
                         @endif
@@ -124,6 +130,21 @@
                     </button>
                 @endif
 
+                @if($systemContext === 'sims')
+                    <button @click="activeTab = 'sim_buy'" 
+                            :class="activeTab === 'sim_buy' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 3h6l4 4v12a2 2 0 01-2 2H8a2 2 0 01-2-2V5a2 2 0 012-2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11h6v6H9z"></path></svg>
+                        {{ __('messages.sim_buy_package') }}
+                    </button>
+                    <button @click="activeTab = 'sim_history'" 
+                            :class="activeTab === 'sim_history' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        {{ __('messages.sim_my_orders') }}
+                    </button>
+                @endif
+
                 <button @click="activeTab = 'deposit'" 
                         :class="activeTab === 'deposit' ? 'border-primary-600 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                         class="whitespace-nowrap py-3 px-6 border-b-2 font-bold text-sm rounded-t-xl transition-all flex items-center gap-2">
@@ -157,6 +178,16 @@
                 
                 <div x-show="activeTab === 'bill_history'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
                     <livewire:admin.bill-payments-history />
+                </div>
+            @endif
+
+            @if($systemContext === 'sims')
+                <div x-show="activeTab === 'sim_buy'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+                    <livewire:sim.buy-package />
+                </div>
+
+                <div x-show="activeTab === 'sim_history'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
+                    <livewire:sim.orders />
                 </div>
             @endif
 

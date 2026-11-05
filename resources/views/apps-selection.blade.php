@@ -13,7 +13,7 @@
                 <h1 class="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight mb-2">{{ __('messages.welcome_to') ?? 'أهلاً بك في' }} {{ config('app.name', 'نظام الصرافة') }}</h1>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10">
                 
                 <!-- Transfers System Card -->
                 <a href="{{ auth()->user()->hasAnyRole(['Super Admin', 'Agent']) ? route('admin.dashboard') : route('dashboard') }}" 
@@ -35,6 +35,31 @@
                     </div>
                     
                     <h2 class="text-2xl sm:text-3xl font-black text-slate-800">نظام تسديد الفواتير</h2>
+                </a>
+
+                <!-- SIM / Internet Packages Card -->
+                <a href="{{ route('sims.dashboard') }}"
+                   class="group bg-white rounded-[32px] p-6 sm:p-10 shadow-soft border border-slate-100 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 flex flex-col items-center text-center md:col-span-2 lg:col-span-1">
+
+                    <div class="w-full h-32 sm:h-40 relative flex items-center justify-center mb-6 overflow-hidden rounded-2xl bg-gradient-to-br from-primary-500 via-rose-500 to-orange-400">
+                        <div class="absolute -top-8 -left-8 w-32 h-32 rounded-full bg-white/15 blur-xl"></div>
+                        <div class="absolute -bottom-10 -right-6 w-36 h-36 rounded-full bg-black/10 blur-xl"></div>
+                        <div class="relative flex items-center gap-4 group-hover:scale-105 transition-transform duration-500">
+                            <!-- SIM card shape -->
+                            <svg class="w-16 h-20 sm:w-20 sm:h-24 drop-shadow-lg" viewBox="0 0 64 80" fill="none">
+                                <path d="M8 4h34l18 18v50a4 4 0 01-4 4H8a4 4 0 01-4-4V8a4 4 0 014-4z" fill="#fff"/>
+                                <rect x="16" y="32" width="32" height="28" rx="4" fill="#fbbf24"/>
+                                <path d="M16 41h32M16 51h32M28 32v28M36 32v28" stroke="#d97706" stroke-width="1.5"/>
+                            </svg>
+                            <div class="flex flex-col items-start gap-1.5 text-white">
+                                <span class="text-xs sm:text-sm font-black bg-white/20 px-2.5 py-1 rounded-lg backdrop-blur-sm">eSIM</span>
+                                <span class="text-2xl leading-none">🇹🇷 🇪🇺</span>
+                                <span class="text-xs font-bold text-white/90" dir="ltr">5 – 50 GB</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="text-2xl sm:text-3xl font-black text-slate-800">{{ __('messages.sim_packages_system') }}</h2>
                 </a>
 
             </div>

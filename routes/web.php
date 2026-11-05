@@ -34,6 +34,17 @@ Route::group([
             }
             return view('dashboard', ['systemContext' => 'invoices']);
         })->name('invoices.dashboard');
+
+        // SIM / Internet packages system
+        Route::get('sims', function () {
+            $user = auth()->user();
+            if ($user->hasAnyRole(['Super Admin', 'Agent'])) {
+                return redirect()->route('admin.dashboard', [
+                    'activeTab' => $user->can('manage_sims') ? 'sim_orders' : 'sim_buy',
+                ]);
+            }
+            return view('dashboard', ['systemContext' => 'sims']);
+        })->name('sims.dashboard');
         
         // Customer routes
         Route::get('dashboard', function () {

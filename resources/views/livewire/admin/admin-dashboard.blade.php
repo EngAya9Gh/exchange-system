@@ -205,6 +205,39 @@
                 @endcan
             @endif
             
+            @if(in_array($systemContext, ['sims', 'both']))
+                <div class="h-px bg-slate-100 my-2"></div>
+                <button wire:click="$set('activeTab', 'sim_buy')"
+                    class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'sim_buy' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
+                    <svg class="w-5 h-5 ml-4 {{ $activeTab === 'sim_buy' ? 'text-primary-600' : 'text-slate-400' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 3h6l4 4v12a2 2 0 01-2 2H8a2 2 0 01-2-2V5a2 2 0 012-2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11h6v6H9z"></path>
+                    </svg>
+                    {{ __('messages.sim_buy_package') }}
+                </button>
+                <button wire:click="$set('activeTab', 'sim_orders')"
+                    class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'sim_orders' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
+                    <svg class="w-5 h-5 ml-4 {{ $activeTab === 'sim_orders' ? 'text-primary-600' : 'text-slate-400' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                    </svg>
+                    {{ __('messages.sim_orders') }}
+                    @if($simPendingCount > 0)
+                        <span class="ms-auto bg-amber-400 text-white text-[11px] font-black min-w-[22px] h-[22px] px-1.5 rounded-full flex items-center justify-center">{{ $simPendingCount }}</span>
+                    @endif
+                </button>
+                @can('manage_sims')
+                <button wire:click="$set('activeTab', 'sim_packages')"
+                    class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'sim_packages' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
+                    <svg class="w-5 h-5 ml-4 {{ $activeTab === 'sim_packages' ? 'text-primary-600' : 'text-slate-400' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    {{ __('messages.sim_manage_packages') }}
+                </button>
+                @endcan
+            @endif
+
             @if($systemContext !== 'both')
                 <div class="h-px bg-slate-100 my-4"></div>
                 <a href="{{ route('apps') }}" wire:navigate class="w-full flex items-center justify-center px-4 py-3 rounded-2xl transition-all text-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 font-bold border border-indigo-100">
@@ -273,6 +306,9 @@
                         @if($activeTab === 'billing_commissions') <span class="text-primary-600 ml-2">{{ __('messages.billing_commissions') ?? 'عمولات الفواتير' }}</span> @endif
                         @if($activeTab === 'bill_payments_history') <span class="text-primary-600 ml-2">{{ __('messages.bill_payments_history') ?? 'سجل الفواتير' }}</span> @endif
                         @if($activeTab === 'api_settings') <span class="text-primary-600 ml-2">إعدادات الـ API للفواتير</span> @endif
+                        @if($activeTab === 'sim_buy') <span class="text-primary-600 ml-2">{{ __('messages.sim_buy_package') }}</span> @endif
+                        @if($activeTab === 'sim_orders') <span class="text-primary-600 ml-2">{{ __('messages.sim_orders') }}</span> @endif
+                        @if($activeTab === 'sim_packages') <span class="text-primary-600 ml-2">{{ __('messages.sim_manage_packages') }}</span> @endif
                     </h1>
                     <p class="text-sm text-slate-400 font-medium mt-1">
                         @if($activeTab === 'dashboard')
@@ -385,6 +421,9 @@
                     @if($activeTab === 'billing_commissions') <span class="text-primary-600">عمولات الفواتير</span> @endif
                     @if($activeTab === 'bill_payments_history') <span class="text-primary-600">سجل الفواتير</span> @endif
                     @if($activeTab === 'api_settings') <span class="text-primary-600">إعدادات الـ API</span> @endif
+                    @if($activeTab === 'sim_buy') <span class="text-primary-600">{{ __('messages.sim_buy_package') }}</span> @endif
+                    @if($activeTab === 'sim_orders') <span class="text-primary-600">{{ __('messages.sim_orders') }}</span> @endif
+                    @if($activeTab === 'sim_packages') <span class="text-primary-600">{{ __('messages.sim_manage_packages') }}</span> @endif
                 </h1>
                 <p class="text-sm text-slate-400 font-medium mt-1">
                     @if($activeTab === 'dashboard')
@@ -1368,6 +1407,27 @@
         <!-- TAB: Company Logos -->
         @if ($activeTab === 'company_logos')
             <livewire:admin.company-logos-manager />
+        @endif
+
+        <!-- TABS: SIM / Internet packages -->
+        @if ($activeTab === 'sim_buy')
+            <div class="animate-fade-in-up">
+                <livewire:sim.buy-package />
+            </div>
+        @endif
+
+        @if ($activeTab === 'sim_orders')
+            <div class="animate-fade-in-up">
+                <livewire:sim.orders />
+            </div>
+        @endif
+
+        @if ($activeTab === 'sim_packages')
+            @can('manage_sims')
+                <div class="animate-fade-in-up">
+                    <livewire:sim.packages-manager />
+                </div>
+            @endcan
         @endif
 
     <!-- REJECT REQUEST MODAL -->

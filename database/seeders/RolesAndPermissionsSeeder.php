@@ -24,6 +24,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view_profits',
             'create_transfers',
             'view_ledger',
+            'manage_sims', // fulfil SIM package orders + edit packages/prices
         ];
 
         // Create permissions if they don't exist
