@@ -65,24 +65,26 @@ class SimPackagesTest extends TestCase
 
     public function test_initial_price_list_is_seeded_in_arabic_and_turkish(): void
     {
-        $this->assertSame(9, SimPackage::count());
+        $this->assertSame(8, SimPackage::count());
+        $this->assertSame(0, SimPackage::where('sim_type', 'esim')->count()); // only physical SIMs are sold
         $this->assertSame(5, SimPackage::where('region', 'local')->count());
-        $this->assertSame(4, SimPackage::where('region', 'europe')->count());
+        $this->assertSame(3, SimPackage::where('region', 'europe')->count());
 
-        // 350 ₺ is the E-SIM 5 GB package (as on the supplier panel)
-        $esim = $this->package(350);
-        $this->assertSame('esim', $esim->sim_type);
-        $this->assertSame(5, $esim->data_gb);
-        $this->assertSame('باقة تركيا 5 جيجا - 30 يوم (eSIM)', $esim->name_ar);
-        $this->assertSame('Türkiye 5 GB - 30 Gün (E-SIM)', $esim->name_tr);
+        // 350 ₺ is the physical 10 GB package (FİZİKSEL Turkiye_10gb_30gun)
+        $tenGb = $this->package(350);
+        $this->assertSame('physical', $tenGb->sim_type);
+        $this->assertSame(10, $tenGb->data_gb);
+        $this->assertSame('باقة تركيا 10 جيجا - 30 يوم (فيزيائية)', $tenGb->name_ar);
+        $this->assertSame('Türkiye 10 GB - 30 Gün (Fiziksel)', $tenGb->name_tr);
+        $this->assertSame('FİZİKSEL Turkiye_20gb_30gun', $this->package(550)->supplier_code);
 
         $this->assertSame(180, $this->package(1100)->validity_days);
 
         // Network names as on the supplier panel
         $this->assertSame(5, SimPackage::where('region', 'local')->where('network_name', 'Tele CARD')->count());
-        $this->assertSame(4, SimPackage::where('region', 'europe')->where('network_name', 'eSIM')->count());
+        $this->assertSame(3, SimPackage::where('region', 'europe')->where('network_name', 'eSIM')->count());
         $this->assertSame([270, 350, 550, 900, 1100], SimPackage::where('region', 'local')->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
-        $this->assertSame([500, 750, 1000, 1500], SimPackage::where('region', 'europe')->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
+        $this->assertSame([500, 750, 1000], SimPackage::where('region', 'europe')->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
     }
 
     public function test_order_deducts_balance_logs_transaction_and_notifies_managers(): void
@@ -179,7 +181,7 @@ class SimPackagesTest extends TestCase
     {
         $this->admin->update(['balance' => 0]);
 
-        $order = $this->service->placeOrder($this->admin, $this->package(1500)->id, '+4915112345678');
+        $order = $this->service->placeOrder($this->admin, $this->package(1000)->id, '5051234567');
         $this->assertEquals(0, $order->charged_amount);
         $this->assertEquals(0, $this->admin->fresh()->balance);
 
@@ -209,35 +211,64 @@ class SimPackagesTest extends TestCase
             ->test(BuyPackage::class)
             ->assertSee($package->name_ar)
             ->call('selectPackage', $package->id)
-            ->assertSee(__('messages.sim_phone_label_esim'))
-            ->set('phoneNumber', '0532 123-45 67')
+            ->assertSee(__('messages.sim_phone_label_physical'))
+            ->assertSeeHtml('placeholder="' . __('messages.sim_phone_last8_placeholder') . '"')
+            ->assertSet('phoneNumber', '')
+            ->set('phoneNumber', '5123 4567') // only the last 8 digits; "50" is fixed
             ->set('customerName', 'Ali')
             ->call('placeOrder')
             ->assertHasNoErrors()
             ->assertSet('selectedPackageId', null)
+            ->assertSet('phoneNumber', '')
             ->assertDispatched('request-created')
             ->assertDispatched('sim-order-created');
 
         $order = SimOrder::sole();
-        $this->assertSame('05321234567', $order->phone_number);
+        $this->assertSame('5051234567', $order->phone_number);
         $this->assertSame('Ali', $order->customer_name);
-        $this->assertEquals(650, $this->customer->fresh()->balance);
+
+        // A pasted full number is accepted as well
+        Livewire::actingAs($this->customer)
+            ->test(BuyPackage::class)
+            ->call('selectPackage', $this->package(270)->id)
+            ->set('phoneNumber', '+90 505 987 65 43')
+            ->call('placeOrder')
+            ->assertHasNoErrors();
+        $this->assertSame('5059876543', SimOrder::latest('id')->first()->phone_number);
+        $this->assertEquals(380, $this->customer->fresh()->balance); // 1000 - 350 - 270
     }
 
     public function test_buy_screen_validates_phone_and_shows_balance_error(): void
     {
         $component = Livewire::actingAs($this->customer)->test(BuyPackage::class);
 
-        $component->call('placeOrder')->assertHasErrors(['selectedPackageId', 'phoneNumber']);
+        $component->set('phoneNumber', '')->call('placeOrder')->assertHasErrors(['selectedPackageId', 'phoneNumber']);
 
-        $component->call('selectPackage', $this->package(270)->id)
-            ->set('phoneNumber', 'abc')
+        // Physical SIM: exactly the 8 digits after the fixed "50"
+        $component->call('selectPackage', $this->package(270)->id);
+        foreach (['50', '1234567', '123456789', 'abcdefgh', '5351234567', '505123456789'] as $bad) {
+            $component->set('phoneNumber', $bad)->call('placeOrder')
+                ->assertSee(__('messages.sim_invalid_last8'));
+        }
+        foreach (['51234567', '5123 4567', '5051234567', '0505 123 45 67', '+90 505 123 45 67'] as $good) {
+            $this->assertSame('51234567', BuyPackage::lastEightDigits($good), $good);
+        }
+
+        // eSIM packages (if added later) still accept international numbers
+        $esim = SimPackage::create([
+            'region' => 'europe', 'sim_type' => 'esim', 'data_gb' => 5, 'validity_days' => 30, 'price' => 400,
+            'name_ar' => 'eSIM test', 'name_tr' => 'eSIM test',
+        ]);
+        $component->call('selectPackage', $esim->id)
+            ->set('phoneNumber', '+49 151 12345678')
             ->call('placeOrder')
-            ->assertHasErrors(['phoneNumber' => 'regex']);
+            ->assertHasNoErrors();
+        $this->assertSame('+4915112345678', SimOrder::sole()->phone_number);
+        SimOrder::query()->forceDelete();
 
         $this->customer->update(['balance' => 0]);
-        $component->call('selectPackage', $this->package(1500)->id)
-            ->set('phoneNumber', '05321234567')
+        $component->call('selectPackage', $this->package(1000)->id)
+            ->set('phoneNumber', '51234567')
             ->call('placeOrder')
             ->assertHasErrors('order');
 
@@ -248,12 +279,12 @@ class SimPackagesTest extends TestCase
     {
         Livewire::actingAs($this->customer)
             ->test(BuyPackage::class)
-            ->assertDontSee('باقة أوروبا 25 جيجا')
+            ->assertDontSee('باقة أوروبا 20 جيجا')
             ->assertSeeHtml('<span dir="ltr">Tele CARD</span>')
             ->call('selectRegion', 'europe')
             ->assertSeeHtml('<span dir="ltr">eSIM</span>')
             ->assertDontSeeHtml('<span dir="ltr">Tele CARD</span>')
-            ->assertSee('باقة أوروبا 25 جيجا - 30 يوم (eSIM)')
+            ->assertSee('باقة أوروبا 20 جيجا - 30 يوم (فيزيائية)')
             ->assertDontSee('باقة تركيا 5 جيجا');
     }
 
@@ -343,7 +374,7 @@ class SimPackagesTest extends TestCase
         $this->assertStringContainsString('Shop\\_\\*One\\*', $tg['text']);
         $this->assertStringContainsString('Ali\\_Veli', $tg['text']);
         $this->assertStringContainsString('*Tele CARD*', $tg['text']);
-        $this->assertStringContainsString('E-SİM Turkiye_5gb_30gun', $order->package->supplier_code);
+        $this->assertSame('FİZİKSEL Turkiye_10gb_30gun', $order->package->supplier_code);
 
         $this->service->reject($order, $this->admin, 'Bad_number');
         $status = new SimOrderStatusNotification($order->fresh(), SimOrder::STATUS_REJECTED);
@@ -355,7 +386,7 @@ class SimPackagesTest extends TestCase
         $this->assertSame('Paket Talebi Reddedildi', $status->toArray($this->customer)['title']);
         $completed = new SimOrderStatusNotification($order->fresh(), SimOrder::STATUS_COMPLETED);
         $this->assertSame('Paket Aktif Edildi', $completed->toArray($this->customer)['title']);
-        $this->assertStringContainsString('Türkiye 5 GB - 30 Gün (E-SIM)', $completed->toArray($this->customer)['message']);
+        $this->assertStringContainsString('Türkiye 10 GB - 30 Gün (Fiziksel)', $completed->toArray($this->customer)['message']);
     }
 
     public function test_admin_dashboard_renders_sim_tabs_with_pending_badge(): void

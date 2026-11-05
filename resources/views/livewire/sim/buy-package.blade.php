@@ -107,7 +107,14 @@
                 x-data
                 @submit.prevent="Swal.fire({
                     title: @js(__('messages.sim_confirm_title')),
-                    text: @js(__('messages.sim_confirm_text', ['package' => $selectedPackage->localized_name, 'price' => SimPackage::formatPrice($selectedPackage->price), 'phone' => '__PHONE__'])).replace('__PHONE__', $wire.phoneNumber || '-'),
+                    text: @js(__('messages.sim_confirm_text', ['package' => $selectedPackage->localized_name, 'price' => SimPackage::formatPrice($selectedPackage->price), 'phone' => '__PHONE__'])).replace('__PHONE__', (v => {
+                        @if($selectedPackage->isEsim())
+                            return v || '-';
+                        @else
+                            const d = v.replace(/\D/g, ''), m = d.match(/^(?:0090|90|0)?50(\d{8})$/);
+                            return @js(\App\Livewire\Sim\BuyPackage::PHONE_PREFIX) + (m ? m[1] : d);
+                        @endif
+                    })($wire.phoneNumber || '')),
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#ef4444',
@@ -122,9 +129,21 @@
                             {{ $selectedPackage->isEsim() ? __('messages.sim_phone_label_esim') : __('messages.sim_phone_label_physical') }}
                             <span class="text-rose-500">*</span>
                         </label>
-                        <input id="sim-phone" type="tel" inputmode="tel" dir="ltr" autocomplete="off" wire:model="phoneNumber"
-                            placeholder="05XX XXX XX XX"
-                            class="block w-full rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm font-bold text-lg tracking-wide">
+                        @if($selectedPackage->isEsim())
+                            <input id="sim-phone" type="tel" inputmode="tel" dir="ltr" autocomplete="off" wire:model="phoneNumber"
+                                placeholder="5XX XXX XX XX"
+                                x-data x-init="$nextTick(() => $el.focus())"
+                                class="block w-full rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm font-bold text-lg tracking-wide placeholder:text-slate-300 placeholder:font-normal">
+                        @else
+                            {{-- "50" is fixed; the user types only the last 8 digits --}}
+                            <div class="flex rounded-xl shadow-sm" dir="ltr">
+                                <span class="inline-flex items-center px-4 rounded-l-xl border border-r-0 border-gray-300 bg-slate-100 text-slate-700 font-black text-lg tracking-wide select-none">{{ \App\Livewire\Sim\BuyPackage::PHONE_PREFIX }}</span>
+                                <input id="sim-phone" type="tel" inputmode="numeric" autocomplete="off" maxlength="20" wire:model="phoneNumber"
+                                    placeholder="{{ __('messages.sim_phone_last8_placeholder') }}"
+                                    x-data x-init="$nextTick(() => $el.focus())"
+                                    class="block w-full min-w-0 rounded-none rounded-r-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 font-bold text-lg tracking-widest placeholder:text-slate-300 placeholder:font-normal placeholder:text-sm placeholder:tracking-normal">
+                            </div>
+                        @endif
                         <p class="text-xs text-slate-500 mt-2 flex items-start gap-1.5">
                             <svg class="w-4 h-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             {{ $selectedPackage->isEsim() ? __('messages.sim_phone_hint_esim') : __('messages.sim_phone_hint_physical') }}

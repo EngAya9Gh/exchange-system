@@ -52,7 +52,7 @@
                                 <path d="M16 41h32M16 51h32M28 32v28M36 32v28" stroke="#d97706" stroke-width="1.5"/>
                             </svg>
                             <div class="flex flex-col items-start gap-1.5 text-white">
-                                <span class="text-xs sm:text-sm font-black bg-white/20 px-2.5 py-1 rounded-lg backdrop-blur-sm">eSIM</span>
+                                <span class="text-xs sm:text-sm font-black bg-white/20 px-2.5 py-1 rounded-lg backdrop-blur-sm whitespace-nowrap" dir="ltr">Tele CARD</span>
                                 <span class="text-2xl leading-none">🇹🇷 🇪🇺</span>
                                 <span class="text-xs font-bold text-white/90" dir="ltr">5 – 50 GB</span>
                             </div>

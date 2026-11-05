@@ -13,6 +13,13 @@ class BuyPackage extends Component
     public string $region = SimPackage::REGION_LOCAL;
     public ?int $selectedPackageId = null;
 
+    /**
+     * Fixed start of physical (Tele CARD) line numbers, shown next to the input.
+     * The user types only the remaining 8 digits.
+     */
+    public const PHONE_PREFIX = '50';
+
+    /** Physical SIM: the last 8 digits only. eSIM: the full number. */
     public string $phoneNumber = '';
     public string $customerName = '';
     public string $notes = '';
@@ -42,13 +49,65 @@ class BuyPackage extends Component
 
     protected function rules(): array
     {
+        $phoneRules = ['bail', 'required', 'string', 'max:30'];
+
+        if ($this->selectedIsPhysical()) {
+            // "50" is fixed: exactly 8 more digits (a pasted full 50XXXXXXXX number is accepted too)
+            $phoneRules[] = function (string $attribute, mixed $value, \Closure $fail) {
+                if (static::lastEightDigits((string) $value) === null) {
+                    $fail(__('messages.sim_invalid_last8'));
+                }
+            };
+        } else {
+            // eSIM: any local or international number (+49...); spaces and dashes allowed
+            $phoneRules[] = 'regex:/^\+?[0-9][0-9\s\-()]{6,19}$/';
+        }
+
         return [
             'selectedPackageId' => ['required', 'integer'],
-            // Local (05xx...) or international (+49...) numbers; spaces and dashes allowed
-            'phoneNumber' => ['required', 'string', 'max:30', 'regex:/^\+?[0-9][0-9\s\-]{6,19}$/'],
+            'phoneNumber' => $phoneRules,
             'customerName' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:500'],
         ];
+    }
+
+    protected function selectedIsPhysical(): bool
+    {
+        return $this->selectedPackageId
+            && SimPackage::whereKey($this->selectedPackageId)->value('sim_type') === SimPackage::TYPE_PHYSICAL;
+    }
+
+    /**
+     * Digits typed after the fixed "50": "51234567" → "51234567".
+     * Also accepts a pasted full number: "0505 123 45 67", "+90 505 123 45 67", "5051234567" → "51234567".
+     */
+    public static function lastEightDigits(string $input): ?string
+    {
+        $digits = static::normalizePhone($input);
+
+        if (preg_match('/^\d{8}$/', $digits)) {
+            return $digits;
+        }
+
+        if (preg_match('/^' . self::PHONE_PREFIX . '(\d{8})$/', $digits, $m)) {
+            return $m[1];
+        }
+
+        return null;
+    }
+
+    /** "0505 123 45 67", "+90 505 1234567" → "5051234567" (international non-TR numbers are kept). */
+    public static function normalizePhone(string $phone): string
+    {
+        $digits = preg_replace('/[\s\-().]+/', '', trim($phone));
+
+        return match (true) {
+            str_starts_with($digits, '+90') => substr($digits, 3),
+            str_starts_with($digits, '0090') => substr($digits, 4),
+            strlen($digits) === 12 && str_starts_with($digits, '90') => substr($digits, 2),
+            strlen($digits) === 11 && str_starts_with($digits, '0') => substr($digits, 1),
+            default => $digits,
+        };
     }
 
     protected function messages(): array
@@ -67,7 +126,9 @@ class BuyPackage extends Component
     {
         $this->validate();
 
-        $phone = preg_replace('/[\s\-]+/', '', $this->phoneNumber);
+        $phone = $this->selectedIsPhysical()
+            ? self::PHONE_PREFIX . static::lastEightDigits($this->phoneNumber)
+            : static::normalizePhone($this->phoneNumber);
 
         try {
             $order = app(SimOrderService::class)->placeOrder(
