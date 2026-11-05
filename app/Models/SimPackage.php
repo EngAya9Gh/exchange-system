@@ -19,6 +19,9 @@ class SimPackage extends Model
     public const TYPE_ESIM = 'esim';
     public const TYPES = [self::TYPE_PHYSICAL, self::TYPE_ESIM];
 
+    /** Physical (Tele CARD) line numbers always start with this; customers type only the 8 digits after it. */
+    public const PHYSICAL_PHONE_PREFIX = '50';
+
     protected $fillable = [
         'region',
         'sim_type',

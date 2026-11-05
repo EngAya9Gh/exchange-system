@@ -443,6 +443,8 @@ return [
     'sim_status_rejected' => 'Rejected (Refunded)',
     'sim_supplier_code' => 'Supplier Package Code',
     'sim_admin_note' => 'Admin Note',
+    'sim_balance_value' => 'Top-up Value',
+    'sim_copy_last8' => 'Copy last 8 digits (without 50)',
     'sim_copy' => 'Copy',
     'sim_complete_confirm_title' => 'Confirm package activation?',
     'sim_complete_note_placeholder' => 'Note for the customer (optional)',

@@ -85,6 +85,21 @@ class SimOrder extends Model
         return $this->sim_type === SimPackage::TYPE_ESIM;
     }
 
+    /**
+     * The number as typed on the supplier panel: for physical lines only the 8 digits
+     * after "50" (5051234567 → 51234567); other numbers are returned unchanged.
+     */
+    public function supplierPanelNumber(): string
+    {
+        $prefix = SimPackage::PHYSICAL_PHONE_PREFIX;
+
+        if (!$this->isEsim() && preg_match('/^' . $prefix . '(\d{8})$/', (string) $this->phone_number, $m)) {
+            return $m[1];
+        }
+
+        return (string) $this->phone_number;
+    }
+
     public function getLocalizedPackageNameAttribute(): string
     {
         return app()->getLocale() === 'ar' ? $this->package_name_ar : $this->package_name_tr;

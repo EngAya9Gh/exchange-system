@@ -385,20 +385,48 @@ class SimPackagesTest extends TestCase
             return $request->url() === 'https://provider.wakeel.cc/api/v1/message/send'
                 && $request->hasHeader('Authorization', 'Bearer test-key')
                 && $request['phone'] === '120363431257235608@g.us'
-                && str_contains($message, 'طلب باقة جديد - Tele CARD')
-                && str_contains($message, '*Shop One*')
-                && str_contains($message, "```5051234567```")
-                && str_contains($message, 'باقة تركيا 10 جيجا - 30 يوم (فيزيائية)')
-                && str_contains($message, 'FİZİKSEL Turkiye_10gb_30gun')
-                && str_contains($message, '*350 ₺*')
-                && str_contains($message, $order->order_number)
-                && str_contains($message, 'الزبون: Ali')
-                && str_contains($message, 'ملاحظات: urgent');
+                && $message === implode("\n", [
+                    '📶 *طلب باقة جديد - Tele CARD*',
+                    '',
+                    '👤 *Shop One*',
+                    '```51234567```',               // last 8 digits only, no "50"
+                    '💰 قيمة الرصيد: *350 ₺*',
+                    '📦 تركيا 10 جيجا - 30 يوم',
+                    '🙋 الزبون: Ali',
+                    '📝 ملاحظات: urgent',
+                ])
+                && !str_contains($message, '5051234567')
+                && !str_contains($message, $order->order_number); // short format
         });
 
         // Admins still get the in-app (bell) notification, but nothing goes to Telegram
         Notification::assertSentTo([$this->admin, $secondManager], NewSimOrderNotification::class,
             fn ($notification, $channels) => $channels === ['database']);
+    }
+
+    public function test_group_message_short_package_names_and_copy_value(): void
+    {
+        $notifier = app(\App\Services\WhatsApp\SimOrderGroupNotifier::class);
+        $this->customer->update(['balance' => 5000]);
+
+        $sixMonths = $this->service->placeOrder($this->customer, $this->package(1100)->id, '5059876543');
+        $this->assertStringContainsString("```59876543```\n💰 قيمة الرصيد: *1,100 ₺*\n📦 تركيا 50 جيجا - 6 أشهر", $notifier->newOrderMessage($sixMonths));
+
+        $europe = $this->service->placeOrder($this->customer, $this->package(500)->id, '5051112233');
+        $this->assertStringContainsString('📦 أوروبا 5 جيجا - 30 يوم', $notifier->newOrderMessage($europe));
+        $this->assertStringContainsString('طلب باقة جديد - eSIM', $notifier->newOrderMessage($europe));
+
+        // eSIM (international) numbers are never cut
+        $esimOrder = new SimOrder(['sim_type' => 'esim', 'phone_number' => '5051234567']);
+        $this->assertSame('5051234567', $esimOrder->supplierPanelNumber());
+        $this->assertSame('+4915112345678', (new SimOrder(['sim_type' => 'esim', 'phone_number' => '+4915112345678']))->supplierPanelNumber());
+
+        // The admin "copy" button copies the same 8 digits
+        Livewire::actingAs($this->admin)
+            ->test(Orders::class)
+            ->assertSee('5059876543')
+            ->assertSeeHtml("writeText('59876543')")
+            ->assertSeeHtml(__('messages.sim_copy_last8'));
     }
 
     public function test_group_message_problems_never_block_the_order(): void

@@ -442,6 +442,8 @@ return [
     'sim_status_rejected' => 'Reddedildi (İade Edildi)',
     'sim_supplier_code' => 'Tedarikçi Paket Kodu',
     'sim_admin_note' => 'Yönetim Notu',
+    'sim_balance_value' => 'Yükleme Tutarı',
+    'sim_copy_last8' => 'Son 8 haneyi kopyala (50 olmadan)',
     'sim_copy' => 'Kopyala',
     'sim_complete_confirm_title' => 'Paket aktivasyonu onaylansın mı?',
     'sim_complete_note_placeholder' => 'Müşteriye not (isteğe bağlı)',

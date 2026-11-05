@@ -443,6 +443,8 @@ return [
     'sim_status_rejected' => 'مرفوض (تم الاسترداد)',
     'sim_supplier_code' => 'كود الباقة عند المورد',
     'sim_admin_note' => 'ملاحظة الإدارة',
+    'sim_balance_value' => 'قيمة الرصيد',
+    'sim_copy_last8' => 'نسخ آخر 8 أرقام (بدون 50)',
     'sim_copy' => 'نسخ',
     'sim_complete_confirm_title' => 'تأكيد تفعيل الباقة؟',
     'sim_complete_note_placeholder' => 'ملاحظة للزبون (اختياري)',

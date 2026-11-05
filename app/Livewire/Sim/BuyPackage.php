@@ -17,7 +17,7 @@ class BuyPackage extends Component
      * Fixed start of physical (Tele CARD) line numbers, shown next to the input.
      * The user types only the remaining 8 digits.
      */
-    public const PHONE_PREFIX = '50';
+    public const PHONE_PREFIX = SimPackage::PHYSICAL_PHONE_PREFIX;
 
     /** Physical SIM: the last 8 digits only. eSIM: the full number. */
     public string $phoneNumber = '';
