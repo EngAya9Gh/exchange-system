@@ -16,9 +16,10 @@ use Illuminate\Support\Facades\Log;
 /**
  * SIM / internet package sales.
  *
- * Fulfilment is manual: the order is paid from the user's balance immediately and
- * stays "pending" until an admin activates it on the supplier panel and marks it
- * completed — or rejects it, which refunds exactly what was charged.
+ * Like auto-accepted Vodafone Cash transfers: the order is paid from the user's balance
+ * and marked "completed" (activated) immediately; the "Tele CARD" WhatsApp group gets the
+ * order so the team loads it on the supplier panel. If loading fails, a manager cancels
+ * the order, which refunds exactly what was charged (once).
  */
 class SimOrderService
 {
@@ -66,7 +67,8 @@ class SimOrderService
                 'phone_number' => $phoneNumber,
                 'customer_name' => $customerName ?: null,
                 'notes' => $notes ?: null,
-                'status' => SimOrder::STATUS_PENDING,
+                'status' => SimOrder::STATUS_COMPLETED, // activated immediately
+                'processed_at' => now(),
             ]);
 
             if (!$isExempt) {
@@ -94,6 +96,8 @@ class SimOrderService
     }
 
     /**
+     * Confirms a legacy "pending" order (placed before instant activation).
+     *
      * @throws SimOrderException when the order was already processed
      */
     public function complete(SimOrder $order, User $admin, ?string $adminNotes = null): SimOrder
@@ -121,17 +125,18 @@ class SimOrderService
     }
 
     /**
-     * Rejects a pending order and refunds exactly what was charged.
-     * The row lock + status check guarantee the refund can never happen twice.
+     * Rejects / cancels a pending or activated order and refunds exactly what was charged
+     * (e.g. loading on the supplier panel failed). The row lock + status check guarantee
+     * the refund can never happen twice.
      *
-     * @throws SimOrderException when the order was already processed
+     * @throws SimOrderException when the order was already rejected
      */
     public function reject(SimOrder $order, User $admin, string $reason): SimOrder
     {
         $order = DB::transaction(function () use ($order, $admin, $reason) {
             $locked = SimOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
-            if (!$locked->isPending()) {
+            if ($locked->status === SimOrder::STATUS_REJECTED) {
                 throw new SimOrderException(__('messages.sim_order_already_processed'));
             }
 

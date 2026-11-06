@@ -100,7 +100,9 @@ class SimPackagesTest extends TestCase
     {
         $order = $this->service->placeOrder($this->customer, $this->package(270)->id, '05321234567', 'Ahmad', 'urgent');
 
-        $this->assertSame(SimOrder::STATUS_PENDING, $order->status);
+        $this->assertSame(SimOrder::STATUS_COMPLETED, $order->status); // activated instantly
+        $this->assertNotNull($order->processed_at);
+        $this->assertNull($order->processed_by);
         $this->assertStringStartsWith('SIM', $order->order_number);
         $this->assertEquals(270, $order->charged_amount);
         $this->assertEquals(730, $this->customer->fresh()->balance);
@@ -113,6 +115,7 @@ class SimPackagesTest extends TestCase
 
         Notification::assertSentTo($this->admin, NewSimOrderNotification::class);
         Notification::assertNotSentTo($this->customer, NewSimOrderNotification::class);
+        Notification::assertNotSentTo($this->customer, SimOrderStatusNotification::class); // they already see success on screen
     }
 
     public function test_insufficient_balance_rejects_order_without_side_effects(): void
@@ -174,16 +177,37 @@ class SimPackagesTest extends TestCase
         $this->assertSame(1, BalanceTransaction::where('type', 'deposit')->count());
     }
 
-    public function test_completed_order_cannot_be_rejected_afterwards(): void
+    public function test_activated_order_can_be_cancelled_and_refunded_once(): void
     {
         $order = $this->service->placeOrder($this->customer, $this->package(270)->id, '05321234567');
-        $this->service->complete($order, $this->admin, 'ICCID 8990...');
-
         $this->assertSame(SimOrder::STATUS_COMPLETED, $order->fresh()->status);
-        $this->assertNotNull($order->fresh()->processed_at);
+
+        // Already activated: confirming again is refused
+        try {
+            $this->service->complete($order, $this->admin);
+            $this->fail('Expected SimOrderException');
+        } catch (SimOrderException) {
+        }
+
+        // Loading failed on the supplier panel → cancel & refund
+        $this->service->reject($order, $this->admin, 'Line not eligible');
+        $this->assertSame(SimOrder::STATUS_REJECTED, $order->fresh()->status);
+        $this->assertEquals(1000, $this->customer->fresh()->balance);
 
         $this->expectException(SimOrderException::class);
-        $this->service->reject($order, $this->admin, 'late');
+        $this->service->reject($order, $this->admin, 'again');
+    }
+
+    public function test_legacy_pending_order_can_still_be_confirmed(): void
+    {
+        $order = $this->service->placeOrder($this->customer, $this->package(270)->id, '05321234567');
+        $order->update(['status' => SimOrder::STATUS_PENDING, 'processed_at' => null]); // placed before instant activation
+
+        $this->service->complete($order, $this->admin, 'done');
+
+        $this->assertSame(SimOrder::STATUS_COMPLETED, $order->fresh()->status);
+        $this->assertSame($this->admin->id, $order->fresh()->processed_by);
+        Notification::assertSentTo($this->customer, SimOrderStatusNotification::class);
     }
 
     public function test_super_admin_orders_are_not_charged(): void
@@ -309,26 +333,33 @@ class SimPackagesTest extends TestCase
             ->test(Orders::class)
             ->assertSee('05320000001')
             ->assertDontSee('05320000002')
-            ->call('complete', $mine->id)
+            ->assertSee(__('messages.sim_status_completed'))
+            ->assertDontSee(__('messages.sim_cancel_refund'))
+            ->call('reject', $mine->id, 'mine')
             ->assertForbidden();
 
-        $this->assertSame(SimOrder::STATUS_PENDING, $mine->fresh()->status);
+        $this->assertSame(SimOrder::STATUS_COMPLETED, $mine->fresh()->status);
+        $this->assertEquals(730, $this->customer->fresh()->balance);
     }
 
-    public function test_manager_can_complete_and_reject_from_orders_screen(): void
+    public function test_manager_can_cancel_activated_orders_from_orders_screen(): void
     {
         $a = $this->service->placeOrder($this->customer, $this->package(270)->id, '05320000001');
         $b = $this->service->placeOrder($this->customer, $this->package(350)->id, '05320000002');
 
         Livewire::actingAs($this->admin)
             ->test(Orders::class)
-            ->assertSet('statusFilter', 'pending')
+            ->assertSet('statusFilter', 'all')
             ->assertSee('05320000001')
             ->assertSee('Turkiye_5gb_30gun') // supplier code visible to managers
-            ->call('complete', $a->id, 'done')
+            ->assertSee(__('messages.sim_cancel_refund'))
+            ->assertDontSeeHtml('$wire.complete(') // nothing left to confirm
             ->call('reject', $b->id, '')        // reason is required
             ->assertSee(__('messages.sim_reject_reason_required'))
-            ->call('reject', $b->id, 'Number not eligible');
+            ->call('reject', $b->id, 'Number not eligible')
+            ->set('statusFilter', 'completed')
+            ->assertSee('05320000001')
+            ->assertDontSee('05320000002');
 
         $this->assertSame(SimOrder::STATUS_COMPLETED, $a->fresh()->status);
         $this->assertSame(SimOrder::STATUS_REJECTED, $b->fresh()->status);
@@ -389,13 +420,12 @@ class SimPackagesTest extends TestCase
                     '📶 *طلب باقة جديد - Tele CARD*',
                     '',
                     '👤 *Shop One*',
-                    '```51234567```',               // last 8 digits only, no "50"
+                    '```5051234567```',             // full number with 50 in one copy block
                     '💰 قيمة الرصيد: *350 ₺*',
                     '📦 تركيا 10 جيجا - 30 يوم',
                     '🙋 الزبون: Ali',
                     '📝 ملاحظات: urgent',
                 ])
-                && !str_contains($message, '5051234567')
                 && !str_contains($message, $order->order_number); // short format
         });
 
@@ -410,23 +440,18 @@ class SimPackagesTest extends TestCase
         $this->customer->update(['balance' => 5000]);
 
         $sixMonths = $this->service->placeOrder($this->customer, $this->package(1100)->id, '5059876543');
-        $this->assertStringContainsString("```59876543```\n💰 قيمة الرصيد: *1,100 ₺*\n📦 تركيا 50 جيجا - 6 أشهر", $notifier->newOrderMessage($sixMonths));
+        $this->assertStringContainsString("```5059876543```\n💰 قيمة الرصيد: *1,100 ₺*\n📦 تركيا 50 جيجا - 6 أشهر", $notifier->newOrderMessage($sixMonths));
 
         $europe = $this->service->placeOrder($this->customer, $this->package(500)->id, '5051112233');
         $this->assertStringContainsString('📦 أوروبا 5 جيجا - 30 يوم', $notifier->newOrderMessage($europe));
         $this->assertStringContainsString('طلب باقة جديد - eSIM', $notifier->newOrderMessage($europe));
 
-        // eSIM (international) numbers are never cut
-        $esimOrder = new SimOrder(['sim_type' => 'esim', 'phone_number' => '5051234567']);
-        $this->assertSame('5051234567', $esimOrder->supplierPanelNumber());
-        $this->assertSame('+4915112345678', (new SimOrder(['sim_type' => 'esim', 'phone_number' => '+4915112345678']))->supplierPanelNumber());
-
-        // The admin "copy" button copies the same 8 digits
+        // The admin "copy" button copies the same full number
         Livewire::actingAs($this->admin)
             ->test(Orders::class)
             ->assertSee('5059876543')
-            ->assertSeeHtml("writeText('59876543')")
-            ->assertSeeHtml(__('messages.sim_copy_last8'));
+            ->assertSeeHtml("writeText('5059876543')")
+            ->assertDontSeeHtml("writeText('59876543')");
     }
 
     public function test_group_message_problems_never_block_the_order(): void

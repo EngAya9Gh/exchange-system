@@ -35,7 +35,7 @@ class SimOrderGroupNotifier
      * 📶 *طلب باقة جديد - Tele CARD*
      *
      * 👤 *اسم المحل*
-     * ```51234567```            ← last 8 digits only, on its own line to copy
+     * ```5051234567```          ← full number (with 50) in one copy block
      * 💰 قيمة الرصيد: *350 ₺*
      * 📦 تركيا 10 جيجا - 30 يوم
      */
@@ -48,7 +48,7 @@ class SimOrderGroupNotifier
             '📶 *' . $t('sim_new_order_title') . ($order->network_name ? ' - ' . $order->network_name : '') . '*',
             '',
             '👤 *' . ($order->user->name ?? '-') . '*',
-            '```' . $order->supplierPanelNumber() . '```',
+            '```' . $order->phone_number . '```',
             '💰 ' . $t('sim_balance_value') . ': *' . SimPackage::formatPrice($order->price) . ' ₺*',
             '📦 ' . $this->shortPackageName($order),
         ];

@@ -19,15 +19,9 @@ class Orders extends Component
 {
     use WithPagination;
 
+    // Orders are activated instantly, so everyone starts on "all"
     public string $statusFilter = 'all';
     public string $search = '';
-
-    public function mount(): void
-    {
-        if ($this->canManage()) {
-            $this->statusFilter = SimOrder::STATUS_PENDING;
-        }
-    }
 
     protected function canManage(): bool
     {

@@ -90,9 +90,8 @@
                             <div class="flex items-center gap-2" x-data="{ copied: false }">
                                 <span class="font-mono font-bold text-slate-800" dir="ltr">{{ $order->phone_number }}</span>
                                 @if($canManage)
-                                    @php $copyValue = $order->supplierPanelNumber(); @endphp
-                                    <button type="button" title="{{ $copyValue !== $order->phone_number ? __('messages.sim_copy_last8') : __('messages.sim_copy') }}"
-                                        @click="navigator.clipboard.writeText(@js($copyValue)); copied = true; setTimeout(() => copied = false, 1500)"
+                                    <button type="button" title="{{ __('messages.sim_copy') }}"
+                                        @click="navigator.clipboard.writeText(@js($order->phone_number)); copied = true; setTimeout(() => copied = false, 1500)"
                                         class="text-slate-400 hover:text-primary-600 transition">
                                         <svg x-show="!copied" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                                         <svg x-show="copied" x-cloak class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -125,8 +124,10 @@
 
                         @if($canManage)
                             <td class="px-4 py-4 whitespace-nowrap" x-data>
-                                @if($order->isPending())
+                                @if($order->status !== SimOrder::STATUS_REJECTED)
                                     <div class="flex gap-2">
+                                        {{-- Legacy orders placed before instant activation can still be confirmed --}}
+                                        @if($order->isPending())
                                         <button type="button"
                                             @click="Swal.fire({
                                                 title: @js(__('messages.sim_complete_confirm_title')),
@@ -144,9 +145,11 @@
                                             class="text-white bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-lg shadow-sm text-xs font-bold transition disabled:opacity-60">
                                             {{ __('messages.sim_mark_completed') }}
                                         </button>
+                                        @endif
+                                        {{-- Activated orders can be cancelled & refunded if loading on the supplier panel fails --}}
                                         <button type="button"
                                             @click="Swal.fire({
-                                                title: @js(__('messages.sim_reject_confirm_title')),
+                                                title: @js($order->isPending() ? __('messages.sim_reject_confirm_title') : __('messages.sim_cancel_refund_confirm_title')),
                                                 text: @js(__('messages.sim_reject_confirm_text', ['amount' => SimPackage::formatPrice($order->charged_amount)])),
                                                 input: 'textarea',
                                                 inputPlaceholder: @js(__('messages.sim_reject_reason_placeholder')),
@@ -155,12 +158,12 @@
                                                 showCancelButton: true,
                                                 confirmButtonColor: '#ef4444',
                                                 cancelButtonColor: '#9ca3af',
-                                                confirmButtonText: @js(__('messages.sim_reject')),
+                                                confirmButtonText: @js($order->isPending() ? __('messages.sim_reject') : __('messages.sim_cancel_refund')),
                                                 cancelButtonText: @js(__('messages.sim_cancel'))
                                             }).then((r) => { if (r.isConfirmed) $wire.reject({{ $order->id }}, r.value) })"
                                             wire:loading.attr="disabled"
                                             class="text-white bg-rose-500 hover:bg-rose-600 px-3 py-1.5 rounded-lg shadow-sm text-xs font-bold transition disabled:opacity-60">
-                                            {{ __('messages.sim_reject') }}
+                                            {{ $order->isPending() ? __('messages.sim_reject') : __('messages.sim_cancel_refund') }}
                                         </button>
                                     </div>
                                 @else
