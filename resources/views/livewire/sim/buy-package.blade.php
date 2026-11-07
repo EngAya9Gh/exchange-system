@@ -8,6 +8,24 @@
 @endphp
 
 <div class="space-y-6">
+    {{-- Check balance (remaining data/days) on the supplier's page --}}
+    <div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-start gap-3">
+            <div class="w-11 h-11 shrink-0 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <div>
+                <h3 class="text-base font-black text-slate-800">{{ __('messages.sim_check_balance') }}</h3>
+                <p class="text-xs text-slate-500 mt-1 leading-relaxed">{{ __('messages.sim_check_balance_desc') }}</p>
+            </div>
+        </div>
+        <a href="{{ config('services.sim.balance_check_url') }}" target="_blank" rel="noopener noreferrer"
+            class="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-100 transition">
+            {{ __('messages.sim_check_balance_open') }}
+            <svg class="w-4 h-4 rtl:-scale-x-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+        </a>
+    </div>
+
     {{-- Package picker --}}
     <div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-5 sm:p-8">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">

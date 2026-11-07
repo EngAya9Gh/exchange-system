@@ -44,4 +44,9 @@ return [
         'bot_username' => env('TELEGRAM_BOT_USERNAME', 'exchange_adbtrk_bot'),
     ],
 
+    'sim' => [
+        // Supplier page that shows the remaining data/days of a SIM (by query code or last 6-7 ICCID digits)
+        'balance_check_url' => env('SIM_BALANCE_CHECK_URL', 'https://esimqrcode.web.app/query'),
+    ],
+
 ];

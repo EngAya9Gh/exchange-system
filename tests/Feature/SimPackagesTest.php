@@ -395,6 +395,28 @@ class SimPackagesTest extends TestCase
             ->assertHasErrors(['price' => 'required']);
     }
 
+    public function test_check_balance_link_opens_supplier_page_in_new_tab(): void
+    {
+        $link = 'href="https://esimqrcode.web.app/query" target="_blank" rel="noopener noreferrer"';
+
+        // Customers & agents: on the buy screen
+        Livewire::actingAs($this->customer)
+            ->test(BuyPackage::class)
+            ->assertSee(__('messages.sim_check_balance'))
+            ->assertSee(__('messages.sim_check_balance_desc'))
+            ->assertSeeHtml($link);
+
+        // Team: in the admin sidebar, from any tab
+        Livewire::withQueryParams(['activeTab' => 'sim_orders'])
+            ->actingAs($this->admin)
+            ->test(\App\Livewire\Admin\AdminDashboard::class)
+            ->assertSeeHtml($link);
+
+        // The URL can be changed from .env without touching code
+        config(['services.sim.balance_check_url' => 'https://example.test/q']);
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)->assertSeeHtml('href="https://example.test/q"');
+    }
+
     public function test_price_formatting(): void
     {
         $this->assertSame('1,100', SimPackage::formatPrice(1100));
