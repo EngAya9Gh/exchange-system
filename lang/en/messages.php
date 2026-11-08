@@ -385,6 +385,8 @@ return [
     'sim_check_balance' => 'Check Balance',
     'sim_check_balance_desc' => 'See the remaining data and days: enter the query code or the last 6-7 digits of the ICCID printed on the SIM.',
     'sim_check_balance_open' => 'Open the query page',
+    'sim_supplier_balance' => 'Our kontor86 balance',
+    'sim_supplier_not_connected' => 'kontor86 not connected: check the server IP registration and API permission',
     'sim_buy_package' => 'Buy Package',
     'sim_orders' => 'Package Orders',
     'sim_my_orders' => 'My Package Orders',

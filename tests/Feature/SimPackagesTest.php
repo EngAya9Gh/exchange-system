@@ -43,6 +43,7 @@ class SimPackagesTest extends TestCase
         Http::preventStrayRequests();
         Http::fake(['provider.wakeel.cc/*' => Http::response(['status' => true], 200)]);
         config(['whatsapp.providers.wakeel.api_key' => 'test-key']);
+        config(['services.kontor.dealer_code' => null, 'services.kontor.password' => null]); // never call kontor86 here
 
         Notification::fake();
         app()->setLocale('ar');

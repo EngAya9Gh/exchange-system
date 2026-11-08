@@ -44,6 +44,14 @@ return [
         'bot_username' => env('TELEGRAM_BOT_USERNAME', 'exchange_adbtrk_bot'),
     ],
 
+    // kontor86.com dealer API (ZNET). Requires API permission + the server's static IP registered with kontor86.
+    'kontor' => [
+        'base_url' => env('KONTOR_API_URL', 'https://bayi.kontor86.com/servis'),
+        'dealer_code' => env('KONTOR_DEALER_CODE'),
+        'password' => env('KONTOR_API_PASSWORD'),
+        'timeout' => (int) env('KONTOR_API_TIMEOUT', 30),
+    ],
+
     'sim' => [
         // Supplier page that shows the remaining data/days of a SIM (by query code or last 6-7 ICCID digits)
         'balance_check_url' => env('SIM_BALANCE_CHECK_URL', 'https://esimqrcode.web.app/query'),

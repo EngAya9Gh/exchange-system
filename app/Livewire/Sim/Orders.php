@@ -5,6 +5,7 @@ namespace App\Livewire\Sim;
 use App\Exceptions\SimOrderException;
 use App\Models\SimOrder;
 use App\Models\SimPackage;
+use App\Services\KontorApiService;
 use App\Services\SimOrderService;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
@@ -125,6 +126,10 @@ class Orders extends Component
             'orders' => $query->paginate(15),
             'canManage' => $canManage,
             'pendingCount' => $canManage ? SimOrder::where('status', SimOrder::STATUS_PENDING)->count() : 0,
+            // Our balance at kontor86 (also shows at a glance whether the API connection works)
+            'supplierBalance' => $canManage && app(KontorApiService::class)->isConfigured()
+                ? app(KontorApiService::class)->cachedBalance()
+                : null,
         ]);
     }
 }

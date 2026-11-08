@@ -384,6 +384,8 @@ return [
     'sim_check_balance' => 'Kota Sorgulama',
     'sim_check_balance_desc' => 'Kalan internet ve gün sayısını görün: sorgu kodunu veya SIM kart üzerindeki ICCID numarasının son 6-7 hanesini yazın.',
     'sim_check_balance_open' => 'Sorgulama Sayfasını Aç',
+    'sim_supplier_balance' => 'kontor86 bakiyemiz',
+    'sim_supplier_not_connected' => 'kontor86 bağlantısı yok: sunucu IP kaydını ve API yetkisini kontrol edin',
     'sim_buy_package' => 'Paket Satın Al',
     'sim_orders' => 'Paket Talepleri',
     'sim_my_orders' => 'Paket Taleplerim',

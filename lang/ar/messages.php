@@ -385,6 +385,8 @@ return [
     'sim_check_balance' => 'تفقد الرصيد',
     'sim_check_balance_desc' => 'اعرف الإنترنت والأيام المتبقية في الباقة: اكتب رمز الاستعلام أو آخر 6-7 أرقام من رقم ICCID المطبوع على الشريحة.',
     'sim_check_balance_open' => 'افتح صفحة الاستعلام',
+    'sim_supplier_balance' => 'رصيدنا عند kontor86',
+    'sim_supplier_not_connected' => 'kontor86 غير متصل: تأكد من تسجيل IP السيرفر وتفعيل صلاحية API',
     'sim_buy_package' => 'شراء باقة',
     'sim_orders' => 'طلبات الباقات',
     'sim_my_orders' => 'سجل طلبات الباقات',
