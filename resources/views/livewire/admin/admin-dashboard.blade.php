@@ -235,6 +235,14 @@
                     </svg>
                     {{ __('messages.sim_manage_packages') }}
                 </button>
+                <button wire:click="$set('activeTab', 'sim_kontor')"
+                    class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all {{ $activeTab === 'sim_kontor' ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
+                    <svg class="w-5 h-5 ml-4 {{ $activeTab === 'sim_kontor' ? 'text-primary-600' : 'text-slate-400' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                    </svg>
+                    {{ __('messages.kontor_menu') }}
+                </button>
                 @endcan
                 <a href="{{ config('services.sim.balance_check_url') }}" target="_blank" rel="noopener noreferrer"
                     class="w-full flex items-center px-4 py-3.5 rounded-2xl transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold">
@@ -317,6 +325,7 @@
                         @if($activeTab === 'sim_buy') <span class="text-primary-600 ml-2">{{ __('messages.sim_buy_package') }}</span> @endif
                         @if($activeTab === 'sim_orders') <span class="text-primary-600 ml-2">{{ __('messages.sim_orders') }}</span> @endif
                         @if($activeTab === 'sim_packages') <span class="text-primary-600 ml-2">{{ __('messages.sim_manage_packages') }}</span> @endif
+                        @if($activeTab === 'sim_kontor') <span class="text-primary-600 ml-2">{{ __('messages.kontor_title') }}</span> @endif
                     </h1>
                     <p class="text-sm text-slate-400 font-medium mt-1">
                         @if($activeTab === 'dashboard')
@@ -432,6 +441,7 @@
                     @if($activeTab === 'sim_buy') <span class="text-primary-600">{{ __('messages.sim_buy_package') }}</span> @endif
                     @if($activeTab === 'sim_orders') <span class="text-primary-600">{{ __('messages.sim_orders') }}</span> @endif
                     @if($activeTab === 'sim_packages') <span class="text-primary-600">{{ __('messages.sim_manage_packages') }}</span> @endif
+                    @if($activeTab === 'sim_kontor') <span class="text-primary-600">{{ __('messages.kontor_title') }}</span> @endif
                 </h1>
                 <p class="text-sm text-slate-400 font-medium mt-1">
                     @if($activeTab === 'dashboard')
@@ -1434,6 +1444,14 @@
             @can('manage_sims')
                 <div class="animate-fade-in-up">
                     <livewire:sim.packages-manager />
+                </div>
+            @endcan
+        @endif
+
+        @if ($activeTab === 'sim_kontor')
+            @can('manage_sims')
+                <div class="animate-fade-in-up">
+                    <livewire:sim.kontor-settings />
                 </div>
             @endcan
         @endif
