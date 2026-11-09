@@ -43,7 +43,9 @@ class KontorApiService
     }
 
     /**
-     * Our balance at kontor86 (BAKİYE KONTROL). "OK|12755.23"
+     * Our balance at kontor86 (BAKİYE KONTROL).
+     * The PDF documents "OK|12755.23"; the live API answers with extra fields, e.g. "OK|0.00|0.00"
+     * (first value = balance; the meaning of the others is not documented).
      *
      * @return array{ok: bool, balance: ?float, error: ?string}
      */
@@ -54,7 +56,7 @@ class KontorApiService
             'sifre' => $this->password(),
         ]);
 
-        if ($raw !== null && preg_match('/^OK\|(-?[\d.]+)$/', $raw, $m)) {
+        if ($raw !== null && preg_match('/^OK\|(-?[\d.]+)(\|.*)?$/', $raw, $m)) {
             return ['ok' => true, 'balance' => (float) $m[1], 'error' => null];
         }
 

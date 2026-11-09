@@ -40,6 +40,13 @@ class KontorApiServiceTest extends TestCase
 
         $this->assertSame(['ok' => true, 'balance' => 12755.23, 'error' => null], $this->api->balance());
 
+        // The live API (2026-11-09) answers with an extra field: "OK|balance|unknown"
+        Http::swap(new \Illuminate\Http\Client\Factory());
+        Http::preventStrayRequests();
+        Http::fake(['bayi.kontor86.com/*' => Http::sequence()->push('OK|0.00|0.00')->push('OK|150.50|20.00')]);
+        $this->assertSame(['ok' => true, 'balance' => 0.0, 'error' => null], $this->api->balance());
+        $this->assertSame(150.5, $this->api->balance()['balance']);
+
         Http::assertSent(fn (Request $r) => str_starts_with($r->url(), 'https://bayi.kontor86.com/servis/bakiye_kontrol.php?')
             && $r['kod'] === '5000000000' && $r['sifre'] === 'secret');
     }
