@@ -422,6 +422,7 @@ return [
     'sim_share_link' => 'Müşterilerin için bağlantıyı kopyala',
     'sim_share_link_hint' => 'Bu bağlantıyı müşterilerine gönder, paket kotalarını sitemizden kendileri sorgulasınlar.',
     'sim_link_copied' => 'Kopyalandı',
+    'sim_refresh' => 'Yenile',
     'sim_buy_package' => 'Paket Satın Al',
     'sim_orders' => 'Paket Talepleri',
     'sim_my_orders' => 'Paket Taleplerim',

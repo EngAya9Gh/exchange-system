@@ -45,6 +45,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11h6v6H9z"></path>
                 </svg>
                 {{ __('messages.sim_choose_package') }}
+                @include('livewire.sim.partials.supplier-balance')
             </h3>
 
             <div class="inline-flex bg-slate-100 rounded-2xl p-1 w-full lg:w-auto">

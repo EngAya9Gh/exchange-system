@@ -224,6 +224,30 @@ class KontorApiServiceTest extends TestCase
             ->assertSeeHtml('sim.kontor-settings');
     }
 
+    public function test_admins_see_supplier_balance_on_buy_screen_with_refresh(): void
+    {
+        [$admin, $customer] = $this->makeUsers();
+
+        Http::fakeSequence('bayi.kontor86.com/*')->push('OK|2000.00|0.00')->push('OK|1994.50|0.00');
+
+        $component = Livewire::actingAs($admin)->test(\App\Livewire\Sim\BuyPackage::class)
+            ->assertSee(__('messages.sim_supplier_balance'))
+            ->assertSee('2,000.00 ₺');
+
+        // Cached: re-rendering doesn't call the API again; "refresh" does
+        $component->call('selectRegion', 'europe')->assertSee('2,000.00 ₺');
+        Http::assertSentCount(1);
+        $component->call('refreshSupplierBalance')->assertSee('1,994.50 ₺');
+        Http::assertSentCount(2);
+
+        // Customers and agents never see it, and it's not fetched for them
+        Livewire::actingAs($customer)->test(\App\Livewire\Sim\BuyPackage::class)
+            ->assertDontSee(__('messages.sim_supplier_balance'))
+            ->call('refreshSupplierBalance')
+            ->assertForbidden();
+        Http::assertSentCount(2);
+    }
+
     /** A later Http::fake() doesn't override an earlier stub, so start from a fresh factory. */
     protected function fakeKontor(string $body): void
     {

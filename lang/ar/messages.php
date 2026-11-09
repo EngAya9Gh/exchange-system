@@ -423,6 +423,7 @@ return [
     'sim_share_link' => 'نسخ الرابط لزبائنك',
     'sim_share_link_hint' => 'أرسل هذا الرابط لزبائنك ليتفقدوا رصيد باقتهم بأنفسهم من موقعنا.',
     'sim_link_copied' => 'تم النسخ',
+    'sim_refresh' => 'تحديث',
     'sim_buy_package' => 'شراء باقة',
     'sim_orders' => 'طلبات الباقات',
     'sim_my_orders' => 'سجل طلبات الباقات',

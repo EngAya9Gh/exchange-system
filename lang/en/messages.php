@@ -423,6 +423,7 @@ return [
     'sim_share_link' => 'Copy link for your customers',
     'sim_share_link_hint' => 'Send this link to your customers so they can check their package balance on our site.',
     'sim_link_copied' => 'Copied',
+    'sim_refresh' => 'Refresh',
     'sim_buy_package' => 'Buy Package',
     'sim_orders' => 'Package Orders',
     'sim_my_orders' => 'My Package Orders',

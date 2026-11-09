@@ -10,17 +10,7 @@
                     {{ __('messages.sim_pending_count', ['count' => $pendingCount]) }}
                 </span>
             @endif
-            @if($supplierBalance !== null)
-                @if($supplierBalance['ok'])
-                    <span class="bg-emerald-50 text-emerald-700 border border-emerald-100 text-xs font-bold px-2.5 py-1 rounded-full">
-                        {{ __('messages.sim_supplier_balance') }}: <span class="font-black" dir="ltr">{{ number_format($supplierBalance['balance'], 2) }} ₺</span>
-                    </span>
-                @else
-                    <span class="bg-rose-50 text-rose-700 border border-rose-100 text-xs font-bold px-2.5 py-1 rounded-full" title="{{ $supplierBalance['error'] }}">
-                        {{ __('messages.sim_supplier_not_connected') }} <span class="font-mono text-[10px] opacity-70" dir="ltr">({{ $supplierBalance['error'] }})</span>
-                    </span>
-                @endif
-            @endif
+            @include('livewire.sim.partials.supplier-balance')
         </h3>
 
         <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">

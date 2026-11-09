@@ -3,6 +3,7 @@
 namespace App\Livewire\Sim;
 
 use App\Exceptions\SimOrderException;
+use App\Livewire\Sim\Concerns\ShowsSupplierBalance;
 use App\Models\SimPackage;
 use App\Services\SimOrderService;
 use Illuminate\Support\Facades\Log;
@@ -10,6 +11,8 @@ use Livewire\Component;
 
 class BuyPackage extends Component
 {
+    use ShowsSupplierBalance;
+
     public string $region = SimPackage::REGION_LOCAL;
     public ?int $selectedPackageId = null;
 
@@ -165,6 +168,7 @@ class BuyPackage extends Component
             'packagesByRegion' => $packages->groupBy('region'),
             'selectedPackage' => $this->selectedPackageId ? $packages->firstWhere('id', $this->selectedPackageId) : null,
             'isExemptFromCharge' => app(SimOrderService::class)->isExemptFromCharge($user),
+            'supplierBalance' => $this->supplierBalance(),
         ]);
     }
 }
