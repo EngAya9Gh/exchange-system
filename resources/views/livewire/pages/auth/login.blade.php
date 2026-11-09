@@ -61,6 +61,18 @@
         </div>
     </form>
 
+    {{-- Public SIM balance check (no login needed) --}}
+    <a href="{{ route('sims.balance') }}"
+        class="mt-6 flex items-center justify-between gap-3 p-4 rounded-2xl bg-primary-50 hover:bg-primary-100 border border-primary-100 transition group">
+        <span class="flex items-center gap-3">
+            <span class="w-10 h-10 shrink-0 rounded-xl bg-white text-primary-600 flex items-center justify-center shadow-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
+            </span>
+            <span class="text-sm font-black text-primary-700 leading-snug">{{ __('messages.sim_public_login_link') }}</span>
+        </span>
+        <svg class="w-5 h-5 shrink-0 text-primary-400 group-hover:text-primary-600 rtl:-scale-x-100 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+    </a>
+
     <script>
         function togglePassword() {
             var passInput = document.getElementById('password');

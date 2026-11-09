@@ -69,17 +69,34 @@ class KontorApiServiceTest extends TestCase
             ->push('OK|1|Talebiniz İşleme Alınmıştır.|5.50')
             ->push('OK|3|Aynı Numaraya Aynı Miktarda 10 Dakika İçinde İşlem Gerçekleşti|0.00')
             ->push('OK|8|Bu İşlem Daha Önce Gönderildi|0.00')
-            ->push('NOK|API_BAGLANTI_HATASI');
+            ->push('NOK|API_BAGLANTI_HATASI')
+            ->push('OK|3|Aktif Kontor turkcell3gcep5|0.00|') // live answer 2026-11-09: product not active, trailing "|"
+            ->push('8:Api İd Gönderim Hatası');             // live answer: undocumented format
 
-        $send = fn () => $this->api->sendTopUp('turkcell', '3gcep', '5', '5051234567', 'SIM2611081234');
+        $send = fn () => $this->api->sendTopUp('turkcell', '3gcep', '5', '5051234567', '2611081234');
 
         $this->assertSame(['ok' => true, 'status' => 1, 'message' => 'Talebiniz İşleme Alınmıştır.', 'cost' => 5.5], $send());
         $this->assertSame(['ok' => false, 'status' => 3, 'message' => 'Aynı Numaraya Aynı Miktarda 10 Dakika İçinde İşlem Gerçekleşti', 'cost' => 0.0], $send());
         $this->assertSame(8, $send()['status']);
         $this->assertSame(['ok' => false, 'status' => 3, 'message' => 'API_BAGLANTI_HATASI', 'cost' => null], $send());
+        $this->assertSame(['ok' => false, 'status' => 3, 'message' => 'Aktif Kontor turkcell3gcep5', 'cost' => 0.0], $send());
+        // Not a documented answer → "check", never "failed" (so nobody refunds something that may have loaded)
+        $this->assertSame(['ok' => false, 'status' => KontorApiService::SEND_CHECK, 'message' => '8:Api İd Gönderim Hatası', 'cost' => null], $send());
 
         Http::assertSent(fn (Request $r) => $r['bayi_kodu'] === '5000000000' && $r['operator'] === 'turkcell'
-            && $r['tip'] === '3gcep' && $r['kontor'] === '5' && $r['gsmno'] === '5051234567' && $r['tekilnumara'] === 'SIM2611081234');
+            && $r['tip'] === '3gcep' && $r['kontor'] === '5' && $r['gsmno'] === '5051234567' && $r['tekilnumara'] === '2611081234');
+    }
+
+    public function test_unique_id_must_be_digits_only(): void
+    {
+        // Letters make the live API answer "8:Api İd Gönderim Hatası", so refuse before calling
+        Http::fake();
+        $this->expectException(\InvalidArgumentException::class);
+        try {
+            $this->api->sendTopUp('turkcell', '3gcep', '5', '5051234567', 'SIM2611081234');
+        } finally {
+            Http::assertNothingSent();
+        }
     }
 
     public function test_send_timeout_is_never_reported_as_failed(): void
@@ -87,7 +104,7 @@ class KontorApiServiceTest extends TestCase
         // We cannot know whether it was loaded → "check", so nobody refunds and resends blindly
         Http::fake(fn () => throw new ConnectionException('timeout'));
 
-        $result = $this->api->sendTopUp('turkcell', '3gcep', '5', '5051234567', 'SIM1');
+        $result = $this->api->sendTopUp('turkcell', '3gcep', '5', '5051234567', '1');
 
         $this->assertFalse($result['ok']);
         $this->assertSame(KontorApiService::SEND_CHECK, $result['status']);
@@ -101,10 +118,10 @@ class KontorApiServiceTest extends TestCase
             ->push('3:Numara hatalı')
             ->push('');
 
-        $this->assertSame(['state' => 'success', 'cost' => 5.5, 'reason' => null], $this->api->checkTopUp('SIM1'));
-        $this->assertSame(['state' => 'processing', 'cost' => 5.5, 'reason' => null], $this->api->checkTopUp('SIM1'));
-        $this->assertSame(['state' => 'cancelled', 'cost' => null, 'reason' => 'Numara hatalı'], $this->api->checkTopUp('SIM1'));
-        $this->assertSame('unknown', $this->api->checkTopUp('SIM1')['state']);
+        $this->assertSame(['state' => 'success', 'cost' => 5.5, 'reason' => null], $this->api->checkTopUp('1'));
+        $this->assertSame(['state' => 'processing', 'cost' => 5.5, 'reason' => null], $this->api->checkTopUp('1'));
+        $this->assertSame(['state' => 'cancelled', 'cost' => null, 'reason' => 'Numara hatalı'], $this->api->checkTopUp('1'));
+        $this->assertSame('unknown', $this->api->checkTopUp('1')['state']);
     }
 
     public function test_password_is_never_written_to_the_log(): void

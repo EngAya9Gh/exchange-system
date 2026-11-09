@@ -55,6 +55,8 @@ return [
     'sim' => [
         // Supplier page that shows the remaining data/days of a SIM (by query code or last 6-7 ICCID digits)
         'balance_check_url' => env('SIM_BALANCE_CHECK_URL', 'https://esimqrcode.web.app/query'),
+        // WhatsApp number for "buy a package" on the public balance page (same as on receipts)
+        'support_whatsapp' => env('SIM_SUPPORT_WHATSAPP', '905392065497'),
     ],
 
 ];

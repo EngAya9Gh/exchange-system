@@ -71,15 +71,22 @@ class KontorApiService
 
     /**
      * Load credit / a package on a line (KONTOR GÖNDERİMİ). "OK|1|Talebiniz İşleme Alınmıştır.|5.50"
+     * The live API also appends a trailing "|": "OK|3|Aktif Kontor turkcell3gcep5|0.00|"
+     * (= product operator+tip+kontor is not active on the account; nothing was charged).
      *
-     * $uniqueId must be unique per order (our order number): resending the same id answers 8.
-     * If the request times out we do NOT know whether it was loaded, so the result is
-     * SEND_CHECK (never "failed") — the caller must check before refunding or retrying.
+     * $uniqueId must be DIGITS ONLY and unique per order: letters make the API answer
+     * "8:Api İd Gönderim Hatası" (verified live 2026-11-09); resending the same id answers 8.
+     * A timeout or any reply we cannot parse is SEND_CHECK (never "failed") — we do not know
+     * whether it was loaded, so the caller must check before refunding or retrying.
      *
      * @return array{ok: bool, status: ?int, message: string, cost: ?float}
      */
     public function sendTopUp(string $operator, string $type, string $amount, string $gsmNo, string $uniqueId): array
     {
+        if (!ctype_digit($uniqueId)) {
+            throw new \InvalidArgumentException("kontor86 tekilnumara must be digits only, got [{$uniqueId}].");
+        }
+
         $raw = $this->call('tl_servis.php', [
             'bayi_kodu' => $this->dealerCode(),
             'sifre' => $this->password(),
@@ -94,7 +101,7 @@ class KontorApiService
             return ['ok' => false, 'status' => self::SEND_CHECK, 'message' => 'NO_RESPONSE', 'cost' => null];
         }
 
-        if (preg_match('/^OK\|(\d+)\|(.*)\|(-?[\d.]+)$/s', $raw, $m)) {
+        if (preg_match('/^OK\|(\d+)\|(.*)\|(-?[\d.]+)\|?$/s', $raw, $m)) {
             $status = (int) $m[1];
 
             return [
@@ -105,7 +112,13 @@ class KontorApiService
             ];
         }
 
-        return ['ok' => false, 'status' => self::SEND_FAILED, 'message' => $this->errorCode($raw), 'cost' => null];
+        // Explicit rejection of the credentials: nothing can have been processed
+        if (str_starts_with($raw, 'NOK|') || $raw === '') {
+            return ['ok' => false, 'status' => self::SEND_FAILED, 'message' => $this->errorCode($raw), 'cost' => null];
+        }
+
+        // Anything else (e.g. "8:Api İd Gönderim Hatası") is not a documented answer → check, don't assume
+        return ['ok' => false, 'status' => self::SEND_CHECK, 'message' => $raw, 'cost' => null];
     }
 
     /**

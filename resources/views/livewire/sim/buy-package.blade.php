@@ -19,11 +19,21 @@
                 <p class="text-xs text-slate-500 mt-1 leading-relaxed">{{ __('messages.sim_check_balance_desc') }}</p>
             </div>
         </div>
-        <a href="{{ config('services.sim.balance_check_url') }}" target="_blank" rel="noopener noreferrer"
-            class="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-100 transition">
-            {{ __('messages.sim_check_balance_open') }}
-            <svg class="w-4 h-4 rtl:-scale-x-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-        </a>
+        <div class="shrink-0 flex flex-col sm:flex-row gap-2">
+            <a href="{{ route('sims.balance') }}" target="_blank" rel="noopener"
+                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-100 transition">
+                {{ __('messages.sim_check_balance_open') }}
+                <svg class="w-4 h-4 rtl:-scale-x-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            </a>
+            {{-- Shops send this link to their customers so they check their balance on our site --}}
+            <button type="button" x-data="{ copied: false }" title="{{ __('messages.sim_share_link_hint') }}"
+                @click="navigator.clipboard.writeText(@js(route('sims.balance'))); copied = true; setTimeout(() => copied = false, 2000)"
+                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                <span x-show="!copied">{{ __('messages.sim_share_link') }}</span>
+                <span x-show="copied" x-cloak>✓ {{ __('messages.sim_link_copied') }}</span>
+            </button>
+        </div>
     </div>
 
     {{-- Package picker --}}

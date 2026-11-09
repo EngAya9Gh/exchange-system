@@ -396,26 +396,56 @@ class SimPackagesTest extends TestCase
             ->assertHasErrors(['price' => 'required']);
     }
 
-    public function test_check_balance_link_opens_supplier_page_in_new_tab(): void
+    public function test_check_balance_links_point_to_our_public_page(): void
     {
-        $link = 'href="https://esimqrcode.web.app/query" target="_blank" rel="noopener noreferrer"';
+        $publicUrl = route('sims.balance');
+        $this->assertStringEndsWith('/ar/sim-balance', $publicUrl);
+        $link = 'href="' . $publicUrl . '" target="_blank"';
 
-        // Customers & agents: on the buy screen
+        // Customers & agents: on the buy screen, plus a "copy link for your customers" button
         Livewire::actingAs($this->customer)
             ->test(BuyPackage::class)
             ->assertSee(__('messages.sim_check_balance'))
             ->assertSee(__('messages.sim_check_balance_desc'))
-            ->assertSeeHtml($link);
+            ->assertSeeHtml($link)
+            ->assertSee(__('messages.sim_share_link'))
+            ->assertSeeHtml("writeText('" . str_replace('/', '\/', $publicUrl) . "')");
 
         // Team: in the admin sidebar, from any tab
         Livewire::withQueryParams(['activeTab' => 'sim_orders'])
             ->actingAs($this->admin)
             ->test(\App\Livewire\Admin\AdminDashboard::class)
             ->assertSeeHtml($link);
+    }
 
-        // The URL can be changed from .env without touching code
+    public function test_public_balance_page_works_without_login(): void
+    {
+        // Guest (not logged in) in Arabic
+        $this->get(route('sims.balance'))
+            ->assertOk()
+            ->assertSee(__('messages.sim_public_title', [], 'ar'))
+            ->assertSee(__('messages.sim_public_step1', [], 'ar'))
+            ->assertSee('<iframe src="https://esimqrcode.web.app/query"', false)                // embedded supplier page
+            ->assertSee('href="https://esimqrcode.web.app/query" target="_blank"', false)      // fallback link
+            ->assertSee('https://wa.me/905392065497?text=' . rawurlencode(__('messages.sim_public_whatsapp_text', [], 'ar')), false)
+            ->assertSee('href="' . route('login') . '"', false)
+            ->assertDontSee('270 ₺');                                                          // wholesale prices stay private
+
+        // The supplier URL can be changed from .env without touching code
         config(['services.sim.balance_check_url' => 'https://example.test/q']);
-        Livewire::actingAs($this->customer)->test(BuyPackage::class)->assertSeeHtml('href="https://example.test/q"');
+        $this->get(route('sims.balance'))->assertSee('<iframe src="https://example.test/q"', false);
+    }
+
+    public function test_login_and_rates_pages_link_to_the_public_balance_page(): void
+    {
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('href="' . route('sims.balance') . '"', false)
+            ->assertSee(__('messages.sim_public_login_link', [], 'ar'));
+
+        $this->get(route('rates.public'))
+            ->assertOk()
+            ->assertSee('href="' . route('sims.balance') . '"', false);
     }
 
     public function test_price_formatting(): void
