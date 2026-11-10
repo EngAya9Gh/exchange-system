@@ -63,6 +63,25 @@ class Orders extends Component
         }
     }
 
+    /** Ask kontor86 now about an automatic load that is still open (also runs every minute in the background). */
+    public function checkSupplier(int $orderId): void
+    {
+        abort_unless($this->canManage(), 403);
+
+        $order = SimOrder::findOrFail($orderId);
+
+        try {
+            $state = app(SimOrderService::class)->checkSupplierStatus($order);
+            session()->flash('sim_success', __('messages.sim_api_checked', [
+                'number' => $order->order_number,
+                'state' => __('messages.sim_api_state_' . ($state ?: 'unknown')),
+            ]));
+        } catch (\Throwable $e) {
+            Log::error('SIM supplier check failed: ' . $e->getMessage(), ['order_id' => $orderId]);
+            session()->flash('sim_error', __('messages.sim_order_error_generic'));
+        }
+    }
+
     public function reject(int $orderId, ?string $reason = null): void
     {
         abort_unless($this->canManage(), 403);

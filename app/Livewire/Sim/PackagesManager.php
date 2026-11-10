@@ -22,6 +22,10 @@ class PackagesManager extends Component
     public string $descriptionAr = '';
     public string $descriptionTr = '';
     public string $supplierCode = '';
+    // kontor86 product key (operator + tip + code) → automatic loading when all three are set
+    public string $apiOperator = '';
+    public string $apiTip = '';
+    public string $apiCode = '';
     public bool $isActive = true;
     public $sortOrder = 0;
 
@@ -49,6 +53,9 @@ class PackagesManager extends Component
             'descriptionAr' => ['nullable', 'string', 'max:1000'],
             'descriptionTr' => ['nullable', 'string', 'max:1000'],
             'supplierCode' => ['nullable', 'string', 'max:255'],
+            'apiOperator' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
+            'apiTip' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
+            'apiCode' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
             'isActive' => ['boolean'],
             'sortOrder' => ['nullable', 'integer', 'min:0', 'max:100000'],
         ];
@@ -63,6 +70,7 @@ class PackagesManager extends Component
             'min' => __('messages.sim_validation_min'),
             'max' => __('messages.sim_validation_max'),
             'in' => __('messages.sim_validation_invalid'),
+            'regex' => __('messages.sim_validation_invalid'),
         ];
     }
 
@@ -80,6 +88,9 @@ class PackagesManager extends Component
             'descriptionAr' => __('messages.sim_description_ar'),
             'descriptionTr' => __('messages.sim_description_tr'),
             'supplierCode' => __('messages.sim_supplier_code'),
+            'apiOperator' => __('messages.sim_api_operator'),
+            'apiTip' => __('messages.sim_api_tip'),
+            'apiCode' => __('messages.sim_api_code'),
             'sortOrder' => __('messages.sim_sort_order'),
         ];
     }
@@ -110,6 +121,9 @@ class PackagesManager extends Component
         $this->descriptionAr = (string) $package->description_ar;
         $this->descriptionTr = (string) $package->description_tr;
         $this->supplierCode = (string) $package->supplier_code;
+        $this->apiOperator = (string) $package->api_operator;
+        $this->apiTip = (string) $package->api_tip;
+        $this->apiCode = (string) $package->api_code;
         $this->isActive = $package->is_active;
         $this->sortOrder = $package->sort_order;
         $this->showForm = true;
@@ -118,7 +132,21 @@ class PackagesManager extends Component
     public function save(): void
     {
         $this->authorizeManage();
+
+        // Pasted values often carry spaces: clean before validating
+        $this->apiOperator = trim($this->apiOperator);
+        $this->apiTip = trim($this->apiTip);
+        $this->apiCode = trim($this->apiCode);
+
         $this->validate();
+
+        // The API product key only works complete: all three or none
+        $apiParts = array_map('trim', [$this->apiOperator, $this->apiTip, $this->apiCode]);
+        $filled = count(array_filter($apiParts, fn ($v) => $v !== ''));
+        if ($filled > 0 && $filled < 3) {
+            $this->addError('apiCode', __('messages.sim_api_fields_incomplete'));
+            return;
+        }
 
         $generated = SimPackage::generateNames($this->region, $this->simType, (int) $this->dataGb, (int) $this->validityDays);
 
@@ -134,6 +162,9 @@ class PackagesManager extends Component
             'description_ar' => trim($this->descriptionAr) ?: null,
             'description_tr' => trim($this->descriptionTr) ?: null,
             'supplier_code' => trim($this->supplierCode) ?: null,
+            'api_operator' => strtolower($apiParts[0]) ?: null,
+            'api_tip' => strtolower($apiParts[1]) ?: null,
+            'api_code' => $apiParts[2] ?: null,
             'is_active' => $this->isActive,
             'sort_order' => (int) ($this->sortOrder ?: 0),
         ];
@@ -175,7 +206,7 @@ class PackagesManager extends Component
         $this->resetValidation();
         $this->reset([
             'editingId', 'region', 'simType', 'networkName', 'dataGb', 'validityDays', 'price',
-            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'isActive', 'sortOrder',
+            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'isActive', 'sortOrder',
         ]);
     }
 

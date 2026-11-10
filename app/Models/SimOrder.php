@@ -15,6 +15,13 @@ class SimOrder extends Model
     public const STATUS_REJECTED = 'rejected';
     public const STATUSES = [self::STATUS_PENDING, self::STATUS_COMPLETED, self::STATUS_REJECTED];
 
+    /** Automatic loading through kontor86 (null = manual, loaded by the team from the WhatsApp group) */
+    public const API_PROCESSING = 'processing'; // accepted by the supplier, being loaded
+    public const API_SUCCESS = 'success';       // loaded
+    public const API_FAILED = 'failed';         // refused / cancelled → refunded
+    public const API_UNKNOWN = 'unknown';       // outcome not known yet → must be checked, never refunded blindly
+    public const API_OPEN_STATES = [self::API_PROCESSING, self::API_UNKNOWN];
+
     protected $fillable = [
         'order_number',
         'user_id',
@@ -33,12 +40,19 @@ class SimOrder extends Model
         'admin_notes',
         'processed_by',
         'processed_at',
+        'api_status',
+        'api_unique_id',
+        'api_cost',
+        'api_message',
+        'api_checked_at',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'charged_amount' => 'decimal:2',
         'processed_at' => 'datetime',
+        'api_cost' => 'decimal:2',
+        'api_checked_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -83,6 +97,19 @@ class SimOrder extends Model
     public function isEsim(): bool
     {
         return $this->sim_type === SimPackage::TYPE_ESIM;
+    }
+
+    public function isSentByApi(): bool
+    {
+        return $this->api_status !== null;
+    }
+
+    /** Sale price minus the supplier's real cost (when the API told us the cost). */
+    public function profit(): ?float
+    {
+        return $this->api_cost !== null && (float) $this->api_cost > 0
+            ? (float) $this->price - (float) $this->api_cost
+            : null;
     }
 
     public function getLocalizedPackageNameAttribute(): string

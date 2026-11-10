@@ -4,6 +4,7 @@ namespace App\Livewire\Sim;
 
 use App\Exceptions\SimOrderException;
 use App\Livewire\Sim\Concerns\ShowsSupplierBalance;
+use App\Models\SimOrder;
 use App\Models\SimPackage;
 use App\Services\SimOrderService;
 use Illuminate\Support\Facades\Log;
@@ -150,13 +151,24 @@ class BuyPackage extends Component
             return;
         }
 
-        $this->reset(['selectedPackageId', 'phoneNumber', 'customerName', 'notes']);
         auth()->user()->refresh();
-
-        session()->flash('sim_order_success', __('messages.sim_order_created', ['number' => $order->order_number]));
-
         $this->dispatch('request-created');   // refreshes the balance widget & notifications
         $this->dispatch('sim-order-created'); // refreshes the orders list
+
+        // The supplier refused the automatic load: already refunded, keep the form so they can fix & retry
+        if ($order->status === SimOrder::STATUS_REJECTED) {
+            $this->addError('order', __('messages.sim_api_failed_customer', ['reason' => (string) $order->api_message]));
+            return;
+        }
+
+        $this->reset(['selectedPackageId', 'phoneNumber', 'customerName', 'notes']);
+
+        $message = match ($order->api_status) {
+            SimOrder::API_PROCESSING, SimOrder::API_SUCCESS => 'sim_order_sent_api',
+            SimOrder::API_UNKNOWN => 'sim_order_checking_api',
+            default => 'sim_order_created',
+        };
+        session()->flash('sim_order_success', __("messages.{$message}", ['number' => $order->order_number]));
     }
 
     public function render()

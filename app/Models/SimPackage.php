@@ -34,6 +34,9 @@ class SimPackage extends Model
         'description_ar',
         'description_tr',
         'supplier_code',
+        'api_operator',
+        'api_tip',
+        'api_code',
         'is_active',
         'sort_order',
     ];
@@ -75,6 +78,12 @@ class SimPackage extends Model
     public function isEsim(): bool
     {
         return $this->sim_type === self::TYPE_ESIM;
+    }
+
+    /** Sent automatically through the kontor86 API (all three product-key parts are set). */
+    public function isApiReady(): bool
+    {
+        return filled($this->api_operator) && filled($this->api_tip) && filled($this->api_code);
     }
 
     /** 1100 → "1,100", 299.5 → "299.50" */

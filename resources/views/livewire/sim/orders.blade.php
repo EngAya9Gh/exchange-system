@@ -121,6 +121,38 @@
                             @if($canManage && $order->processedBy)
                                 <div class="text-[11px] text-slate-400 mt-1.5">{{ $order->processedBy->name }}</div>
                             @endif
+
+                            {{-- Automatic loading through kontor86 (team only) --}}
+                            @if($canManage)
+                                @php
+                                    $apiBadge = match ($order->api_status) {
+                                        SimOrder::API_SUCCESS => ['bg-indigo-100 text-indigo-700', '🤖 ' . __('messages.sim_api_state_success')],
+                                        SimOrder::API_PROCESSING => ['bg-sky-100 text-sky-700', '🤖 ' . __('messages.sim_api_state_processing')],
+                                        SimOrder::API_UNKNOWN => ['bg-amber-100 text-amber-800', '⚠️ ' . __('messages.sim_api_state_unknown')],
+                                        SimOrder::API_FAILED => ['bg-rose-100 text-rose-700', '❌ ' . __('messages.sim_api_state_failed')],
+                                        default => ['bg-slate-100 text-slate-500', '✋ ' . __('messages.sim_api_manual')],
+                                    };
+                                @endphp
+                                <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full {{ $apiBadge[0] }}" title="{{ $order->api_message }}">{{ $apiBadge[1] }}</span>
+                                    @if(in_array($order->api_status, SimOrder::API_OPEN_STATES, true))
+                                        <button type="button" wire:click="checkSupplier({{ $order->id }})" wire:loading.attr="disabled" wire:target="checkSupplier({{ $order->id }})"
+                                            class="text-[10px] font-black px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition disabled:opacity-50">
+                                            <span wire:loading.remove wire:target="checkSupplier({{ $order->id }})">{{ __('messages.sim_api_check_now') }}</span>
+                                            <span wire:loading wire:target="checkSupplier({{ $order->id }})">…</span>
+                                        </button>
+                                    @endif
+                                </div>
+                                @if($order->api_status === SimOrder::API_FAILED && $order->api_message)
+                                    <div class="text-[10px] text-rose-600 mt-1 max-w-[200px] whitespace-normal">{{ $order->api_message }}</div>
+                                @endif
+                                @if($order->profit() !== null)
+                                    <div class="text-[10px] text-slate-500 mt-1" dir="ltr">
+                                        {{ __('messages.sim_api_cost') }} {{ SimPackage::formatPrice($order->api_cost) }} ₺ ·
+                                        <span class="font-black text-emerald-600">{{ __('messages.sim_api_profit') }} {{ SimPackage::formatPrice($order->profit()) }} ₺</span>
+                                    </div>
+                                @endif
+                            @endif
                         </td>
 
                         @if($canManage)

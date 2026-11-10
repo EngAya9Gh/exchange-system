@@ -59,7 +59,16 @@
                                         <div class="text-xs text-slate-500 mt-1" dir="ltr">{{ $package->data_gb }} GB · {{ $package->validity_days }}d</div>
                                     </td>
                                     <td class="px-4 py-3 font-black text-primary-600 whitespace-nowrap" dir="ltr">{{ SimPackage::formatPrice($package->price) }} ₺</td>
-                                    <td class="px-4 py-3 text-xs font-mono text-slate-500 whitespace-nowrap" dir="ltr">{{ $package->supplier_code ?: '—' }}</td>
+                                    <td class="px-4 py-3 text-xs whitespace-nowrap">
+                                        <div class="font-mono text-slate-500" dir="ltr">{{ $package->supplier_code ?: '—' }}</div>
+                                        @if($package->isApiReady())
+                                            <span class="inline-block mt-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700" dir="ltr">🤖 API {{ $package->api_operator }}·{{ $package->api_tip }}·{{ $package->api_code }}</span>
+                                        @else
+                                            <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500" title="{{ __('messages.sim_api_manual_hint') }}">
+                                                ✋ {{ __('messages.sim_api_manual') }}@if($package->api_code) <span dir="ltr">· {{ $package->api_code }}</span>@endif
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <button type="button" wire:click="toggleActive({{ $package->id }})"
                                             class="text-xs font-bold px-2.5 py-1 rounded-full transition {{ $package->is_active ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-slate-200 text-slate-600 hover:bg-slate-300' }}">
@@ -195,6 +204,29 @@
                             <input type="checkbox" wire:model="isActive" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 w-5 h-5">
                             <span class="text-sm font-bold text-slate-700">{{ __('messages.sim_active_for_sale') }}</span>
                         </label>
+                    </div>
+
+                    {{-- kontor86 automatic loading --}}
+                    <div class="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
+                        <div class="text-sm font-black text-indigo-900">🤖 {{ __('messages.sim_api_section') }}</div>
+                        <p class="text-[11px] text-indigo-700/80 mt-1 mb-3 leading-relaxed">{{ __('messages.sim_api_section_hint') }}</p>
+                        <div class="grid grid-cols-3 gap-3" dir="ltr">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_operator') }}</label>
+                                <input type="text" wire:model="apiOperator" maxlength="30" placeholder="operator" class="{{ $inputClass }} font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_tip') }}</label>
+                                <input type="text" wire:model="apiTip" maxlength="30" placeholder="tip" class="{{ $inputClass }} font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_code') }}</label>
+                                <input type="text" wire:model="apiCode" maxlength="30" placeholder="26240" class="{{ $inputClass }} font-mono">
+                            </div>
+                        </div>
+                        @error('apiOperator') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
+                        @error('apiTip') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
+                        @error('apiCode') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
                     </div>
 
                     <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t border-slate-100">

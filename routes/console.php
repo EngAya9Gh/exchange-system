@@ -15,3 +15,4 @@ Artisan::command('inspire', function () {
 // })->hourly();
 
 Schedule::command('bills:check-pending')->everyFiveMinutes();
+Schedule::command('sims:check-api')->everyMinute()->withoutOverlapping();

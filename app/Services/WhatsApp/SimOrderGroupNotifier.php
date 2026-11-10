@@ -60,6 +60,18 @@ class SimOrderGroupNotifier
             $lines[] = '📝 ' . $t('sim_notes_short') . ': ' . $order->notes;
         }
 
+        // Automatic (kontor86) orders: tell the team NOT to load them by hand. Manual orders: unchanged.
+        $apiLine = match ($order->api_status) {
+            SimOrder::API_PROCESSING, SimOrder::API_SUCCESS => '🤖 ' . $t('sim_group_api_sent'),
+            SimOrder::API_UNKNOWN => '⏳ ' . $t('sim_group_api_unknown'),
+            SimOrder::API_FAILED => '❌ ' . __('messages.sim_group_api_failed', ['reason' => (string) $order->api_message], 'ar'),
+            default => null,
+        };
+        if ($apiLine) {
+            $lines[] = '';
+            $lines[] = $apiLine;
+        }
+
         return implode("\n", $lines);
     }
 

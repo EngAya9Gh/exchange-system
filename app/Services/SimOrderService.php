@@ -17,9 +17,13 @@ use Illuminate\Support\Facades\Log;
  * SIM / internet package sales.
  *
  * Like auto-accepted Vodafone Cash transfers: the order is paid from the user's balance
- * and marked "completed" (activated) immediately; the "Tele CARD" WhatsApp group gets the
- * order so the team loads it on the supplier panel. If loading fails, a manager cancels
- * the order, which refunds exactly what was charged (once).
+ * and marked "completed" (activated) immediately.
+ *
+ *  - Packages with an API product key (operator + tip + code) are sent to kontor86 right away:
+ *    refused → refunded immediately; accepted / unknown → tracked by sims:check-api until the
+ *    supplier confirms (success) or cancels (refund). Never refunded on a timeout.
+ *  - Other packages stay manual: the "Tele CARD" WhatsApp group gets the order and the team
+ *    loads it on the supplier panel; if that fails a manager cancels & refunds.
  */
 class SimOrderService
 {
@@ -90,9 +94,101 @@ class SimOrderService
             return $order;
         });
 
+        $this->sendToSupplier($order);
+        $order->refresh();
+
         $this->notifyManagers($order);
 
         return $order;
+    }
+
+    /**
+     * Sends the order to kontor86 when its package has an API product key.
+     * Manual packages (or no API credentials) are left untouched.
+     */
+    public function sendToSupplier(SimOrder $order): void
+    {
+        $package = $order->package;
+        $api = app(KontorApiService::class);
+
+        if (!$package || !$package->isApiReady() || !$api->isConfigured()) {
+            return;
+        }
+
+        // tekilnumara must be digits only; the order number is unique ("SIM2611101234" → "2611101234")
+        $uniqueId = preg_replace('/\D+/', '', (string) $order->order_number);
+
+        // Marked BEFORE the call: if anything breaks mid-request we still know it must be checked
+        $order->update(['api_status' => SimOrder::API_UNKNOWN, 'api_unique_id' => $uniqueId]);
+
+        try {
+            $result = $api->sendTopUp(
+                (string) $package->api_operator,
+                (string) $package->api_tip,
+                (string) $package->api_code,
+                (string) $order->phone_number,
+                $uniqueId
+            );
+        } catch (\Throwable $e) {
+            Log::error('kontor86 send failed for SIM order ' . $order->order_number . ': ' . $e->getMessage());
+            $order->update(['api_message' => mb_substr($e->getMessage(), 0, 500), 'api_checked_at' => now()]);
+            return;
+        }
+
+        if ($result['ok']) {
+            $order->update([
+                'api_status' => SimOrder::API_PROCESSING,
+                'api_cost' => $result['cost'],
+                'api_message' => $result['message'],
+                'api_checked_at' => now(),
+            ]);
+            return;
+        }
+
+        if ($result['status'] === KontorApiService::SEND_FAILED) {
+            // Definite refusal: nothing was loaded → refund now (the buyer sees the error on screen)
+            $order->update(['api_status' => SimOrder::API_FAILED, 'api_message' => $result['message'], 'api_checked_at' => now()]);
+            $this->reject($order, null, __('messages.sim_api_refused_reason', ['reason' => $result['message']], 'ar'), false);
+            return;
+        }
+
+        // 8 / no answer / undocumented answer: we don't know → check later, never refund blindly
+        $order->update(['api_message' => $result['message'], 'api_checked_at' => now()]);
+    }
+
+    /**
+     * Asks kontor86 about an order that is still open (processing / unknown) and settles it:
+     * success → done; cancelled → refund + tell the buyer; otherwise left open.
+     *
+     * @return string the order's api_status after the check
+     */
+    public function checkSupplierStatus(SimOrder $order): string
+    {
+        if (!in_array($order->api_status, SimOrder::API_OPEN_STATES, true) || blank($order->api_unique_id)) {
+            return (string) $order->api_status;
+        }
+
+        $result = app(KontorApiService::class)->checkTopUp((string) $order->api_unique_id);
+
+        if ($result['state'] === 'success') {
+            $order->update([
+                'api_status' => SimOrder::API_SUCCESS,
+                'api_cost' => $result['cost'] ?? $order->api_cost,
+                'api_checked_at' => now(),
+            ]);
+        } elseif ($result['state'] === 'cancelled') {
+            $reason = $result['reason'] ?: '-';
+            $order->update(['api_status' => SimOrder::API_FAILED, 'api_message' => $reason, 'api_checked_at' => now()]);
+            if ($order->status !== SimOrder::STATUS_REJECTED) {
+                $this->reject($order, null, __('messages.sim_api_cancelled_reason', ['reason' => $reason], 'ar'));
+            }
+        } elseif ($result['state'] === 'processing') {
+            $order->update(['api_status' => SimOrder::API_PROCESSING, 'api_checked_at' => now()]);
+        } else {
+            $order->update(['api_checked_at' => now()]);
+        }
+
+        return (string) $order->fresh()->api_status;
     }
 
     /**
@@ -131,7 +227,7 @@ class SimOrderService
      *
      * @throws SimOrderException when the order was already rejected
      */
-    public function reject(SimOrder $order, User $admin, string $reason): SimOrder
+    public function reject(SimOrder $order, ?User $admin, string $reason, bool $notifyOwner = true): SimOrder
     {
         $order = DB::transaction(function () use ($order, $admin, $reason) {
             $locked = SimOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
@@ -143,7 +239,7 @@ class SimOrderService
             $locked->update([
                 'status' => SimOrder::STATUS_REJECTED,
                 'admin_notes' => $reason,
-                'processed_by' => $admin->id,
+                'processed_by' => $admin?->id,
                 'processed_at' => now(),
             ]);
 
@@ -156,7 +252,7 @@ class SimOrderService
 
                 BalanceTransaction::create([
                     'user_id' => $owner->id,
-                    'admin_id' => $admin->id,
+                    'admin_id' => $admin?->id ?? auth()->id() ?? $owner->id,
                     'type' => 'deposit',
                     'amount' => $refund,
                     'balance_before' => $balanceBefore,
@@ -168,7 +264,9 @@ class SimOrderService
             return $locked;
         });
 
-        $this->notifyOwner($order, SimOrder::STATUS_REJECTED);
+        if ($notifyOwner) {
+            $this->notifyOwner($order, SimOrder::STATUS_REJECTED);
+        }
 
         return $order;
     }
