@@ -99,6 +99,27 @@ class SimOrder extends Model
         return $this->sim_type === SimPackage::TYPE_ESIM;
     }
 
+    /** Supplier's answer meaning OUR balance at kontor86 is too low ("Bakiyeniz Yeterli Değildir") */
+    public static function isSupplierBalanceProblem(?string $message): bool
+    {
+        return (bool) preg_match('/bakiye\S*\s+yeterli\s+de[gğ]il/iu', (string) $message);
+    }
+
+    /**
+     * The supplier's reason, safe to show to the buyer: our balance / cost are never shown
+     * ("Bu İşlem İçin Bakiyeniz Yeterli Değildir. - BAK=35 AL=220" → "service temporarily unavailable").
+     */
+    public static function publicSupplierReason(?string $message): string
+    {
+        if (static::isSupplierBalanceProblem($message)) {
+            return __('messages.sim_api_supplier_unavailable');
+        }
+
+        $clean = trim((string) preg_replace('/\s*-?\s*(BAK|AL)=[\d.,]+/iu', '', (string) $message));
+
+        return $clean !== '' ? $clean : '-';
+    }
+
     public function isSentByApi(): bool
     {
         return $this->api_status !== null;

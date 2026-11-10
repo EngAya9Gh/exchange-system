@@ -448,6 +448,8 @@ return [
     'sim_group_api_sent' => 'Sent automatically to the supplier, do not load by hand',
     'sim_group_api_unknown' => 'Sent to the supplier and being checked, do not load by hand before it is confirmed',
     'sim_group_api_failed' => 'Automatic load failed (:reason), the customer was refunded',
+    'sim_api_supplier_unavailable' => 'The service is temporarily unavailable',
+    'sim_group_api_no_balance' => 'Our kontor86 balance is too low: the package was not loaded and the customer was refunded. Top up the account now (:details)',
     'sim_buy_package' => 'Buy Package',
     'sim_orders' => 'Package Orders',
     'sim_my_orders' => 'My Package Orders',

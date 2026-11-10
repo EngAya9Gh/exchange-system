@@ -157,7 +157,7 @@ class BuyPackage extends Component
 
         // The supplier refused the automatic load: already refunded, keep the form so they can fix & retry
         if ($order->status === SimOrder::STATUS_REJECTED) {
-            $this->addError('order', __('messages.sim_api_failed_customer', ['reason' => (string) $order->api_message]));
+            $this->addError('order', __('messages.sim_api_failed_customer', ['reason' => SimOrder::publicSupplierReason($order->api_message)]));
             return;
         }
 

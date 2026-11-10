@@ -448,6 +448,8 @@ return [
     'sim_group_api_sent' => 'أُرسلت تلقائياً للمورد، لا تحمّلها يدوياً',
     'sim_group_api_unknown' => 'أُرسلت للمورد وجاري التحقق، لا تحمّلها يدوياً قبل التأكد',
     'sim_group_api_failed' => 'فشل التحميل التلقائي (:reason) وتم إرجاع المبلغ للزبون',
+    'sim_api_supplier_unavailable' => 'الخدمة غير متاحة مؤقتاً',
+    'sim_group_api_no_balance' => 'رصيدنا عند kontor86 لا يكفي، لم تُحمَّل الباقة وتم إرجاع المبلغ للزبون. اشحنوا الحساب فوراً (:details)',
     'sim_buy_package' => 'شراء باقة',
     'sim_orders' => 'طلبات الباقات',
     'sim_my_orders' => 'سجل طلبات الباقات',

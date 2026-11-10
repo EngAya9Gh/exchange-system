@@ -77,9 +77,7 @@ class SimAutoSendTest extends TestCase
             return Http::response('unexpected', 500);
         });
 
-        // Product key placeholders (the real operator/tip come from the supplier)
         $this->fiveGb = SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_5gb_30gun')->firstOrFail();
-        $this->fiveGb->update(['api_operator' => 'callback', 'api_tip' => 'tam']);
     }
 
     protected function sentTo(string $endpoint): \Illuminate\Support\Collection
@@ -103,10 +101,15 @@ class SimAutoSendTest extends TestCase
             'FİZİKSEL Turkiye_50gb_180gun' => '26270',
         ], $codes);
 
-        // Europe is not in the API list → no code, stays manual
+        // Verified live: operator=callback, tip=telecard → all 5 Turkey packages send automatically
+        foreach (SimPackage::where('region', 'local')->get() as $package) {
+            $this->assertSame(['callback', 'telecard'], [$package->api_operator, $package->api_tip]);
+            $this->assertTrue($package->isApiReady());
+        }
+
+        // Europe is not in the API list → no key, stays manual
         $this->assertSame(0, SimPackage::where('region', 'europe')->whereNotNull('api_code')->count());
-        // Only the one we completed in setUp is ready: the others still miss operator/tip
-        $this->assertSame([$this->fiveGb->id], SimPackage::all()->filter->isApiReady()->pluck('id')->values()->all());
+        $this->assertFalse(SimPackage::where('region', 'europe')->first()->isApiReady());
     }
 
     public function test_accepted_load_is_sent_with_the_panel_code_and_tracked(): void
@@ -122,7 +125,7 @@ class SimAutoSendTest extends TestCase
         $send = $this->sentTo('tl_servis.php')->sole();
         $this->assertSame('5392065499', $send['bayi_kodu']);
         $this->assertSame('callback', $send['operator']);
-        $this->assertSame('tam', $send['tip']);
+        $this->assertSame('telecard', $send['tip']);
         $this->assertSame('26240', $send['kontor']);
         $this->assertSame('5051234567', $send['gsmno']);
         $this->assertSame(preg_replace('/\D/', '', $order->order_number), $send['tekilnumara']);
@@ -154,6 +157,41 @@ class SimAutoSendTest extends TestCase
         $this->assertEquals(1000, $this->customer->fresh()->balance); // refunded
         Notification::assertNotSentTo($this->customer, SimOrderStatusNotification::class); // they saw it on screen
         $this->assertStringContainsString('❌ فشل التحميل التلقائي (PAKET_BULUNAMADI) وتم إرجاع المبلغ للزبون', $this->groupMessage());
+    }
+
+    public function test_low_supplier_balance_refunds_without_showing_our_balance_or_cost(): void
+    {
+        // Exact live answer 2026-11-10
+        $this->sendReply = 'OK|3|Bu İşlem İçin Bakiyeniz Yeterli Değildir. - BAK=35.0000 AL=220.00|220.00|';
+
+        $component = Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->call('selectPackage', $this->fiveGb->id)
+            ->set('phoneNumber', '51234567')
+            ->call('placeOrder')
+            ->assertHasErrors('order')
+            ->assertSee(__('messages.sim_api_failed_customer', ['reason' => __('messages.sim_api_supplier_unavailable')]));
+
+        $order = SimOrder::sole();
+        $this->assertEquals(1000, $this->customer->fresh()->balance); // refunded
+        $this->assertSame(SimOrder::API_FAILED, $order->api_status);
+        $this->assertStringContainsString('BAK=35', $order->api_message); // raw reason kept for the team
+
+        // Never visible to the buyer: not on screen, not in the order notes, not in their orders list
+        foreach (['BAK=', 'AL=', '220', 'Bakiyeniz'] as $secret) {
+            $component->assertDontSee($secret);
+            $this->assertStringNotContainsString($secret, (string) $order->admin_notes);
+        }
+        Livewire::actingAs($this->customer)->test(Orders::class)->assertDontSee('BAK=')->assertDontSee('Bakiyeniz');
+
+        // The team is alerted in the group to top up
+        $this->assertStringContainsString('🚨 رصيدنا عند kontor86 لا يكفي', $this->groupMessage());
+    }
+
+    public function test_public_reason_keeps_normal_supplier_reasons(): void
+    {
+        $this->assertSame('PAKET_BULUNAMADI', SimOrder::publicSupplierReason('PAKET_BULUNAMADI'));
+        $this->assertSame('Numara hatalı', SimOrder::publicSupplierReason('Numara hatalı - AL=220.00'));
+        $this->assertSame(__('messages.sim_api_supplier_unavailable'), SimOrder::publicSupplierReason('Bu İşlem İçin Bakiyeniz Yeterli Değildir.'));
     }
 
     public function test_no_answer_is_never_refunded_blindly(): void
@@ -208,8 +246,8 @@ class SimAutoSendTest extends TestCase
 
     public function test_manual_packages_and_missing_credentials_never_call_the_supplier(): void
     {
-        $tenGb = SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_10gb_30gun')->firstOrFail(); // code only
-        $order = app(SimOrderService::class)->placeOrder($this->customer, $tenGb->id, '5051234567');
+        $europe = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_5gb')->firstOrFail(); // not in the API list
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $europe->id, '5051234567');
         $this->assertNull($order->api_status);
 
         config(['services.kontor.password' => null]);
@@ -246,10 +284,10 @@ class SimAutoSendTest extends TestCase
         $twentyGb = SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_20gb_30gun')->firstOrFail();
 
         Livewire::actingAs($this->admin)->test(PackagesManager::class)
-            ->assertSee('26250')
+            ->assertSee('🤖 API callback·telecard·26250')
             ->call('edit', $twentyGb->id)
             ->assertSet('apiCode', '26250')
-            ->set('apiOperator', 'Callback')
+            ->set('apiTip', '')
             ->call('save')
             ->assertHasErrors('apiCode')
             ->assertSee(__('messages.sim_api_fields_incomplete'))
@@ -257,17 +295,24 @@ class SimAutoSendTest extends TestCase
             ->call('save')
             ->assertHasErrors('apiTip')
             ->assertDontSee('validation.regex');
+        $this->assertTrue($twentyGb->fresh()->isApiReady()); // nothing saved
+
+        // Clearing all three makes it manual; spaces / capitals are cleaned
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('edit', $twentyGb->id)
+            ->set('apiOperator', '')->set('apiTip', '')->set('apiCode', '')
+            ->call('save')
+            ->assertHasNoErrors();
         $this->assertFalse($twentyGb->fresh()->isApiReady());
 
         Livewire::actingAs($this->admin)->test(PackagesManager::class)
             ->call('edit', $twentyGb->id)
             ->set('apiOperator', ' Callback ')
-            ->set('apiTip', 'TAM')
+            ->set('apiTip', 'TeleCard')
+            ->set('apiCode', ' 26250 ')
             ->call('save')
             ->assertHasNoErrors()
-            ->assertSee('🤖 API callback·tam·26250');
-
-        $this->assertTrue($twentyGb->fresh()->isApiReady());
-        $this->assertSame(['callback', 'tam', '26250'], [$twentyGb->fresh()->api_operator, $twentyGb->fresh()->api_tip, $twentyGb->fresh()->api_code]);
+            ->assertSee('🤖 API callback·telecard·26250');
+        $this->assertSame(['callback', 'telecard', '26250'], [$twentyGb->fresh()->api_operator, $twentyGb->fresh()->api_tip, $twentyGb->fresh()->api_code]);
     }
 }

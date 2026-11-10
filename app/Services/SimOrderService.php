@@ -148,7 +148,8 @@ class SimOrderService
         if ($result['status'] === KontorApiService::SEND_FAILED) {
             // Definite refusal: nothing was loaded → refund now (the buyer sees the error on screen)
             $order->update(['api_status' => SimOrder::API_FAILED, 'api_message' => $result['message'], 'api_checked_at' => now()]);
-            $this->reject($order, null, __('messages.sim_api_refused_reason', ['reason' => $result['message']], 'ar'), false);
+            // admin_notes is visible to the buyer → customer-safe reason; the raw one stays in api_message (team only)
+            $this->reject($order, null, __('messages.sim_api_refused_reason', ['reason' => SimOrder::publicSupplierReason($result['message'])], 'ar'), false);
             return;
         }
 
@@ -180,7 +181,7 @@ class SimOrderService
             $reason = $result['reason'] ?: '-';
             $order->update(['api_status' => SimOrder::API_FAILED, 'api_message' => $reason, 'api_checked_at' => now()]);
             if ($order->status !== SimOrder::STATUS_REJECTED) {
-                $this->reject($order, null, __('messages.sim_api_cancelled_reason', ['reason' => $reason], 'ar'));
+                $this->reject($order, null, __('messages.sim_api_cancelled_reason', ['reason' => SimOrder::publicSupplierReason($reason)], 'ar'));
             }
         } elseif ($result['state'] === 'processing') {
             $order->update(['api_status' => SimOrder::API_PROCESSING, 'api_checked_at' => now()]);

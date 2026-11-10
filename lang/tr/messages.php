@@ -447,6 +447,8 @@ return [
     'sim_group_api_sent' => 'Tedarikçiye otomatik gönderildi, manuel yüklemeyin',
     'sim_group_api_unknown' => 'Tedarikçiye gönderildi, kontrol ediliyor; onaylanmadan manuel yüklemeyin',
     'sim_group_api_failed' => 'Otomatik yükleme başarısız (:reason), tutar müşteriye iade edildi',
+    'sim_api_supplier_unavailable' => 'Hizmet geçici olarak kullanılamıyor',
+    'sim_group_api_no_balance' => 'kontor86 bakiyemiz yetersiz, paket yüklenmedi ve tutar müşteriye iade edildi. Hesaba hemen yükleme yapın (:details)',
     'sim_buy_package' => 'Paket Satın Al',
     'sim_orders' => 'Paket Talepleri',
     'sim_my_orders' => 'Paket Taleplerim',
