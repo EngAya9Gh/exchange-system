@@ -29,7 +29,7 @@
                     <div class="text-xs font-bold text-emerald-800">آخر عملية تم تنفيذها (سند #{{ $lastSummaryData['transaction_id'] }})</div>
                     <div class="text-sm font-black text-gray-900">
                         {{ $lastSummaryData['user_name'] }} • 
-                        <span class="font-mono text-emerald-700" dir="ltr">{{ $lastSummaryData['type'] === 'deposit' ? '+' : '-' }} {{ number_format($lastSummaryData['amount'], 2) }} $</span>
+                        <span class="font-mono text-emerald-700" dir="ltr">{{ $lastSummaryData['type'] === 'deposit' ? '+' : '-' }} {{ number_format($lastSummaryData['amount'], 2) }} ₺</span>
                         <span class="text-xs font-normal text-gray-500">({{ $lastSummaryData['type_text'] }})</span>
                     </div>
                 </div>
@@ -207,7 +207,7 @@
                             <div class="text-xs font-bold text-gray-500 mb-1">المبلغ المحدد</div>
                             <div class="text-3xl sm:text-4xl font-black font-mono tracking-tight {{ $summaryData['type'] === 'deposit' ? 'text-emerald-600' : 'text-rose-600' }}" dir="ltr">
                                 {{ $summaryData['type'] === 'deposit' ? '+' : '-' }} {{ number_format($summaryData['amount'], 2) }}
-                                <span class="text-base font-bold text-gray-700">دولار</span>
+                                <span class="text-base font-bold text-gray-700">ليرة تركية</span>
                             </div>
                         </div>
 
@@ -221,7 +221,7 @@
                             <div class="flex items-center justify-between pt-2.5">
                                 <span class="text-gray-500 font-medium">الرصيد السابق:</span>
                                 <span class="font-bold font-mono text-gray-700" dir="ltr">
-                                    {{ number_format(abs($summaryData['balance_before']), 2) }} $
+                                    {{ number_format(abs($summaryData['balance_before']), 2) }} ₺
                                     <span class="text-xs font-normal text-gray-500">
                                         ({{ $summaryData['balance_before'] >= 0 ? 'له' : 'عليه' }})
                                     </span>
@@ -231,7 +231,7 @@
                             <div class="flex items-center justify-between pt-2.5">
                                 <span class="text-gray-500 font-medium">الرصيد بعد العملية:</span>
                                 <span class="font-black font-mono {{ $summaryData['balance_after'] >= 0 ? 'text-emerald-600' : 'text-rose-600' }}" dir="ltr">
-                                    {{ number_format(abs($summaryData['balance_after']), 2) }} $
+                                    {{ number_format(abs($summaryData['balance_after']), 2) }} ₺
                                     <span class="text-xs font-bold">
                                         ({{ $summaryData['balance_after'] >= 0 ? 'دائن / له' : 'مدين / عليه' }})
                                     </span>
@@ -249,7 +249,7 @@
                     <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row gap-2.5">
                         <button type="button"
                                 @click="
-                                    const text = `إشعار عملية مالية\n----------------\nالزبون: {{ $summaryData['user_name'] }}\nنوع العملية: {{ $summaryData['type_text'] }}\nالمبلغ: {{ number_format($summaryData['amount'], 2) }} دولار\nالرصيد بعد العملية: {{ number_format(abs($summaryData['balance_after']), 2) }} $ ({{ $summaryData['balance_after'] >= 0 ? 'دائن' : 'مدين' }})\nالتاريخ: {{ $summaryData['date'] }}\nرقم السند: #{{ $summaryData['transaction_id'] }}`;
+                                    const text = `إشعار عملية مالية\n----------------\nالزبون: {{ $summaryData['user_name'] }}\nنوع العملية: {{ $summaryData['type_text'] }}\nالمبلغ: {{ number_format($summaryData['amount'], 2) }} ليرة تركية\nالرصيد بعد العملية: {{ number_format(abs($summaryData['balance_after']), 2) }} ليرة تركية ({{ $summaryData['balance_after'] >= 0 ? 'دائن' : 'مدين' }})\nالتاريخ: {{ $summaryData['date'] }}\nرقم السند: #{{ $summaryData['transaction_id'] }}`;
                                     navigator.clipboard.writeText(text);
                                     copied = true;
                                     setTimeout(() => copied = false, 2500);
@@ -266,7 +266,7 @@
 
                         <button type="button"
                                 @click="
-                                    const shareText = encodeURIComponent(`إشعار عملية مالية\n----------------\nالزبون: {{ $summaryData['user_name'] }}\nنوع العملية: {{ $summaryData['type_text'] }}\nالمبلغ: {{ number_format($summaryData['amount'], 2) }} دولار\nالرصيد بعد العملية: {{ number_format(abs($summaryData['balance_after']), 2) }} $ ({{ $summaryData['balance_after'] >= 0 ? 'دائن' : 'مدين' }})\nالتاريخ: {{ $summaryData['date'] }}\nرقم السند: #{{ $summaryData['transaction_id'] }}`);
+                                    const shareText = encodeURIComponent(`إشعار عملية مالية\n----------------\nالزبون: {{ $summaryData['user_name'] }}\nنوع العملية: {{ $summaryData['type_text'] }}\nالمبلغ: {{ number_format($summaryData['amount'], 2) }} ليرة تركية\nالرصيد بعد العملية: {{ number_format(abs($summaryData['balance_after']), 2) }} ليرة تركية ({{ $summaryData['balance_after'] >= 0 ? 'دائن' : 'مدين' }})\nالتاريخ: {{ $summaryData['date'] }}\nرقم السند: #{{ $summaryData['transaction_id'] }}`);
                                     let phone = '{{ $summaryData['user_phone'] ?? '' }}'.replace(/[^0-9]/g, '');
                                     let url = phone ? `https://wa.me/${phone}?text=${shareText}` : `https://wa.me/?text=${shareText}`;
                                     window.open(url, '_blank');
