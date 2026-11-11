@@ -135,7 +135,7 @@ class SimAutoSendTest extends TestCase
         $this->assertEquals(220, $order->api_cost);
         $this->assertEquals(50, $order->profit());
         $this->assertEquals(730, $this->customer->fresh()->balance);
-        $this->assertStringContainsString('🤖 أُرسلت تلقائياً للمورد، لا تحمّلها يدوياً', $this->groupMessage());
+        $this->assertStringContainsString('🤖 جاري التحميل', $this->groupMessage());
     }
 
     public function test_refused_load_is_refunded_at_once_and_the_buyer_sees_why(): void
@@ -202,7 +202,7 @@ class SimAutoSendTest extends TestCase
 
             $this->assertSame(SimOrder::STATUS_COMPLETED, $order->status, $reply);
             $this->assertSame(SimOrder::API_UNKNOWN, $order->api_status, $reply);
-            $this->assertStringContainsString('⏳ أُرسلت للمورد وجاري التحقق', $this->groupMessage());
+            $this->assertStringContainsString('⏳ جاري التحقق', $this->groupMessage());
         }
 
         $this->assertEquals(460, $this->customer->fresh()->balance); // both still charged, nothing refunded
@@ -401,20 +401,20 @@ class SimAutoSendTest extends TestCase
         $this->assertSame(SimOrder::API_SUCCESS, $order->fresh()->api_status);
         $checksBefore = $this->sentTo('tl_kontrol.php')->count();
 
-        // Re-asked only every 10 minutes
-        $this->travel(5)->minutes();
+        // Re-asked only once an hour
+        $this->travel(30)->minutes();
         Artisan::call('sims:check-api');
         $this->assertSame($checksBefore, $this->sentTo('tl_kontrol.php')->count());
 
         // Still loaded → nothing changes
-        $this->travel(6)->minutes();
+        $this->travel(31)->minutes();
         Artisan::call('sims:check-api');
         $this->assertSame($checksBefore + 1, $this->sentTo('tl_kontrol.php')->count());
         $this->assertSame(SimOrder::API_SUCCESS, $order->fresh()->api_status);
 
         // The supplier cancels it later → refunded, buyer + group told
         $this->checkReply = '3:İade edildi';
-        $this->travel(11)->minutes();
+        $this->travel(61)->minutes();
         Artisan::call('sims:check-api');
         $this->assertSame(SimOrder::STATUS_REJECTED, $order->fresh()->status);
         $this->assertEquals(1000, $this->customer->fresh()->balance);
@@ -429,6 +429,32 @@ class SimAutoSendTest extends TestCase
         Artisan::call('sims:check-api');
         $this->assertSame($checksBefore, $this->sentTo('tl_kontrol.php')->count());
         $this->assertSame(SimOrder::API_SUCCESS, $old->fresh()->api_status);
+    }
+
+    public function test_open_load_is_asked_every_run_for_an_hour_then_every_15_minutes(): void
+    {
+        $this->sendReply = 'TIMEOUT';
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567');
+        $this->checkReply = ''; // supplier does not know it (yet)
+        $count = fn () => $this->sentTo('tl_kontrol.php')->count();
+
+        Artisan::call('sims:check-api');
+        $this->travel(1)->minutes();
+        Artisan::call('sims:check-api');
+        $this->assertSame(2, $count()); // first hour: every run
+
+        $this->travel(70)->minutes();
+        Artisan::call('sims:check-api');
+        $this->assertSame(3, $count());
+        $this->travel(5)->minutes();
+        Artisan::call('sims:check-api');
+        $this->assertSame(3, $count()); // after an hour: not before 15 minutes
+        $this->travel(11)->minutes();
+        Artisan::call('sims:check-api');
+        $this->assertSame(4, $count());
+
+        $this->assertSame(SimOrder::API_UNKNOWN, $order->fresh()->api_status);
+        $this->assertEquals(730, $this->customer->fresh()->balance); // never refunded blindly
     }
 
     public function test_group_warns_when_the_supplier_cost_is_above_our_price(): void

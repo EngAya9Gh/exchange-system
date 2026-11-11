@@ -7,10 +7,11 @@ use App\Services\SimOrderService;
 use Illuminate\Console\Command;
 
 /**
- * Mirrors kontor86 in our system, every minute:
- *  - open loads (accepted but not loaded yet, or unknown after a timeout / "8"): loaded → done; cancelled → refunded.
- *  - loads done in the last 24 h, re-asked every 10 minutes: a late cancellation by the supplier → refunded.
- * The buyer and the "Tele CARD" group are told about every change.
+ * Mirrors kontor86 in our system on every scheduler run. Only unsettled / recent automatic loads are asked about:
+ *  - open loads (accepted but not loaded yet, or unknown after a timeout / "8"): every run during their first hour,
+ *    then every 15 minutes, for 3 days. Loaded → done; cancelled → refunded.
+ *  - loads done in the last 24 h: once an hour, for a late cancellation by the supplier → refunded.
+ * Nothing open → two small DB queries and no call to the supplier.
  */
 class CheckSimApiOrdersCommand extends Command
 {
@@ -23,6 +24,10 @@ class CheckSimApiOrdersCommand extends Command
         $orders = SimOrder::whereIn('api_status', SimOrder::API_OPEN_STATES)
             ->whereNotNull('api_unique_id')
             ->where('created_at', '>=', now()->subDays(3)) // older ones are reviewed by hand in «طلبات الباقات»
+            // First hour: every run. A load still open after that is asked about every 15 minutes.
+            ->where(fn ($q) => $q->where('created_at', '>=', now()->subHour())
+                ->orWhereNull('api_checked_at')
+                ->orWhere('api_checked_at', '<=', now()->subMinutes(15)))
             ->orderBy('id')
             ->limit(50)
             ->get();
@@ -32,7 +37,7 @@ class CheckSimApiOrdersCommand extends Command
             ->where('status', '!=', SimOrder::STATUS_REJECTED)
             ->whereNotNull('api_unique_id')
             ->where('created_at', '>=', now()->subDay())
-            ->where(fn ($q) => $q->whereNull('api_checked_at')->orWhere('api_checked_at', '<=', now()->subMinutes(10)))
+            ->where(fn ($q) => $q->whereNull('api_checked_at')->orWhere('api_checked_at', '<=', now()->subHour()))
             ->orderBy('api_checked_at')
             ->limit(30)
             ->get();

@@ -160,7 +160,7 @@ class SimOrderService
     /**
      * Asks kontor86 about an automatic load and mirrors the answer in our system:
      *  - still open (processing / unknown): loaded → done, buyer + group told; cancelled → refund, buyer + group told.
-     *  - loaded in the last 24 h (re-checked by sims:check-api): only a later cancellation is applied → refund, buyer + group told.
+     *  - loaded in the last 24 h (re-checked hourly by sims:check-api): only a later cancellation is applied → refund, buyer + group told.
      * Every change is a guarded transition, so the cron and the «تحقق الآن» button can never apply it twice.
      *
      * @return string the order's api_status after the check
