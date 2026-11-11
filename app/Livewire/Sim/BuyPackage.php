@@ -181,6 +181,8 @@ class BuyPackage extends Component
             'selectedPackage' => $this->selectedPackageId ? $packages->firstWhere('id', $this->selectedPackageId) : null,
             'isExemptFromCharge' => app(SimOrderService::class)->isExemptFromCharge($user),
             'supplierBalance' => $this->supplierBalance(),
+            // "⚡ instant loading" chip on packages sent automatically through kontor86
+            'apiConfigured' => app(\App\Services\KontorApiService::class)->isConfigured(),
         ]);
     }
 }

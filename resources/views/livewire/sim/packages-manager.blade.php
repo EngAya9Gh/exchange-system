@@ -47,7 +47,10 @@
                                 <tr wire:key="sim-manage-{{ $package->id }}" class="hover:bg-slate-50/60 transition {{ $package->is_active ? '' : 'opacity-60' }}">
                                     <td class="px-4 py-3 text-xs text-slate-400">{{ $package->sort_order }}</td>
                                     <td class="px-4 py-3 min-w-[240px]">
-                                        <div class="font-bold text-slate-800" dir="rtl">{{ $package->name_ar }}</div>
+                                        <div class="font-bold text-slate-800 flex flex-wrap items-center gap-1.5" dir="rtl">
+                                            {{ $package->name_ar }}
+                                            @include('livewire.sim.partials.package-badge', ['badge' => $package->badge, 'size' => 'text-[10px] px-2 py-0.5'])
+                                        </div>
                                         <div class="text-xs text-slate-500 mt-0.5" dir="ltr">{{ $package->name_tr }}</div>
                                         <div class="text-[11px] text-slate-400 mt-1">{{ __('messages.sim_orders_count', ['count' => $package->orders_count]) }}</div>
                                     </td>
@@ -204,6 +207,25 @@
                             <input type="checkbox" wire:model="isActive" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 w-5 h-5">
                             <span class="text-sm font-bold text-slate-700">{{ __('messages.sim_active_for_sale') }}</span>
                         </label>
+                    </div>
+
+                    {{-- Colored label on the package card --}}
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-2">{{ __('messages.sim_badge') }}</label>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <label class="cursor-pointer rounded-full ring-2 ring-transparent ring-offset-2 has-[:checked]:ring-slate-800 transition">
+                                <input type="radio" wire:model="badge" value="" class="sr-only">
+                                <span class="inline-flex items-center rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold px-2.5 py-1">{{ __('messages.sim_badge_none') }}</span>
+                            </label>
+                            @foreach(SimPackage::BADGES as $badgeKey)
+                                <label class="cursor-pointer rounded-full ring-2 ring-transparent ring-offset-2 has-[:checked]:ring-slate-800 transition">
+                                    <input type="radio" wire:model="badge" value="{{ $badgeKey }}" class="sr-only">
+                                    @include('livewire.sim.partials.package-badge', ['badge' => $badgeKey])
+                                </label>
+                            @endforeach
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2">{{ __('messages.sim_badge_hint') }}</p>
+                        @error('badge') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
                     </div>
 
                     {{-- kontor86 automatic loading --}}

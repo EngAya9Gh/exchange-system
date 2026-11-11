@@ -141,8 +141,12 @@ class Orders extends Component
             });
         }
 
+        $orders = $query->paginate(15);
+
         return view('livewire.sim.orders', [
-            'orders' => $query->paginate(15),
+            'orders' => $orders,
+            // The list refreshes itself while a load is still open, so the result shows up without reloading
+            'hasOpenApiOrders' => $orders->getCollection()->contains(fn (SimOrder $o) => in_array($o->api_status, SimOrder::API_OPEN_STATES, true)),
             'canManage' => $canManage,
             'pendingCount' => $canManage ? SimOrder::where('status', SimOrder::STATUS_PENDING)->count() : 0,
             // Our balance at kontor86 (also shows at a glance whether the API connection works)

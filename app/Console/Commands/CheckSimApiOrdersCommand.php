@@ -7,9 +7,10 @@ use App\Services\SimOrderService;
 use Illuminate\Console\Command;
 
 /**
- * Follows up SIM orders sent to kontor86 whose outcome is still open
- * (accepted but not yet loaded, or unknown after a timeout / "8" answer).
- * Success → marked loaded; cancelled by the supplier → refunded and the buyer is told.
+ * Mirrors kontor86 in our system, every minute:
+ *  - open loads (accepted but not loaded yet, or unknown after a timeout / "8"): loaded → done; cancelled → refunded.
+ *  - loads done in the last 24 h, re-asked every 10 minutes: a late cancellation by the supplier → refunded.
+ * The buyer and the "Tele CARD" group are told about every change.
  */
 class CheckSimApiOrdersCommand extends Command
 {
@@ -26,7 +27,17 @@ class CheckSimApiOrdersCommand extends Command
             ->limit(50)
             ->get();
 
-        foreach ($orders as $order) {
+        // Already loaded, last 24 h: the supplier can still cancel / refund one later
+        $loaded = SimOrder::where('api_status', SimOrder::API_SUCCESS)
+            ->where('status', '!=', SimOrder::STATUS_REJECTED)
+            ->whereNotNull('api_unique_id')
+            ->where('created_at', '>=', now()->subDay())
+            ->where(fn ($q) => $q->whereNull('api_checked_at')->orWhere('api_checked_at', '<=', now()->subMinutes(10)))
+            ->orderBy('api_checked_at')
+            ->limit(30)
+            ->get();
+
+        foreach ($orders->concat($loaded) as $order) {
             try {
                 $state = $service->checkSupplierStatus($order);
                 $this->line("{$order->order_number}: {$state}");

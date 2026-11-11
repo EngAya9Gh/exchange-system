@@ -21,6 +21,19 @@ class SimOrderGroupNotifier
 
     public function sendNewOrder(SimOrder $order): bool
     {
+        return $this->post($this->newOrderMessage($order), $order);
+    }
+
+    /** Follow-up once kontor86 settles an automatic load, so the group always sees how it ended. */
+    public function sendStatusUpdate(SimOrder $order): bool
+    {
+        $message = $this->statusUpdateMessage($order);
+
+        return $message !== null && $this->post($message, $order);
+    }
+
+    protected function post(string $message, SimOrder $order): bool
+    {
         $groupId = (string) config('whatsapp.providers.wakeel.sim_group_id');
 
         if ($groupId === '' || empty(config('whatsapp.providers.wakeel.api_key'))) {
@@ -28,7 +41,48 @@ class SimOrderGroupNotifier
             return false;
         }
 
-        return $this->whatsapp->provider('wakeel')->send($groupId, $this->newOrderMessage($order));
+        return $this->whatsapp->provider('wakeel')->send($groupId, $message);
+    }
+
+    /**
+     * ✅ *تم تحميل الباقة تلقائياً*        or   ❌ *ألغى المورد التحميل وتم إرجاع المبلغ للزبون*
+     *
+     * 👤 *اسم المحل*
+     * ```5051234567```
+     * 📦 تركيا 10 جيجا - 30 يوم
+     * 🧾 SIM2611101234
+     * 📝 السبب: …                          (cancelled only; raw supplier reason, team only)
+     */
+    public function statusUpdateMessage(SimOrder $order): ?string
+    {
+        $order->loadMissing(['user', 'package']);
+        $isBalanceProblem = SimOrder::isSupplierBalanceProblem($order->api_message);
+
+        $title = match ($order->api_status) {
+            SimOrder::API_SUCCESS => '✅ *' . __('messages.sim_group_update_loaded', [], 'ar') . '*',
+            SimOrder::API_FAILED => $isBalanceProblem
+                ? '🚨 *' . __('messages.sim_group_api_no_balance', ['details' => (string) $order->api_message], 'ar') . '*'
+                : '❌ *' . __('messages.sim_group_update_cancelled', [], 'ar') . '*',
+            default => null,
+        };
+        if ($title === null) {
+            return null;
+        }
+
+        $lines = [
+            $title,
+            '',
+            '👤 *' . ($order->user->name ?? '-') . '*',
+            '```' . $order->phone_number . '```',
+            '📦 ' . $this->shortPackageName($order),
+            '🧾 ' . $order->order_number,
+        ];
+
+        if ($order->api_status === SimOrder::API_FAILED && !$isBalanceProblem && filled($order->api_message)) {
+            $lines[] = '📝 ' . __('messages.sim_group_reason', [], 'ar') . ': ' . $order->api_message;
+        }
+
+        return implode("\n", $lines);
     }
 
     /**
@@ -72,6 +126,14 @@ class SimOrderGroupNotifier
         if ($apiLine) {
             $lines[] = '';
             $lines[] = $apiLine;
+        }
+
+        // The supplier raised its cost above our sale price: we would sell at a loss
+        if ($order->api_cost !== null && (float) $order->api_cost > (float) $order->price) {
+            $lines[] = '⚠️ ' . __('messages.sim_group_cost_above_price', [
+                'cost' => SimPackage::formatPrice($order->api_cost),
+                'price' => SimPackage::formatPrice($order->price),
+            ], 'ar');
         }
 
         return implode("\n", $lines);

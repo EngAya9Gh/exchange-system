@@ -55,7 +55,7 @@
                         <span class="text-base">{{ $meta['flag'] }}</span> {{ $meta['label'] }}
                         @php $regionNetworks = $packagesByRegion->get($key, collect())->pluck('network_name')->filter()->unique()->implode(' / '); @endphp
                         @if($regionNetworks)
-                            <span class="text-[11px] font-semibold opacity-70" dir="ltr">· {{ $regionNetworks }}</span>
+                            <span class="hidden sm:inline text-[11px] font-semibold opacity-70" dir="ltr">· {{ $regionNetworks }}</span>
                         @endif
                     </button>
                 @endforeach
@@ -73,50 +73,13 @@
             <div class="mb-4 text-sm font-bold text-rose-600">{{ $message }}</div>
         @enderror
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             @forelse($currentPackages as $package)
-                @php $isSelected = $selectedPackageId === $package->id; @endphp
-                <button type="button" wire:key="sim-pkg-{{ $package->id }}" wire:click="selectPackage({{ $package->id }})"
-                    class="relative text-start rounded-2xl border-2 p-5 transition-all flex flex-col {{ $isSelected ? 'border-primary-500 bg-primary-50 shadow-md ring-4 ring-primary-100' : 'border-slate-100 bg-white hover:border-rose-200 hover:shadow-sm' }}">
-                    @if($package->network_name)
-                        <div class="flex items-center gap-1.5 mb-3 text-xs font-black text-slate-700" title="{{ __('messages.sim_network') }}">
-                            <svg class="w-4 h-4 text-primary-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
-                            <span dir="ltr">{{ $package->network_name }}</span>
-                        </div>
-                    @endif
-                    <div class="flex items-start justify-between gap-3 mb-3 w-full">
-                        <div>
-                            <div class="text-3xl font-black text-slate-800 leading-none" dir="ltr">
-                                {{ $package->data_gb }}<span class="text-base font-bold text-slate-500 ms-1">GB</span>
-                            </div>
-                            <div class="text-sm font-bold text-slate-500 mt-2">
-                                {{ __('messages.sim_validity', ['days' => $package->validity_days]) }}
-                            </div>
-                        </div>
-                        <span class="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full {{ $package->isEsim() ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-800' }}">
-                            {{ $package->isEsim() ? __('messages.sim_type_esim') : __('messages.sim_type_physical') }}
-                        </span>
-                    </div>
-
-                    <div class="text-sm font-bold text-slate-700 mb-1">{{ $package->localized_name }}</div>
-                    @if($package->localized_description)
-                        <p class="text-xs text-slate-500 leading-relaxed">{{ $package->localized_description }}</p>
-                    @endif
-
-                    <div class="mt-auto pt-4 w-full">
-                        <div class="pt-3 border-t {{ $isSelected ? 'border-primary-100' : 'border-slate-100' }} flex items-center justify-between">
-                            <span class="text-xs font-bold {{ $isSelected ? 'text-primary-600' : 'text-slate-400' }} flex items-center gap-1">
-                                @if($isSelected)
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                    {{ __('messages.sim_selected') }}
-                                @else
-                                    {{ __('messages.sim_price') }}
-                                @endif
-                            </span>
-                            <span class="text-xl font-black text-primary-600" dir="ltr">{{ SimPackage::formatPrice($package->price) }} ₺</span>
-                        </div>
-                    </div>
-                </button>
+                @include('livewire.sim.partials.package-card', [
+                    'package' => $package,
+                    'isSelected' => $selectedPackageId === $package->id,
+                    'instant' => $apiConfigured && $package->isApiReady(),
+                ])
             @empty
                 <div class="col-span-full text-center text-slate-400 py-10 font-bold">{{ __('messages.sim_no_packages') }}</div>
             @endforelse

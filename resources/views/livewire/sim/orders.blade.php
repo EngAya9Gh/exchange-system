@@ -1,7 +1,7 @@
 @use('App\Models\SimPackage')
 @use('App\Models\SimOrder')
 
-<div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-5 sm:p-8">
+<div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-5 sm:p-8" @if($hasOpenApiOrders) wire:poll.15s @endif>
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
             {{ $canManage ? __('messages.sim_orders') : __('messages.sim_my_orders') }}
@@ -113,6 +113,17 @@
                         <td class="px-4 py-4 whitespace-nowrap">
                             @if($order->status === SimOrder::STATUS_PENDING)
                                 <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full">{{ __('messages.sim_status_pending') }}</span>
+                            @elseif($order->status === SimOrder::STATUS_COMPLETED && in_array($order->api_status, SimOrder::API_OPEN_STATES, true))
+                                {{-- Automatic load still running at the supplier --}}
+                                <span class="inline-flex items-center gap-1.5 bg-sky-100 text-sky-800 text-xs font-bold px-2.5 py-1 rounded-full">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse"></span>
+                                    {{ __('messages.sim_status_loading') }}
+                                </span>
+                            @elseif($order->status === SimOrder::STATUS_COMPLETED && $order->api_status === SimOrder::API_SUCCESS)
+                                <span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                    {{ __('messages.sim_status_loaded') }}
+                                </span>
                             @elseif($order->status === SimOrder::STATUS_COMPLETED)
                                 <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">{{ __('messages.sim_status_completed') }}</span>
                             @else

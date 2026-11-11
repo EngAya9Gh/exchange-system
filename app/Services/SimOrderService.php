@@ -158,38 +158,70 @@ class SimOrderService
     }
 
     /**
-     * Asks kontor86 about an order that is still open (processing / unknown) and settles it:
-     * success → done; cancelled → refund + tell the buyer; otherwise left open.
+     * Asks kontor86 about an automatic load and mirrors the answer in our system:
+     *  - still open (processing / unknown): loaded → done, buyer + group told; cancelled → refund, buyer + group told.
+     *  - loaded in the last 24 h (re-checked by sims:check-api): only a later cancellation is applied → refund, buyer + group told.
+     * Every change is a guarded transition, so the cron and the «تحقق الآن» button can never apply it twice.
      *
      * @return string the order's api_status after the check
      */
     public function checkSupplierStatus(SimOrder $order): string
     {
-        if (!in_array($order->api_status, SimOrder::API_OPEN_STATES, true) || blank($order->api_unique_id)) {
+        $isOpen = in_array($order->api_status, SimOrder::API_OPEN_STATES, true);
+        $isLoaded = $order->api_status === SimOrder::API_SUCCESS && $order->status !== SimOrder::STATUS_REJECTED;
+
+        if ((!$isOpen && !$isLoaded) || blank($order->api_unique_id)) {
             return (string) $order->api_status;
         }
 
         $result = app(KontorApiService::class)->checkTopUp((string) $order->api_unique_id);
+        $from = $isOpen ? SimOrder::API_OPEN_STATES : [SimOrder::API_SUCCESS];
 
-        if ($result['state'] === 'success') {
-            $order->update([
-                'api_status' => SimOrder::API_SUCCESS,
-                'api_cost' => $result['cost'] ?? $order->api_cost,
-                'api_checked_at' => now(),
-            ]);
+        if ($result['state'] === 'success' && $isOpen) {
+            $changes = ['api_status' => SimOrder::API_SUCCESS, 'api_cost' => $result['cost'] ?? $order->api_cost];
+            if ($this->moveApiStatus($order, $from, $changes)) {
+                $order->refresh();
+                $this->notifyOwner($order, SimOrder::STATUS_COMPLETED);
+                $this->postGroupUpdate($order);
+            }
         } elseif ($result['state'] === 'cancelled') {
             $reason = $result['reason'] ?: '-';
-            $order->update(['api_status' => SimOrder::API_FAILED, 'api_message' => $reason, 'api_checked_at' => now()]);
-            if ($order->status !== SimOrder::STATUS_REJECTED) {
-                $this->reject($order, null, __('messages.sim_api_cancelled_reason', ['reason' => SimOrder::publicSupplierReason($reason)], 'ar'));
+            if ($this->moveApiStatus($order, $from, ['api_status' => SimOrder::API_FAILED, 'api_message' => $reason])) {
+                $order->refresh();
+                if ($order->status !== SimOrder::STATUS_REJECTED) {
+                    try {
+                        $this->reject($order, null, __('messages.sim_api_cancelled_reason', ['reason' => SimOrder::publicSupplierReason($reason)], 'ar'));
+                    } catch (SimOrderException) {
+                        // A manager cancelled & refunded it at the same moment: nothing left to refund
+                    }
+                }
+                $this->postGroupUpdate($order->fresh());
             }
-        } elseif ($result['state'] === 'processing') {
-            $order->update(['api_status' => SimOrder::API_PROCESSING, 'api_checked_at' => now()]);
+        } elseif ($result['state'] === 'processing' && $isOpen) {
+            $this->moveApiStatus($order, $from, ['api_status' => SimOrder::API_PROCESSING]);
         } else {
             $order->update(['api_checked_at' => now()]);
         }
 
         return (string) $order->fresh()->api_status;
+    }
+
+    /** Changes api_status only while it is still one of $from (atomic). True when this call made the change. */
+    protected function moveApiStatus(SimOrder $order, array $from, array $changes): bool
+    {
+        return SimOrder::whereKey($order->id)
+            ->whereIn('api_status', $from)
+            ->update($changes + ['api_checked_at' => now()]) === 1;
+    }
+
+    /** Tells the "Tele CARD" group how an automatic load ended (loaded / cancelled by the supplier). */
+    protected function postGroupUpdate(SimOrder $order): void
+    {
+        try {
+            app(SimOrderGroupNotifier::class)->sendStatusUpdate($order);
+        } catch (\Throwable $e) {
+            Log::error('Failed to post SIM order update ' . $order->order_number . ' to WhatsApp group: ' . $e->getMessage());
+        }
     }
 
     /**

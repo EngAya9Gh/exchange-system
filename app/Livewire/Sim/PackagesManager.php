@@ -28,6 +28,7 @@ class PackagesManager extends Component
     public string $apiCode = '';
     public bool $isActive = true;
     public $sortOrder = 0;
+    public string $badge = '';
 
     public function mount(): void
     {
@@ -58,6 +59,7 @@ class PackagesManager extends Component
             'apiCode' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
             'isActive' => ['boolean'],
             'sortOrder' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            'badge' => ['nullable', 'in:' . implode(',', SimPackage::BADGES)],
         ];
     }
 
@@ -92,6 +94,7 @@ class PackagesManager extends Component
             'apiTip' => __('messages.sim_api_tip'),
             'apiCode' => __('messages.sim_api_code'),
             'sortOrder' => __('messages.sim_sort_order'),
+            'badge' => __('messages.sim_badge'),
         ];
     }
 
@@ -126,6 +129,7 @@ class PackagesManager extends Component
         $this->apiCode = (string) $package->api_code;
         $this->isActive = $package->is_active;
         $this->sortOrder = $package->sort_order;
+        $this->badge = (string) $package->badge;
         $this->showForm = true;
     }
 
@@ -167,6 +171,7 @@ class PackagesManager extends Component
             'api_code' => $apiParts[2] ?: null,
             'is_active' => $this->isActive,
             'sort_order' => (int) ($this->sortOrder ?: 0),
+            'badge' => $this->badge ?: null,
         ];
 
         if ($this->editingId) {
@@ -206,7 +211,7 @@ class PackagesManager extends Component
         $this->resetValidation();
         $this->reset([
             'editingId', 'region', 'simType', 'networkName', 'dataGb', 'validityDays', 'price',
-            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'isActive', 'sortOrder',
+            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'isActive', 'sortOrder', 'badge',
         ]);
     }
 

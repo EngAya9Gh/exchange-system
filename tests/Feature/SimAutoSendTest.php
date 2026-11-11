@@ -315,4 +315,180 @@ class SimAutoSendTest extends TestCase
             ->assertSee('🤖 API callback·telecard·26250');
         $this->assertSame(['callback', 'telecard', '26250'], [$twentyGb->fresh()->api_operator, $twentyGb->fresh()->api_tip, $twentyGb->fresh()->api_code]);
     }
+
+    protected function groupMessages(): \Illuminate\Support\Collection
+    {
+        return $this->sentTo('provider.wakeel.cc')->map(fn ($r) => (string) $r['message'])->values();
+    }
+
+    protected function ownerNotifications(string $status): int
+    {
+        return Notification::sent($this->customer, SimOrderStatusNotification::class)
+            ->filter(fn ($n) => $n->toArray($this->customer)['status'] === $status)
+            ->count();
+    }
+
+    public function test_loaded_by_the_supplier_is_shown_to_the_buyer_and_the_group(): void
+    {
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567');
+
+        // While loading: the buyer sees "loading" and the list refreshes itself
+        Livewire::actingAs($this->customer)->test(Orders::class)
+            ->assertSee(__('messages.sim_status_loading'))
+            ->assertDontSee(__('messages.sim_status_loaded'))
+            ->assertSeeHtml('wire:poll.15s');
+
+        $this->checkReply = '1:olumlu_islem:220.00';
+        Artisan::call('sims:check-api');
+
+        $this->assertSame(SimOrder::API_SUCCESS, $order->fresh()->api_status);
+        $this->assertSame(1, $this->ownerNotifications(SimOrder::STATUS_COMPLETED));
+
+        $update = $this->groupMessages()->last();
+        $this->assertStringContainsString('✅ *تم تحميل الباقة تلقائياً*', $update);
+        $this->assertStringContainsString('```5051234567```', $update);
+        $this->assertStringContainsString($order->order_number, $update);
+
+        Livewire::actingAs($this->customer)->test(Orders::class)
+            ->assertSee(__('messages.sim_status_loaded'))
+            ->assertDontSee(__('messages.sim_status_loading'))
+            ->assertDontSeeHtml('wire:poll');
+    }
+
+    public function test_cancelled_by_the_supplier_tells_the_group_why(): void
+    {
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567');
+        $this->checkReply = '3:Numara Tele CARD Değil';
+
+        Artisan::call('sims:check-api');
+
+        $this->assertSame(SimOrder::STATUS_REJECTED, $order->fresh()->status);
+        $this->assertEquals(1000, $this->customer->fresh()->balance);
+        $this->assertSame(1, $this->ownerNotifications(SimOrder::STATUS_REJECTED));
+
+        $update = $this->groupMessages()->last();
+        $this->assertStringContainsString('❌ *ألغى المورد التحميل وتم إرجاع المبلغ للزبون*', $update);
+        $this->assertStringContainsString('📝 السبب: Numara Tele CARD Değil', $update);
+    }
+
+    public function test_cron_and_button_at_the_same_time_apply_an_outcome_once(): void
+    {
+        $loaded = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051111111');
+        $cancelled = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5052222222');
+        $staleLoaded = SimOrder::find($loaded->id);       // both copies still say "processing"
+        $staleCancelled = SimOrder::find($cancelled->id);
+        $groupBefore = $this->groupMessages()->count();
+
+        $this->checkReply = '1:olumlu_islem:220.00';
+        app(SimOrderService::class)->checkSupplierStatus($loaded);
+        app(SimOrderService::class)->checkSupplierStatus($staleLoaded);
+
+        $this->checkReply = '3:Numara Tele CARD Değil';
+        app(SimOrderService::class)->checkSupplierStatus($cancelled);
+        app(SimOrderService::class)->checkSupplierStatus($staleCancelled);
+
+        $this->assertSame(1, $this->ownerNotifications(SimOrder::STATUS_COMPLETED));
+        $this->assertSame(1, $this->ownerNotifications(SimOrder::STATUS_REJECTED));
+        $this->assertSame($groupBefore + 2, $this->groupMessages()->count());
+        $this->assertEquals(730, $this->customer->fresh()->balance); // 1000 - 270 - 270 + one refund of 270
+    }
+
+    public function test_late_cancellation_after_loading_is_refunded_within_a_day(): void
+    {
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567');
+        $this->checkReply = '1:olumlu_islem:220.00';
+        Artisan::call('sims:check-api');
+        $this->assertSame(SimOrder::API_SUCCESS, $order->fresh()->api_status);
+        $checksBefore = $this->sentTo('tl_kontrol.php')->count();
+
+        // Re-asked only every 10 minutes
+        $this->travel(5)->minutes();
+        Artisan::call('sims:check-api');
+        $this->assertSame($checksBefore, $this->sentTo('tl_kontrol.php')->count());
+
+        // Still loaded → nothing changes
+        $this->travel(6)->minutes();
+        Artisan::call('sims:check-api');
+        $this->assertSame($checksBefore + 1, $this->sentTo('tl_kontrol.php')->count());
+        $this->assertSame(SimOrder::API_SUCCESS, $order->fresh()->api_status);
+
+        // The supplier cancels it later → refunded, buyer + group told
+        $this->checkReply = '3:İade edildi';
+        $this->travel(11)->minutes();
+        Artisan::call('sims:check-api');
+        $this->assertSame(SimOrder::STATUS_REJECTED, $order->fresh()->status);
+        $this->assertEquals(1000, $this->customer->fresh()->balance);
+        $this->assertStringContainsString('❌', $this->groupMessages()->last());
+
+        // After a day loads are no longer re-asked
+        $old = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5059999999');
+        $this->checkReply = '1:olumlu_islem:220.00';
+        Artisan::call('sims:check-api');
+        $this->travel(25)->hours();
+        $checksBefore = $this->sentTo('tl_kontrol.php')->count();
+        Artisan::call('sims:check-api');
+        $this->assertSame($checksBefore, $this->sentTo('tl_kontrol.php')->count());
+        $this->assertSame(SimOrder::API_SUCCESS, $old->fresh()->api_status);
+    }
+
+    public function test_group_warns_when_the_supplier_cost_is_above_our_price(): void
+    {
+        $this->sendReply = 'OK|1|Talebiniz İşleme Alınmıştır.|300.00'; // 5 GB is sold at 270
+        app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567');
+
+        $this->assertStringContainsString('⚠️ تكلفة المورد 300 ₺ أعلى من سعر البيع 270 ₺', $this->groupMessage());
+
+        $this->sendReply = 'OK|1|Talebiniz İşleme Alınmıştır.|220.00';
+        app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234568');
+        $this->assertStringNotContainsString('⚠️', $this->groupMessage());
+    }
+
+    public function test_package_cards_show_labels_duration_and_instant_loading(): void
+    {
+        // Starting labels from the migration
+        $this->assertSame('best_seller', SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_20gb_30gun')->value('badge'));
+        $this->assertSame('best_value', SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_50gb_180gun')->value('badge'));
+
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->assertSee('🔥')->assertSee('الأكثر طلباً')
+            ->assertSee('💎')->assertSee('أفضل قيمة')
+            ->assertSee('6 أشهر')
+            ->assertSee('30 يوم')
+            ->assertSee(__('messages.sim_instant_load'))
+            ->assertSee('≈ 54 ₺ للجيجا') // 5 GB at 270
+            ->call('selectRegion', 'europe')
+            ->assertDontSee(__('messages.sim_instant_load')); // Europe is manual
+
+        app()->setLocale('tr');
+        $this->assertSame('6 Ay', SimPackage::where('validity_days', 180)->first()->durationLabel());
+        $this->assertSame('30 Gün', $this->fiveGb->durationLabel());
+        app()->setLocale('ar');
+
+        // No API credentials → no "instant" promise
+        config(['services.kontor.password' => null]);
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->assertDontSee(__('messages.sim_instant_load'));
+    }
+
+    public function test_admin_sets_and_clears_a_package_label(): void
+    {
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('edit', $this->fiveGb->id)
+            ->assertSet('badge', '')
+            ->set('badge', 'hacked')
+            ->call('save')
+            ->assertHasErrors('badge')
+            ->set('badge', 'offer')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSee('عرض خاص');
+        $this->assertSame('offer', $this->fiveGb->fresh()->badge);
+
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('edit', $this->fiveGb->id)
+            ->assertSet('badge', 'offer')
+            ->set('badge', '')
+            ->call('save');
+        $this->assertNull($this->fiveGb->fresh()->badge);
+    }
 }
