@@ -342,7 +342,7 @@ class SimAutoSendTest extends TestCase
         Artisan::call('sims:check-api');
 
         $this->assertSame(SimOrder::API_SUCCESS, $order->fresh()->api_status);
-        $this->assertSame(1, $this->ownerNotifications(SimOrder::STATUS_COMPLETED));
+        $this->assertSame(0, $this->ownerNotifications(SimOrder::STATUS_COMPLETED)); // paused: no "loaded" message to the buyer
 
         $update = $this->groupMessages()->last();
         $this->assertStringContainsString('✅ *تم تحميل الباقة تلقائياً*', $update);
@@ -387,9 +387,9 @@ class SimAutoSendTest extends TestCase
         app(SimOrderService::class)->checkSupplierStatus($cancelled);
         app(SimOrderService::class)->checkSupplierStatus($staleCancelled);
 
-        $this->assertSame(1, $this->ownerNotifications(SimOrder::STATUS_COMPLETED));
+        $this->assertSame(0, $this->ownerNotifications(SimOrder::STATUS_COMPLETED)); // paused
         $this->assertSame(1, $this->ownerNotifications(SimOrder::STATUS_REJECTED));
-        $this->assertSame($groupBefore + 2, $this->groupMessages()->count());
+        $this->assertSame($groupBefore + 2, $this->groupMessages()->count()); // one ✅ + one ❌, never twice
         $this->assertEquals(730, $this->customer->fresh()->balance); // 1000 - 270 - 270 + one refund of 270
     }
 

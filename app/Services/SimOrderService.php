@@ -181,7 +181,9 @@ class SimOrderService
             $changes = ['api_status' => SimOrder::API_SUCCESS, 'api_cost' => $result['cost'] ?? $order->api_cost];
             if ($this->moveApiStatus($order, $from, $changes)) {
                 $order->refresh();
-                $this->notifyOwner($order, SimOrder::STATUS_COMPLETED);
+                // PAUSED (owner's request, 2026-11-11): no "package loaded" bell / WhatsApp to the buyer.
+                // The buyer still sees «تم التحميل» in their orders list. Uncomment to turn it back on.
+                // $this->notifyOwner($order, SimOrder::STATUS_COMPLETED);
                 $this->postGroupUpdate($order);
             }
         } elseif ($result['state'] === 'cancelled') {
