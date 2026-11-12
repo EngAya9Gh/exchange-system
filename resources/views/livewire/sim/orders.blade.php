@@ -2,46 +2,50 @@
 @use('App\Models\SimOrder')
 
 <div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-5 sm:p-8" @if($hasOpenApiOrders) wire:poll.15s @endif>
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
-        <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
-            {{ $canManage ? __('messages.sim_orders') : __('messages.sim_my_orders') }}
-            @if($canManage && $pendingCount > 0)
-                <span class="bg-amber-100 text-amber-800 text-xs font-black px-2.5 py-1 rounded-full">
-                    {{ __('messages.sim_pending_count', ['count' => $pendingCount]) }}
-                </span>
+    {{-- Title on one side, filters on the other; they wrap only when the row is too narrow --}}
+    @php $filterClass = 'rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm py-2'; @endphp
+    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-6">
+        <div class="min-w-0">
+            <h3 class="text-xl font-black text-slate-800 flex flex-wrap items-center gap-2">
+                {{ $canManage ? __('messages.sim_orders') : __('messages.sim_my_orders') }}
+                @if($canManage && $pendingCount > 0)
+                    <span class="bg-amber-100 text-amber-800 text-xs font-black px-2.5 py-1 rounded-full">
+                        {{ __('messages.sim_pending_count', ['count' => $pendingCount]) }}
+                    </span>
+                @endif
+            </h3>
+            @if($supplierBalance !== null)
+                <div class="mt-1.5">@include('livewire.sim.partials.supplier-balance')</div>
             @endif
-            @include('livewire.sim.partials.supplier-balance')
-        </h3>
-    </div>
+        </div>
 
-    {{-- Filters: search, status, period --}}
-    <div class="flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-5">
-        <input type="search" wire:model.live.debounce.400ms="search"
-            placeholder="{{ __('messages.sim_search_placeholder') }}"
-            class="rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm w-full sm:w-72">
-        <select wire:model.live="statusFilter"
-            class="rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm w-full sm:w-44">
-            <option value="all">{{ __('messages.sim_filter_all') }}</option>
-            <option value="{{ SimOrder::STATUS_PENDING }}">{{ __('messages.sim_status_pending') }}</option>
-            <option value="{{ SimOrder::STATUS_COMPLETED }}">{{ __('messages.sim_status_completed') }}</option>
-            <option value="{{ SimOrder::STATUS_REJECTED }}">{{ __('messages.sim_status_rejected') }}</option>
-        </select>
-        <select wire:model.live="period" aria-label="{{ __('messages.sim_period') }}"
-            class="rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm w-full sm:w-44">
-            @foreach(\App\Livewire\Sim\Orders::PERIODS as $periodKey)
-                <option value="{{ $periodKey }}">{{ __('messages.sim_period_' . $periodKey) }}</option>
-            @endforeach
-        </select>
-        @if($period === 'custom')
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-                <label class="text-xs font-bold text-slate-500 shrink-0" for="sim-date-from">{{ __('messages.sim_date_from') }}</label>
-                <input id="sim-date-from" type="date" wire:model.live="dateFrom" dir="ltr"
-                    class="rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm w-full sm:w-40">
-                <label class="text-xs font-bold text-slate-500 shrink-0" for="sim-date-to">{{ __('messages.sim_date_to') }}</label>
-                <input id="sim-date-to" type="date" wire:model.live="dateTo" dir="ltr"
-                    class="rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm w-full sm:w-40">
+        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div class="relative w-full sm:w-64">
+                <svg class="absolute top-1/2 -translate-y-1/2 start-3 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="search" wire:model.live.debounce.400ms="search"
+                    placeholder="{{ __('messages.sim_search_placeholder') }}"
+                    class="{{ $filterClass }} w-full ps-9">
             </div>
-        @endif
+            <select wire:model.live="statusFilter" aria-label="{{ __('messages.sim_status') }}" class="{{ $filterClass }} flex-1 min-w-0 sm:flex-none sm:w-36">
+                <option value="all">{{ __('messages.sim_filter_all') }}</option>
+                <option value="{{ SimOrder::STATUS_PENDING }}">{{ __('messages.sim_status_pending') }}</option>
+                <option value="{{ SimOrder::STATUS_COMPLETED }}">{{ __('messages.sim_status_completed') }}</option>
+                <option value="{{ SimOrder::STATUS_REJECTED }}">{{ __('messages.sim_status_rejected') }}</option>
+            </select>
+            <select wire:model.live="period" aria-label="{{ __('messages.sim_period') }}" class="{{ $filterClass }} flex-1 min-w-0 sm:flex-none sm:w-36">
+                @foreach(\App\Livewire\Sim\Orders::PERIODS as $periodKey)
+                    <option value="{{ $periodKey }}">{{ __('messages.sim_period_' . $periodKey) }}</option>
+                @endforeach
+            </select>
+            @if($period === 'custom')
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <label class="text-xs font-bold text-slate-500 shrink-0" for="sim-date-from">{{ __('messages.sim_date_from') }}</label>
+                    <input id="sim-date-from" type="date" wire:model.live="dateFrom" dir="ltr" class="{{ $filterClass }} w-full sm:w-36">
+                    <label class="text-xs font-bold text-slate-500 shrink-0" for="sim-date-to">{{ __('messages.sim_date_to') }}</label>
+                    <input id="sim-date-to" type="date" wire:model.live="dateTo" dir="ltr" class="{{ $filterClass }} w-full sm:w-36">
+                </div>
+            @endif
+        </div>
     </div>
 
     @include('livewire.sim.partials.order-stats')

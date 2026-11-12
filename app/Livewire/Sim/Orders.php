@@ -181,18 +181,32 @@ class Orders extends Component
         ];
     }
 
-    /** Best-selling packages in the period (not refunded), for the team. */
-    protected function topPackages(Builder $base): \Illuminate\Support\Collection
+    /**
+     * Best-selling packages in the period (not refunded), for the team:
+     * orders, sales and share of the period's orders, with the package for a short title ("20 GB · 30 يوم").
+     */
+    protected function topPackages(Builder $base, int $doneCount): \Illuminate\Support\Collection
     {
         $nameColumn = app()->getLocale() === 'ar' ? 'package_name_ar' : 'package_name_tr';
 
-        return (clone $base)->toBase()
+        $rows = (clone $base)->toBase()
             ->where('status', '!=', SimOrder::STATUS_REJECTED)
-            ->selectRaw("sim_package_id, MAX({$nameColumn}) AS name, COUNT(*) AS orders_count")
+            ->selectRaw("sim_package_id, MAX({$nameColumn}) AS name, COUNT(*) AS orders_count, SUM(charged_amount) AS sales")
             ->groupBy('sim_package_id')
             ->orderByDesc('orders_count')
+            ->orderByDesc('sales')
             ->limit(3)
             ->get();
+
+        $packages = SimPackage::withTrashed()->whereIn('id', $rows->pluck('sim_package_id')->filter())->get()->keyBy('id');
+
+        return $rows->map(fn ($row) => (object) [
+            'name' => $row->name,
+            'package' => $packages->get($row->sim_package_id),
+            'orders_count' => (int) $row->orders_count,
+            'sales' => (float) $row->sales,
+            'share' => $doneCount > 0 ? (int) round($row->orders_count * 100 / $doneCount) : 0,
+        ]);
     }
 
     #[On('sim-order-created')]
@@ -288,8 +302,8 @@ class Orders extends Component
             // The list refreshes itself while a load is still open, so the result shows up without reloading
             'hasOpenApiOrders' => $orders->getCollection()->contains(fn (SimOrder $o) => in_array($o->api_status, SimOrder::API_OPEN_STATES, true)),
             'canManage' => $canManage,
-            'stats' => $this->statistics($base),
-            'topPackages' => $canManage ? $this->topPackages($base) : collect(),
+            'stats' => $stats = $this->statistics($base),
+            'topPackages' => $canManage ? $this->topPackages($base, $stats['done_count']) : collect(),
             'pendingCount' => $canManage ? SimOrder::where('status', SimOrder::STATUS_PENDING)->count() : 0,
             // Our balance at kontor86 (also shows at a glance whether the API connection works)
             'supplierBalance' => $this->supplierBalance(),

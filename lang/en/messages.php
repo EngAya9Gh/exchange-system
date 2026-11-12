@@ -496,6 +496,7 @@ return [
     'sim_stat_refunded' => 'Refunded',
     'sim_stat_refunded_sub' => ':count refused or cancelled orders',
     'sim_stat_top_packages' => 'Best sellers',
+    'sim_stat_top_hint' => 'Share of the period\'s completed orders',
     'sim_stat_orders_count' => ':count orders',
     'sim_buy_package' => 'Buy Package',
     'sim_orders' => 'Package Orders',

@@ -495,6 +495,7 @@ return [
     'sim_stat_refunded' => 'İade edilen tutar',
     'sim_stat_refunded_sub' => ':count reddedilen veya iptal edilen talep',
     'sim_stat_top_packages' => 'En çok satanlar',
+    'sim_stat_top_hint' => 'Dönemdeki tamamlanan taleplerin payı',
     'sim_stat_orders_count' => ':count talep',
     'sim_buy_package' => 'Paket Satın Al',
     'sim_orders' => 'Paket Talepleri',

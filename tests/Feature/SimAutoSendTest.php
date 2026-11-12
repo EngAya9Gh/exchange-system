@@ -549,20 +549,24 @@ class SimAutoSendTest extends TestCase
 
     public function test_cost_is_the_first_number_not_our_remaining_balance(): void
     {
-        // Live answer with an extra number after the cost (our remaining balance)
-        $this->sendReply = 'OK|1|Talebiniz İşleme Alınmıştır.|220.00|10545.00|';
-        $order = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567');
+        // Exact production answers 2026-11-11: cost, then our remaining balance
+        $this->sendReply = 'OK|1|Talebiniz İşleme Alınmıştır.|215.00|10545.0000';
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5021681984');
 
-        $this->assertEquals(220, $order->api_cost);
+        $this->assertEquals(215, $order->api_cost);
         $this->assertSame('Talebiniz İşleme Alınmıştır.', $order->api_message);
-        $this->assertEquals(50, $order->profit());
+        $this->assertEquals(55, $order->profit()); // 270 − 215
         $this->assertStringNotContainsString('⚠️', $this->groupMessage()); // no false "cost above price" alert
 
-        // The check's number never overwrites the cost read at send time
-        $this->checkReply = '1:olumlu_islem:10545.00';
+        // Real tl_kontrol answers: status:link:cost:number::hash (processing, then loaded)
+        $this->checkReply = '2::215.00:5021681984::94c339916c';
+        Artisan::call('sims:check-api');
+        $this->assertSame(SimOrder::API_PROCESSING, $order->fresh()->api_status);
+
+        $this->checkReply = '1:https%3Desimqrcode.web.appXrqSu6rktHAv4MFG0DFq:215.00:5021681984::94c339916c';
         Artisan::call('sims:check-api');
         $this->assertSame(SimOrder::API_SUCCESS, $order->fresh()->api_status);
-        $this->assertEquals(220, $order->fresh()->api_cost);
+        $this->assertEquals(215, $order->fresh()->api_cost);
     }
 
     public function test_cost_after_a_timeout_is_taken_from_the_check_only_when_plausible(): void
@@ -585,15 +589,17 @@ class SimAutoSendTest extends TestCase
     public function test_misread_costs_already_saved_are_repaired(): void
     {
         $recoverable = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051111111');
-        $recoverable->update(['api_cost' => 10545, 'api_message' => 'Talebiniz İşleme Alınmıştır.|220.00']);
+        // Exactly what the old reader saved for "OK|1|Talebiniz İşleme Alınmıştır.|215.00|10545.0000"
+        $recoverable->update(['api_cost' => 10545, 'api_message' => 'Talebiniz İşleme Alınmıştır.|215.00']);
         $unrecoverable = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5052222222');
         $unrecoverable->update(['api_cost' => 10545, 'api_message' => 'Talebiniz İşleme Alınmıştır.']);
         $fine = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5053333333'); // cost 220
 
         (require database_path('migrations/2026_11_12_000002_repair_sim_order_api_costs.php'))->up();
 
-        $this->assertEquals(220, $recoverable->fresh()->api_cost);
+        $this->assertEquals(215, $recoverable->fresh()->api_cost);
         $this->assertSame('Talebiniz İşleme Alınmıştır.', $recoverable->fresh()->api_message);
+        $this->assertEquals(55, $recoverable->fresh()->profit());
         $this->assertNull($unrecoverable->fresh()->api_cost);
         $this->assertEquals(220, $fine->fresh()->api_cost);
     }

@@ -496,6 +496,7 @@ return [
     'sim_stat_refunded' => 'المبالغ المسترجعة',
     'sim_stat_refunded_sub' => ':count طلب مرفوض أو ملغى',
     'sim_stat_top_packages' => 'الأكثر مبيعاً',
+    'sim_stat_top_hint' => 'من الطلبات المكتملة في الفترة',
     'sim_stat_orders_count' => ':count طلب',
     'sim_buy_package' => 'شراء باقة',
     'sim_orders' => 'طلبات الباقات',
