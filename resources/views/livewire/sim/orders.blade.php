@@ -2,7 +2,7 @@
 @use('App\Models\SimOrder')
 
 <div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-5 sm:p-8" @if($hasOpenApiOrders) wire:poll.15s @endif>
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
         <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
             {{ $canManage ? __('messages.sim_orders') : __('messages.sim_my_orders') }}
             @if($canManage && $pendingCount > 0)
@@ -12,20 +12,39 @@
             @endif
             @include('livewire.sim.partials.supplier-balance')
         </h3>
-
-        <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-            <input type="search" wire:model.live.debounce.400ms="search"
-                placeholder="{{ __('messages.sim_search_placeholder') }}"
-                class="rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm w-full sm:w-72">
-            <select wire:model.live="statusFilter"
-                class="rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm w-full sm:w-48">
-                <option value="all">{{ __('messages.sim_filter_all') }}</option>
-                <option value="{{ SimOrder::STATUS_PENDING }}">{{ __('messages.sim_status_pending') }}</option>
-                <option value="{{ SimOrder::STATUS_COMPLETED }}">{{ __('messages.sim_status_completed') }}</option>
-                <option value="{{ SimOrder::STATUS_REJECTED }}">{{ __('messages.sim_status_rejected') }}</option>
-            </select>
-        </div>
     </div>
+
+    {{-- Filters: search, status, period --}}
+    <div class="flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-5">
+        <input type="search" wire:model.live.debounce.400ms="search"
+            placeholder="{{ __('messages.sim_search_placeholder') }}"
+            class="rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm w-full sm:w-72">
+        <select wire:model.live="statusFilter"
+            class="rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm w-full sm:w-44">
+            <option value="all">{{ __('messages.sim_filter_all') }}</option>
+            <option value="{{ SimOrder::STATUS_PENDING }}">{{ __('messages.sim_status_pending') }}</option>
+            <option value="{{ SimOrder::STATUS_COMPLETED }}">{{ __('messages.sim_status_completed') }}</option>
+            <option value="{{ SimOrder::STATUS_REJECTED }}">{{ __('messages.sim_status_rejected') }}</option>
+        </select>
+        <select wire:model.live="period" aria-label="{{ __('messages.sim_period') }}"
+            class="rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm w-full sm:w-44">
+            @foreach(\App\Livewire\Sim\Orders::PERIODS as $periodKey)
+                <option value="{{ $periodKey }}">{{ __('messages.sim_period_' . $periodKey) }}</option>
+            @endforeach
+        </select>
+        @if($period === 'custom')
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <label class="text-xs font-bold text-slate-500 shrink-0" for="sim-date-from">{{ __('messages.sim_date_from') }}</label>
+                <input id="sim-date-from" type="date" wire:model.live="dateFrom" dir="ltr"
+                    class="rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm w-full sm:w-40">
+                <label class="text-xs font-bold text-slate-500 shrink-0" for="sim-date-to">{{ __('messages.sim_date_to') }}</label>
+                <input id="sim-date-to" type="date" wire:model.live="dateTo" dir="ltr"
+                    class="rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm w-full sm:w-40">
+            </div>
+        @endif
+    </div>
+
+    @include('livewire.sim.partials.order-stats')
 
     @if (session()->has('sim_success'))
         <div class="mb-4 p-4 bg-green-50 text-green-700 rounded-xl border border-green-100 font-bold">{{ session('sim_success') }}</div>
@@ -157,11 +176,16 @@
                                 @if($order->api_status === SimOrder::API_FAILED && $order->api_message)
                                     <div class="text-[10px] text-rose-600 mt-1 max-w-[200px] whitespace-normal">{{ $order->api_message }}</div>
                                 @endif
-                                @if($order->profit() !== null)
-                                    <div class="text-[10px] text-slate-500 mt-1" dir="ltr">
-                                        {{ __('messages.sim_api_cost') }} {{ SimPackage::formatPrice($order->api_cost) }} ₺ ·
-                                        <span class="font-black text-emerald-600">{{ __('messages.sim_api_profit') }} {{ SimPackage::formatPrice($order->profit()) }} ₺</span>
-                                    </div>
+                                @if($order->api_cost !== null && (float) $order->api_cost > 0 && $order->status !== SimOrder::STATUS_REJECTED)
+                                    @php $orderProfit = $order->profit(); @endphp
+                                    <dl class="mt-2 grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 text-[11px] w-max">
+                                        <dt class="text-slate-500">{{ __('messages.sim_api_cost') }}</dt>
+                                        <dd class="font-bold text-slate-700"><span dir="ltr">{{ SimPackage::formatPrice($order->api_cost) }} ₺</span></dd>
+                                        @if($orderProfit !== null)
+                                            <dt class="text-slate-500">{{ $orderProfit >= 0 ? __('messages.sim_api_profit') : __('messages.sim_api_loss') }}</dt>
+                                            <dd class="font-black {{ $orderProfit >= 0 ? 'text-emerald-600' : 'text-rose-600' }}"><span dir="ltr">{{ SimPackage::formatPrice(abs($orderProfit)) }} ₺</span></dd>
+                                        @endif
+                                    </dl>
                                 @endif
                             @endif
                         </td>

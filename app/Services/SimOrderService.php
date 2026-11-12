@@ -178,7 +178,13 @@ class SimOrderService
         $from = $isOpen ? SimOrder::API_OPEN_STATES : [SimOrder::API_SUCCESS];
 
         if ($result['state'] === 'success' && $isOpen) {
-            $changes = ['api_status' => SimOrder::API_SUCCESS, 'api_cost' => $result['cost'] ?? $order->api_cost];
+            $changes = ['api_status' => SimOrder::API_SUCCESS];
+            // The cost comes from the send reply (documented "Maliyet"). The check's number is undocumented,
+            // so it only fills a missing cost (e.g. after a timeout), and only when it looks like a cost.
+            if ($order->api_cost === null && $result['cost'] !== null
+                && $result['cost'] > 0 && $result['cost'] <= (float) $order->price * 3) {
+                $changes['api_cost'] = $result['cost'];
+            }
             if ($this->moveApiStatus($order, $from, $changes)) {
                 $order->refresh();
                 // PAUSED (owner's request, 2026-11-11): no "package loaded" bell / WhatsApp to the buyer.

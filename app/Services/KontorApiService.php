@@ -71,8 +71,10 @@ class KontorApiService
 
     /**
      * Load credit / a package on a line (KONTOR GÖNDERİMİ). "OK|1|Talebiniz İşleme Alınmıştır.|5.50"
-     * The live API also appends a trailing "|": "OK|3|Aktif Kontor turkcell3gcep5|0.00|"
-     * (= product operator+tip+kontor is not active on the account; nothing was charged).
+     * PDF: "Cevap Formatı : OK|Sonuç Durum|Açıklama|Maliyet" → the cost is the FIRST number after the
+     * description. The live API adds fields (a trailing "|", and possibly the remaining balance after the
+     * cost, like its fatura/pin services do), so never take the LAST number: that read our balance (10,545)
+     * as the cost. "OK|3|Aktif Kontor turkcell3gcep5|0.00|" = product not active on the account.
      *
      * $uniqueId must be DIGITS ONLY and unique per order: letters make the API answer
      * "8:Api İd Gönderim Hatası" (verified live 2026-11-09); resending the same id answers 8.
@@ -101,14 +103,16 @@ class KontorApiService
             return ['ok' => false, 'status' => self::SEND_CHECK, 'message' => 'NO_RESPONSE', 'cost' => null];
         }
 
-        if (preg_match('/^OK\|(\d+)\|(.*)\|(-?[\d.]+)\|?$/s', $raw, $m)) {
-            $status = (int) $m[1];
+        $fields = explode('|', rtrim($raw, "| \t\n\r"));
+        if (count($fields) >= 3 && $fields[0] === 'OK' && ctype_digit(trim($fields[1]))) {
+            $status = (int) trim($fields[1]);
+            [$message, $numbers] = $this->splitTextAndNumbers(array_slice($fields, 2));
 
             return [
                 'ok' => $status === self::SEND_ACCEPTED,
                 'status' => $status,
-                'message' => trim($m[2]),
-                'cost' => (float) $m[3],
+                'message' => $message !== '' ? $message : '-',
+                'cost' => $numbers[0] ?? null,
             ];
         }
 
@@ -142,9 +146,10 @@ class KontorApiService
                 return ['state' => 'cancelled', 'cost' => null, 'reason' => $rest];
             }
 
-            $cost = preg_match('/:(-?[\d.]+)$/', $rest, $c) ? (float) $c[1] : null;
+            // "olumlu_islem:5.50" (the number is not described in the PDF; its example equals the send cost)
+            [, $numbers] = $this->splitTextAndNumbers(explode(':', $rest));
 
-            return ['state' => $code === 1 ? 'success' : 'processing', 'cost' => $cost, 'reason' => null];
+            return ['state' => $code === 1 ? 'success' : 'processing', 'cost' => $numbers[0] ?? null, 'reason' => null];
         }
 
         return ['state' => 'unknown', 'cost' => null, 'reason' => $this->errorCode($raw)];
@@ -163,6 +168,30 @@ class KontorApiService
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * ["Talebiniz İşleme Alınmıştır.", "350.00", "10545.00"] → ["Talebiniz İşleme Alınmıştır.", [350.0, 10545.0]]
+     * Text = the fields before the first number; numbers = every numeric field after it, in order.
+     *
+     * @param  string[]  $fields
+     * @return array{0: string, 1: float[]}
+     */
+    protected function splitTextAndNumbers(array $fields): array
+    {
+        $text = [];
+        $numbers = [];
+
+        foreach ($fields as $field) {
+            $field = trim($field);
+            if (is_numeric($field)) {
+                $numbers[] = (float) $field;
+            } elseif ($numbers === [] && $field !== '') {
+                $text[] = $field;
+            }
+        }
+
+        return [implode(' | ', $text), $numbers];
     }
 
     /** Raw trimmed body, or null when the request itself failed (timeout, DNS, HTTP error). */

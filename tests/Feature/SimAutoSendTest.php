@@ -292,7 +292,8 @@ class SimAutoSendTest extends TestCase
 
         Livewire::actingAs($this->admin)->test(Orders::class)
             ->assertSee(__('messages.sim_api_state_processing'))
-            ->assertSee(__('messages.sim_api_profit') . ' 50 ₺')
+            ->assertSee(__('messages.sim_api_cost'))->assertSee('220 ₺')
+            ->assertSee(__('messages.sim_api_profit'))->assertSee('50 ₺')
             ->call('checkSupplier', $order->id)
             ->assertSee(__('messages.sim_api_state_success'))
             ->assertDontSee(__('messages.sim_api_check_now'));
@@ -489,7 +490,8 @@ class SimAutoSendTest extends TestCase
         $this->sendReply = 'OK|1|Talebiniz İşleme Alınmıştır.|300.00'; // 5 GB is sold at 270
         app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567');
 
-        $this->assertStringContainsString('⚠️ تكلفة المورد 300 ₺ أعلى من سعر البيع 270 ₺', $this->groupMessage());
+        $this->assertStringContainsString('⚠️ تنبيه: تكلفة المورد (300 ₺) أعلى من سعر البيع (270 ₺)', $this->groupMessage());
+        $this->assertStringNotContainsString('عدّلوا', $this->groupMessage());
 
         $this->sendReply = 'OK|1|Talebiniz İşleme Alınmıştır.|220.00';
         app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234568');
@@ -543,5 +545,118 @@ class SimAutoSendTest extends TestCase
             ->set('badge', '')
             ->call('save');
         $this->assertNull($this->fiveGb->fresh()->badge);
+    }
+
+    public function test_cost_is_the_first_number_not_our_remaining_balance(): void
+    {
+        // Live answer with an extra number after the cost (our remaining balance)
+        $this->sendReply = 'OK|1|Talebiniz İşleme Alınmıştır.|220.00|10545.00|';
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567');
+
+        $this->assertEquals(220, $order->api_cost);
+        $this->assertSame('Talebiniz İşleme Alınmıştır.', $order->api_message);
+        $this->assertEquals(50, $order->profit());
+        $this->assertStringNotContainsString('⚠️', $this->groupMessage()); // no false "cost above price" alert
+
+        // The check's number never overwrites the cost read at send time
+        $this->checkReply = '1:olumlu_islem:10545.00';
+        Artisan::call('sims:check-api');
+        $this->assertSame(SimOrder::API_SUCCESS, $order->fresh()->api_status);
+        $this->assertEquals(220, $order->fresh()->api_cost);
+    }
+
+    public function test_cost_after_a_timeout_is_taken_from_the_check_only_when_plausible(): void
+    {
+        $this->sendReply = 'TIMEOUT';
+        $plausible = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051111111');
+        $absurd = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5052222222');
+
+        Http::swap(new \Illuminate\Http\Client\Factory());
+        Http::fake(fn (Request $r) => Http::response(
+            str_contains($r->url(), 'tekilnumara=' . $plausible->api_unique_id) ? '1:olumlu_islem:220.00' : '1:olumlu_islem:10545.00'
+        ));
+        Artisan::call('sims:check-api');
+
+        $this->assertEquals(220, $plausible->fresh()->api_cost);
+        $this->assertNull($absurd->fresh()->api_cost); // unknown rather than wrong
+        $this->assertSame(SimOrder::API_SUCCESS, $absurd->fresh()->api_status);
+    }
+
+    public function test_misread_costs_already_saved_are_repaired(): void
+    {
+        $recoverable = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051111111');
+        $recoverable->update(['api_cost' => 10545, 'api_message' => 'Talebiniz İşleme Alınmıştır.|220.00']);
+        $unrecoverable = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5052222222');
+        $unrecoverable->update(['api_cost' => 10545, 'api_message' => 'Talebiniz İşleme Alınmıştır.']);
+        $fine = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5053333333'); // cost 220
+
+        (require database_path('migrations/2026_11_12_000002_repair_sim_order_api_costs.php'))->up();
+
+        $this->assertEquals(220, $recoverable->fresh()->api_cost);
+        $this->assertSame('Talebiniz İşleme Alınmıştır.', $recoverable->fresh()->api_message);
+        $this->assertNull($unrecoverable->fresh()->api_cost);
+        $this->assertEquals(220, $fine->fresh()->api_cost);
+    }
+
+    public function test_loss_is_shown_as_a_loss_not_a_minus_sign(): void
+    {
+        $this->sendReply = 'OK|1|Talebiniz İşleme Alınmıştır.|300.00'; // sold at 270
+        app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567');
+
+        Livewire::actingAs($this->admin)->test(Orders::class)
+            ->assertSee(__('messages.sim_api_loss'))
+            ->assertSee(__('messages.sim_stat_loss'))
+            ->assertSee('30 ₺')
+            ->assertDontSee('-30 ₺')
+            ->assertDontSee('>-30');
+    }
+
+    public function test_statistics_and_date_filter(): void
+    {
+        $service = app(SimOrderService::class);
+        $twentyGb = SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_20gb_30gun')->firstOrFail();
+        $this->customer->update(['balance' => 5000]);
+
+        // Last month: one 20 GB order (550, cost 220 from the fake reply)
+        $this->travelTo(now()->subMonthNoOverflow()->startOfMonth()->addDays(2));
+        $old = $service->placeOrder($this->customer, $twentyGb->id, '5050000001');
+        $this->travelBack();
+
+        // Today: two 5 GB loads (270 each, cost 220) + one refused (refunded 270)
+        $service->placeOrder($this->customer, $this->fiveGb->id, '5050000002');
+        $service->placeOrder($this->customer, $this->fiveGb->id, '5050000003');
+        $this->sendReply = 'OK|3|PAKET_BULUNAMADI|0.00|';
+        $service->placeOrder($this->customer, $this->fiveGb->id, '5050000004');
+
+        $all = Livewire::actingAs($this->admin)->test(Orders::class);
+        $all->assertViewHas('stats', fn ($s) => $s['total'] === 4 && $s['done_count'] === 3 && $s['refunded_count'] === 1
+            && $s['sales'] == 1090 && $s['refunded'] == 270
+            && $s['costed_count'] === 3 && $s['costed_cost'] == 660 && $s['profit'] == 430)
+            ->assertSee(__('messages.sim_stat_profit'))
+            ->assertSee('430 ₺')
+            ->assertSee(__('messages.sim_stat_top_packages'));
+
+        $all->set('period', 'today')
+            ->assertViewHas('stats', fn ($s) => $s['total'] === 3 && $s['sales'] == 540 && $s['profit'] == 100)
+            ->assertDontSee($old->order_number);
+
+        $all->set('period', 'last_month')
+            ->assertViewHas('stats', fn ($s) => $s['total'] === 1 && $s['sales'] == 550 && $s['profit'] == 330)
+            ->assertSee($old->order_number);
+
+        // Custom range (reversed dates are swapped)
+        $all->set('period', 'custom')
+            ->set('dateFrom', now()->toDateString())
+            ->set('dateTo', now()->subDays(3)->toDateString())
+            ->assertViewHas('stats', fn ($s) => $s['total'] === 3);
+
+        $all->set('period', 'nonsense')->assertSet('period', 'all');
+
+        // Customers see their own figures, never cost or profit
+        Livewire::actingAs($this->customer)->test(Orders::class)
+            ->assertSee(__('messages.sim_stat_spent'))
+            ->assertDontSee(__('messages.sim_stat_profit'))
+            ->assertDontSee(__('messages.sim_api_cost'))
+            ->assertDontSee(__('messages.sim_stat_top_packages'));
     }
 }

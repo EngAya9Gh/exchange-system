@@ -128,8 +128,8 @@ class SimOrder extends Model
     /** Sale price minus the supplier's real cost (when the API told us the cost). */
     public function profit(): ?float
     {
-        return $this->api_cost !== null && (float) $this->api_cost > 0
-            ? (float) $this->price - (float) $this->api_cost
+        return $this->api_cost !== null && (float) $this->api_cost > 0 && (float) $this->charged_amount > 0
+            ? (float) $this->charged_amount - (float) $this->api_cost
             : null;
     }
 
