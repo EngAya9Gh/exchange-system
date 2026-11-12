@@ -107,9 +107,17 @@ class SimAutoSendTest extends TestCase
             $this->assertTrue($package->isApiReady());
         }
 
-        // Europe is not in the API list → no key, stays manual
-        $this->assertSame(0, SimPackage::where('region', 'europe')->whereNotNull('api_code')->count());
-        $this->assertFalse(SimPackage::where('region', 'europe')->first()->isApiReady());
+        // Europe physical packages: "Callback (eSIM) AVRUPA_FİZİKSEL_30gun_*" in the panel list
+        $europe = SimPackage::where('region', 'europe')->ordered()->get();
+        $this->assertSame([
+            'AVRUPA_FİZİKSEL_30gun_5gb' => '45240',
+            'AVRUPA_FİZİKSEL_30gun_10gb' => '45241',
+            'AVRUPA_FİZİKSEL_30gun_20gb' => '45242',
+        ], $europe->pluck('api_code', 'supplier_code')->all());
+        foreach ($europe as $package) {
+            $this->assertSame(['callback', 'esim'], [$package->api_operator, $package->api_tip]);
+            $this->assertTrue($package->isApiReady());
+        }
     }
 
     public function test_accepted_load_is_sent_with_the_panel_code_and_tracked(): void
@@ -244,10 +252,29 @@ class SimAutoSendTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_europe_package_is_sent_with_its_esim_product_key(): void
+    {
+        $europe = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_10gb')->firstOrFail();
+
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->call('selectRegion', 'europe')
+            ->call('selectPackage', $europe->id)
+            ->set('phoneNumber', '51234567')
+            ->call('placeOrder')
+            ->assertHasNoErrors();
+
+        $send = $this->sentTo('tl_servis.php')->sole();
+        $this->assertSame(['callback', 'esim', '45241', '5051234567'], [$send['operator'], $send['tip'], $send['kontor'], $send['gsmno']]);
+        $this->assertSame(SimOrder::API_PROCESSING, SimOrder::sole()->api_status);
+        $this->assertStringContainsString('🤖 جاري التحميل', $this->groupMessage());
+    }
+
     public function test_manual_packages_and_missing_credentials_never_call_the_supplier(): void
     {
-        $europe = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_5gb')->firstOrFail(); // not in the API list
-        $order = app(SimOrderService::class)->placeOrder($this->customer, $europe->id, '5051234567');
+        // A package without an API key stays manual
+        $manual = $this->fiveGb->replicate()->fill(['api_operator' => null, 'api_tip' => null, 'api_code' => null, 'supplier_code' => 'MANUAL_TEST', 'badge' => null]);
+        $manual->save();
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $manual->id, '5051234567');
         $this->assertNull($order->api_status);
 
         config(['services.kontor.password' => null]);
@@ -483,7 +510,7 @@ class SimAutoSendTest extends TestCase
             ->assertSee(__('messages.sim_instant_load'))
             ->assertSee('≈ 54 ₺ للجيجا') // 5 GB at 270
             ->call('selectRegion', 'europe')
-            ->assertDontSee(__('messages.sim_instant_load')); // Europe is manual
+            ->assertSee(__('messages.sim_instant_load')); // Europe loads automatically too
 
         app()->setLocale('tr');
         $this->assertSame('6 Ay', SimPackage::where('validity_days', 180)->first()->durationLabel());
