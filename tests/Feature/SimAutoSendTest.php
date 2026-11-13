@@ -692,6 +692,7 @@ class SimAutoSendTest extends TestCase
         $tenGb = $esims->firstWhere('supplier_code', 'E-SİM Turkiye_10gb_30gun');
         $this->sendReply = 'OK|1|Talebiniz İşleme Alınmıştır.|255.00|2205.0000';
         Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->call('selectRegion', 'local_esim')
             ->assertSee('باقة تركيا 10 جيجا - 30 يوم (eSIM)')
             ->call('selectPackage', $tenGb->id)
             ->assertSee(__('messages.sim_phone_label_esim'))
@@ -719,5 +720,39 @@ class SimAutoSendTest extends TestCase
         $this->assertEquals(333, $fiveGb->fresh()->price); // admin's price kept
         $this->assertSame(['callback', 'telecard', '35240'], [$fiveGb->fresh()->api_operator, $fiveGb->fresh()->api_tip, $fiveGb->fresh()->api_code]);
         $this->assertSame(5, SimPackage::where('sim_type', 'esim')->where('region', 'local')->count());
+    }
+
+    public function test_esim_packages_have_their_own_tab(): void
+    {
+        $physical = 'باقة تركيا 10 جيجا - 30 يوم (فيزيائية)';
+        $esim = 'باقة تركيا 10 جيجا - 30 يوم (eSIM)';
+
+        $component = Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->assertSet('region', 'local')
+            ->assertSee(__('messages.sim_tab_local'))
+            ->assertSee(__('messages.sim_tab_local_esim'))
+            ->assertSee(__('messages.sim_tab_europe'))
+            ->assertDontSee(__('messages.sim_tab_europe_esim')) // no Europe eSIM packages → no tab
+            ->assertSee($physical)
+            ->assertDontSee($esim);
+
+        $component->call('selectRegion', 'local_esim')
+            ->assertSee($esim)
+            ->assertDontSee($physical)
+            ->assertSee(__('messages.sim_type_esim'));
+
+        $component->call('selectRegion', 'europe')
+            ->assertSee('باقة أوروبا 5 جيجا - 30 يوم (فيزيائية)')
+            ->assertDontSee($esim);
+
+        // Selecting a package opens its tab; unknown tabs are ignored
+        $esimTen = SimPackage::where('supplier_code', 'E-SİM Turkiye_10gb_30gun')->firstOrFail();
+        $component->call('selectPackage', $esimTen->id)->assertSet('region', 'local_esim');
+        $component->call('selectRegion', 'mars')->assertSet('region', 'local_esim');
+
+        // The admin screen lists them in their own section too
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->assertSee(__('messages.sim_tab_local_esim'))
+            ->assertSee(__('messages.sim_tab_hint_esim'));
     }
 }

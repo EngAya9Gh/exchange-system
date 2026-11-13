@@ -28,9 +28,10 @@ class BuyPackage extends Component
     public string $customerName = '';
     public string $notes = '';
 
+    /** $region holds the open tab: "local", "local_esim" (Turkey eSIM), "europe", "europe_esim". */
     public function selectRegion(string $region): void
     {
-        if (!in_array($region, SimPackage::REGIONS, true)) {
+        if (!in_array($region, SimPackage::TABS, true)) {
             return;
         }
 
@@ -41,7 +42,12 @@ class BuyPackage extends Component
 
     public function selectPackage(int $packageId): void
     {
-        $this->selectedPackageId = SimPackage::active()->whereKey($packageId)->exists() ? $packageId : null;
+        $package = SimPackage::active()->find($packageId);
+
+        $this->selectedPackageId = $package?->id;
+        if ($package) {
+            $this->region = $package->tabKey(); // keep the selected card in view
+        }
         $this->resetValidation();
     }
 
@@ -181,8 +187,11 @@ class BuyPackage extends Component
         $packages = SimPackage::active()->ordered()->get();
         $user = auth()->user();
 
+        $packagesByTab = $packages->groupBy(fn (SimPackage $package) => $package->tabKey());
+
         return view('livewire.sim.buy-package', [
-            'packagesByRegion' => $packages->groupBy('region'),
+            'packagesByTab' => $packagesByTab,
+            'tabs' => SimPackage::visibleTabs($packagesByTab),
             'selectedPackage' => $this->selectedPackageId ? $packages->firstWhere('id', $this->selectedPackageId) : null,
             'isExemptFromCharge' => app(SimOrderService::class)->isExemptFromCharge($user),
             'supplierBalance' => $this->supplierBalance(),

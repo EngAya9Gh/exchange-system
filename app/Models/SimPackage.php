@@ -19,6 +19,12 @@ class SimPackage extends Model
     public const TYPE_ESIM = 'esim';
     public const TYPES = [self::TYPE_PHYSICAL, self::TYPE_ESIM];
 
+    /**
+     * Tabs on «اختر الباقة» and «إدارة الباقات»: one per region, and eSIM packages in their own tab
+     * so they are never mixed with physical SIMs. Region tabs always show; an eSIM tab only when it has packages.
+     */
+    public const TABS = ['local', 'local_esim', 'europe', 'europe_esim'];
+
     /** Colored labels an admin can put on a package card (texts: messages.sim_badge_*, colors: partials/package-badge) */
     public const BADGES = ['best_seller', 'best_value', 'new', 'offer', 'limited'];
 
@@ -82,6 +88,29 @@ class SimPackage extends Model
     public function isEsim(): bool
     {
         return $this->sim_type === self::TYPE_ESIM;
+    }
+
+    /** "local", "local_esim", "europe", "europe_esim" */
+    public function tabKey(): string
+    {
+        return $this->region . ($this->isEsim() ? '_esim' : '');
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection  $packagesByTab  packages grouped by tabKey()
+     * @return string[]
+     */
+    public static function visibleTabs(\Illuminate\Support\Collection $packagesByTab): array
+    {
+        return array_values(array_filter(
+            self::TABS,
+            fn (string $tab) => !str_ends_with($tab, '_esim') || $packagesByTab->has($tab)
+        ));
+    }
+
+    public static function tabFlag(string $tab): string
+    {
+        return str_starts_with($tab, self::REGION_EUROPE) ? '🇪🇺' : '🇹🇷';
     }
 
     /** Sent automatically through the kontor86 API (all three product-key parts are set). */

@@ -220,7 +220,8 @@ class PackagesManager extends Component
         $packages = SimPackage::withCount('orders')->ordered()->get();
 
         return view('livewire.sim.packages-manager', [
-            'packagesByRegion' => $packages->groupBy('region'),
+            'packagesByTab' => $packagesByTab = $packages->groupBy(fn (SimPackage $package) => $package->tabKey()),
+            'tabs' => SimPackage::visibleTabs($packagesByTab),
             'knownNetworks' => SimPackage::withTrashed()->whereNotNull('network_name')->distinct()->orderBy('network_name')->pluck('network_name'),
         ]);
     }

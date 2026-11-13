@@ -1,10 +1,6 @@
 @use('App\Models\SimPackage')
 @php
-    $regions = [
-        SimPackage::REGION_LOCAL => ['flag' => '🇹🇷', 'label' => __('messages.sim_region_local')],
-        SimPackage::REGION_EUROPE => ['flag' => '🇪🇺', 'label' => __('messages.sim_region_europe')],
-    ];
-    $currentPackages = $packagesByRegion->get($region, collect());
+    $currentPackages = $packagesByTab->get($region, collect());
 @endphp
 
 <div class="space-y-6">
@@ -48,15 +44,19 @@
                 @include('livewire.sim.partials.supplier-balance')
             </h3>
 
-            <div class="inline-flex bg-slate-100 rounded-2xl p-1 w-full lg:w-auto">
-                @foreach($regions as $key => $meta)
-                    <button type="button" wire:click="selectRegion('{{ $key }}')"
-                        class="flex-1 lg:flex-none px-4 py-2.5 rounded-xl text-sm font-bold transition whitespace-nowrap {{ $region === $key ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
-                        <span class="text-base">{{ $meta['flag'] }}</span> {{ $meta['label'] }}
-                        @php $regionNetworks = $packagesByRegion->get($key, collect())->pluck('network_name')->filter()->unique()->implode(' / '); @endphp
-                        @if($regionNetworks)
-                            <span class="hidden sm:inline text-[11px] font-semibold opacity-70" dir="ltr">· {{ $regionNetworks }}</span>
-                        @endif
+            {{-- One tab per region, eSIM packages in their own tab (never mixed with physical SIMs) --}}
+            <div class="flex bg-slate-100 rounded-2xl p-1 w-full lg:w-auto gap-1">
+                @foreach($tabs as $tab)
+                    @php $isEsimTab = str_ends_with($tab, '_esim'); @endphp
+                    <button type="button" wire:click="selectRegion('{{ $tab }}')" wire:key="sim-tab-{{ $tab }}"
+                        class="flex-1 lg:flex-none min-w-0 px-2.5 sm:px-4 py-2 rounded-xl text-sm font-bold transition flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 {{ $region === $tab ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
+                        <span class="flex items-center gap-1.5 whitespace-nowrap">
+                            <span class="text-base leading-none">{{ SimPackage::tabFlag($tab) }}</span>
+                            {{ __('messages.sim_tab_' . $tab) }}
+                        </span>
+                        <span class="text-[10px] sm:text-[11px] font-semibold whitespace-nowrap {{ $region === $tab ? 'opacity-80' : 'opacity-60' }} {{ $isEsimTab ? 'text-indigo-600' : '' }}">
+                            {{ $isEsimTab ? __('messages.sim_tab_hint_esim') : __('messages.sim_tab_hint_physical') }}
+                        </span>
                     </button>
                 @endforeach
             </div>

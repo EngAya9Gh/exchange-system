@@ -1,9 +1,5 @@
 @use('App\Models\SimPackage')
 @php
-    $regionLabels = [
-        SimPackage::REGION_LOCAL => '🇹🇷 ' . __('messages.sim_region_local'),
-        SimPackage::REGION_EUROPE => '🇪🇺 ' . __('messages.sim_region_europe'),
-    ];
     $inputClass = 'block w-full rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm text-sm';
 @endphp
 
@@ -25,9 +21,13 @@
             <div class="mb-6 p-4 bg-green-50 text-green-700 rounded-xl border border-green-100 font-bold">{{ session('sim_package_success') }}</div>
         @endif
 
-        @foreach($regionLabels as $regionKey => $regionLabel)
+        @foreach($tabs as $regionKey)
             <div class="mb-8 last:mb-0">
-                <h4 class="text-sm font-black text-slate-600 mb-3">{{ $regionLabel }}</h4>
+                <h4 class="text-sm font-black text-slate-600 mb-3 flex items-center gap-2">
+                    <span>{{ SimPackage::tabFlag($regionKey) }}</span>
+                    <span>{{ __('messages.sim_tab_' . $regionKey) }}</span>
+                    <span class="text-[11px] font-semibold {{ str_ends_with($regionKey, '_esim') ? 'text-indigo-600' : 'text-slate-400' }}">· {{ str_ends_with($regionKey, '_esim') ? __('messages.sim_tab_hint_esim') : __('messages.sim_tab_hint_physical') }}</span>
+                </h4>
                 <div class="overflow-x-auto -mx-5 sm:mx-0">
                     <table class="w-full text-sm text-start text-slate-600">
                         <thead class="text-xs text-slate-500 bg-slate-50 border-y border-slate-100">
@@ -43,7 +43,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            @forelse($packagesByRegion->get($regionKey, collect()) as $package)
+                            @forelse($packagesByTab->get($regionKey, collect()) as $package)
                                 <tr wire:key="sim-manage-{{ $package->id }}" class="hover:bg-slate-50/60 transition {{ $package->is_active ? '' : 'opacity-60' }}">
                                     <td class="px-4 py-3 text-xs text-slate-400">{{ $package->sort_order }}</td>
                                     <td class="px-4 py-3 min-w-[240px]">
