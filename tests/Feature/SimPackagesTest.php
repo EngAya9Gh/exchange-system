@@ -70,14 +70,16 @@ class SimPackagesTest extends TestCase
 
     protected function package(int $price): SimPackage
     {
-        return SimPackage::where('price', $price)->firstOrFail();
+        // Physical packages (the eSIM ones share some prices: 350, 550, 900)
+        return SimPackage::where('price', $price)->where('sim_type', 'physical')->firstOrFail();
     }
 
     public function test_initial_price_list_is_seeded_in_arabic_and_turkish(): void
     {
-        $this->assertSame(8, SimPackage::count());
-        $this->assertSame(0, SimPackage::where('sim_type', 'esim')->count()); // only physical SIMs are sold
-        $this->assertSame(5, SimPackage::where('region', 'local')->count());
+        $this->assertSame(13, SimPackage::count());
+        $this->assertSame(5, SimPackage::where('sim_type', 'esim')->count()); // Turkey E-SİM (2026-11-13)
+        $this->assertSame(0, SimPackage::where('sim_type', 'esim')->where('region', 'europe')->count());
+        $this->assertSame(10, SimPackage::where('region', 'local')->count());
         $this->assertSame(3, SimPackage::where('region', 'europe')->count());
 
         // 350 ₺ is the physical 10 GB package (FİZİKSEL Turkiye_10gb_30gun)
@@ -91,9 +93,10 @@ class SimPackagesTest extends TestCase
         $this->assertSame(180, $this->package(1100)->validity_days);
 
         // Network names as on the supplier panel
-        $this->assertSame(5, SimPackage::where('region', 'local')->where('network_name', 'Tele CARD')->count());
+        $this->assertSame(10, SimPackage::where('region', 'local')->where('network_name', 'Tele CARD')->count());
         $this->assertSame(3, SimPackage::where('region', 'europe')->where('network_name', 'eSIM')->count());
-        $this->assertSame([270, 350, 550, 900, 1100], SimPackage::where('region', 'local')->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
+        $this->assertSame([270, 350, 550, 900, 1100], SimPackage::where('region', 'local')->where('sim_type', 'physical')->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
+        $this->assertSame([350, 400, 550, 900, 1200], SimPackage::where('region', 'local')->where('sim_type', 'esim')->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
         $this->assertSame([500, 750, 1000], SimPackage::where('region', 'europe')->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
     }
 
@@ -288,16 +291,17 @@ class SimPackagesTest extends TestCase
             $this->assertSame('51234567', BuyPackage::lastEightDigits($good), $good);
         }
 
-        // eSIM packages (if added later) still accept international numbers
-        $esim = SimPackage::create([
-            'region' => 'europe', 'sim_type' => 'esim', 'data_gb' => 5, 'validity_days' => 30, 'price' => 400,
-            'name_ar' => 'eSIM test', 'name_tr' => 'eSIM test',
-        ]);
-        $component->call('selectPackage', $esim->id)
-            ->set('phoneNumber', '+49 151 12345678')
+        // eSIM: the link is texted to a Turkish mobile (the supplier's GSM NO), so foreign numbers are refused
+        $esim = SimPackage::where('supplier_code', 'E-SİM Turkiye_5gb_30gun')->firstOrFail();
+        $component->call('selectPackage', $esim->id);
+        foreach (['+49 151 12345678', '0212 123 45 67', '555123456', 'abc'] as $bad) {
+            $component->set('phoneNumber', $bad)->call('placeOrder')
+                ->assertSee(__('messages.sim_invalid_phone_esim'));
+        }
+        $component->set('phoneNumber', '+90 555 123 45 67')
             ->call('placeOrder')
             ->assertHasNoErrors();
-        $this->assertSame('+4915112345678', SimOrder::sole()->phone_number);
+        $this->assertSame('5551234567', SimOrder::sole()->phone_number);
         SimOrder::query()->forceDelete();
 
         $this->customer->update(['balance' => 0]);

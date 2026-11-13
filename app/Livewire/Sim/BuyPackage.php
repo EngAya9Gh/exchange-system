@@ -63,8 +63,13 @@ class BuyPackage extends Component
                 }
             };
         } else {
-            // eSIM: any local or international number (+49...); spaces and dashes allowed
-            $phoneRules[] = 'regex:/^\+?[0-9][0-9\s\-()]{6,19}$/';
+            // eSIM: the supplier texts the install link to a TURKISH mobile (its "GSM NO" / gsmno is 5XXXXXXXXX).
+            // 0555…, +90 555…, 0090… are accepted and stored as 5551234567.
+            $phoneRules[] = function (string $attribute, mixed $value, \Closure $fail) {
+                if (!preg_match('/^5\d{9}$/', static::normalizePhone((string) $value))) {
+                    $fail(__('messages.sim_invalid_phone_esim'));
+                }
+            };
         }
 
         return [

@@ -92,7 +92,7 @@ class SimAutoSendTest extends TestCase
 
     public function test_api_codes_from_the_panel_are_filled_for_the_physical_turkey_packages(): void
     {
-        $codes = SimPackage::where('region', 'local')->ordered()->pluck('api_code', 'supplier_code')->all();
+        $codes = SimPackage::where('region', 'local')->where('sim_type', 'physical')->ordered()->pluck('api_code', 'supplier_code')->all();
         $this->assertSame([
             'FİZİKSEL Turkiye_5gb_30gun' => '26240',
             'FİZİKSEL Turkiye_10gb_30gun' => '26241',
@@ -102,7 +102,7 @@ class SimAutoSendTest extends TestCase
         ], $codes);
 
         // Verified live: operator=callback, tip=telecard → all 5 Turkey packages send automatically
-        foreach (SimPackage::where('region', 'local')->get() as $package) {
+        foreach (SimPackage::where('region', 'local')->where('sim_type', 'physical')->get() as $package) {
             $this->assertSame(['callback', 'telecard'], [$package->api_operator, $package->api_tip]);
             $this->assertTrue($package->isApiReady());
         }
@@ -664,5 +664,60 @@ class SimAutoSendTest extends TestCase
             ->assertDontSee(__('messages.sim_stat_profit'))
             ->assertDontSee(__('messages.sim_api_cost'))
             ->assertDontSee(__('messages.sim_stat_top_packages'));
+    }
+
+    public function test_turkey_esim_packages_are_on_sale_and_load_automatically(): void
+    {
+        $esims = SimPackage::where('region', 'local')->where('sim_type', 'esim')->ordered()->get();
+        // Price and API code exactly as in the panel's Callback list (2026-11-13)
+        $this->assertSame([
+            'E-SİM Turkiye_5gb_30gun' => [350, '35240'],
+            'E-SİM Turkiye_10gb_30gun' => [400, '35250'],
+            'E-SİM Turkiye_20gb_30gun' => [550, '35270'],
+            'E-SİM Turkiye_50gb_30gun' => [900, '35290'],
+            'E-SİM Turkiye_50gb_180gun' => [1200, '35310'],
+        ], $esims->mapWithKeys(fn ($p) => [$p->supplier_code => [(int) $p->price, $p->api_code]])->all());
+        foreach ($esims as $package) {
+            $this->assertTrue($package->is_active);
+            $this->assertSame('Tele CARD', $package->network_name);
+            $this->assertSame(['callback', 'telecard'], [$package->api_operator, $package->api_tip]);
+            $this->assertTrue($package->isApiReady());
+            $this->assertSame(1, SimPackage::withTrashed()->where('supplier_code', $package->supplier_code)->count()); // restored, not duplicated
+        }
+        $sixMonths = $esims->firstWhere('supplier_code', 'E-SİM Turkiye_50gb_180gun');
+        $this->assertSame('باقة تركيا 50 جيجا - 6 أشهر (eSIM)', $sixMonths->name_ar);
+        $this->assertSame('6 أشهر', $sixMonths->durationLabel());
+
+        // Ordered from the buy screen: sent at once with the Turkish number that receives the link by SMS
+        $tenGb = $esims->firstWhere('supplier_code', 'E-SİM Turkiye_10gb_30gun');
+        $this->sendReply = 'OK|1|Talebiniz İşleme Alınmıştır.|255.00|2205.0000';
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->assertSee('باقة تركيا 10 جيجا - 30 يوم (eSIM)')
+            ->call('selectPackage', $tenGb->id)
+            ->assertSee(__('messages.sim_phone_label_esim'))
+            ->set('phoneNumber', '0555 123 45 67')
+            ->call('placeOrder')
+            ->assertHasNoErrors();
+
+        $send = $this->sentTo('tl_servis.php')->sole();
+        $this->assertSame(['callback', 'telecard', '35250', '5551234567'], [$send['operator'], $send['tip'], $send['kontor'], $send['gsmno']]);
+
+        $order = SimOrder::sole();
+        $this->assertSame(SimOrder::API_PROCESSING, $order->api_status);
+        $this->assertEquals(255, $order->api_cost);
+        $this->assertEquals(145, $order->profit()); // 400 − 255
+        $this->assertStringContainsString('🤖 جاري التحميل', $this->groupMessage());
+    }
+
+    public function test_esim_migration_keeps_a_package_an_admin_already_put_back_on_sale(): void
+    {
+        $fiveGb = SimPackage::where('supplier_code', 'E-SİM Turkiye_5gb_30gun')->firstOrFail();
+        $fiveGb->update(['price' => 333, 'api_operator' => null, 'api_tip' => null, 'api_code' => null]);
+
+        (require database_path('migrations/2026_11_13_000001_add_turkey_esim_packages.php'))->up();
+
+        $this->assertEquals(333, $fiveGb->fresh()->price); // admin's price kept
+        $this->assertSame(['callback', 'telecard', '35240'], [$fiveGb->fresh()->api_operator, $fiveGb->fresh()->api_tip, $fiveGb->fresh()->api_code]);
+        $this->assertSame(5, SimPackage::where('sim_type', 'esim')->where('region', 'local')->count());
     }
 }
