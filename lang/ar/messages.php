@@ -505,6 +505,7 @@ return [
     'sim_tab_europe_esim' => 'eSIM أوروبا',
     'sim_tab_hint_physical' => 'شريحة فيزيائية',
     'sim_tab_hint_esim' => 'رابط يصل SMS',
+    'sim_group_api_bad_product' => 'كود الباقة غير مفعّل عند المورد (:details): لم تُحمَّل الباقة وتم إرجاع المبلغ للزبون. راجعوا كود الباقة في «إدارة الباقات والأسعار».',
     'sim_buy_package' => 'شراء باقة',
     'sim_orders' => 'طلبات الباقات',
     'sim_my_orders' => 'سجل طلبات الباقات',

@@ -504,6 +504,7 @@ return [
     'sim_tab_europe_esim' => 'Avrupa E-SIM',
     'sim_tab_hint_physical' => 'Fiziksel SIM',
     'sim_tab_hint_esim' => 'SMS ile link',
+    'sim_group_api_bad_product' => 'Paket kodu tedarikçide aktif değil (:details): paket yüklenmedi ve tutar müşteriye iade edildi. Paket kodunu paket yönetiminde kontrol edin.',
     'sim_buy_package' => 'Paket Satın Al',
     'sim_orders' => 'Paket Talepleri',
     'sim_my_orders' => 'Paket Taleplerim',

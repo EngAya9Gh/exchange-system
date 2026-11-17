@@ -505,6 +505,7 @@ return [
     'sim_tab_europe_esim' => 'Europe eSIM',
     'sim_tab_hint_physical' => 'Physical SIM',
     'sim_tab_hint_esim' => 'Link by SMS',
+    'sim_group_api_bad_product' => 'The package code is not active at the supplier (:details): nothing was loaded and the customer was refunded. Check the package code in package management.',
     'sim_buy_package' => 'Buy Package',
     'sim_orders' => 'Package Orders',
     'sim_my_orders' => 'My Package Orders',

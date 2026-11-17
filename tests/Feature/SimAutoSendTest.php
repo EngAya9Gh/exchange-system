@@ -99,7 +99,9 @@ class SimAutoSendTest extends TestCase
             'FİZİKSEL Turkiye_20gb_30gun' => '26250',
             'FİZİKSEL Turkiye_50gb_30gun' => '26260',
             'FİZİKSEL Turkiye_50gb_180gun' => '26270',
+            'FİZİKSEL Turkiye_100gb_30gun' => '26265', // added 2026-11-17 at 1400 ₺
         ], $codes);
+        $this->assertEquals(1400, SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_100gb_30gun')->value('price'));
 
         // Verified live: operator=callback, tip=telecard → all 5 Turkey packages send automatically
         foreach (SimPackage::where('region', 'local')->where('sim_type', 'physical')->get() as $package) {
@@ -107,16 +109,10 @@ class SimAutoSendTest extends TestCase
             $this->assertTrue($package->isApiReady());
         }
 
-        // Europe physical packages: "Callback (eSIM) AVRUPA_FİZİKSEL_30gun_*" in the panel list
-        $europe = SimPackage::where('region', 'europe')->ordered()->get();
-        $this->assertSame([
-            'AVRUPA_FİZİKSEL_30gun_5gb' => '45240',
-            'AVRUPA_FİZİKSEL_30gun_10gb' => '45241',
-            'AVRUPA_FİZİKSEL_30gun_20gb' => '45242',
-        ], $europe->pluck('api_code', 'supplier_code')->all());
-        foreach ($europe as $package) {
-            $this->assertSame(['callback', 'esim'], [$package->api_operator, $package->api_tip]);
-            $this->assertTrue($package->isApiReady());
+        // Europe: callback/esim/4524x was refused live ("Aktif Kontor callbackesim45242") → manual until the supplier confirms
+        foreach (SimPackage::where('region', 'europe')->get() as $package) {
+            $this->assertFalse($package->isApiReady());
+            $this->assertNull($package->api_code);
         }
     }
 
@@ -252,21 +248,40 @@ class SimAutoSendTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_europe_package_is_sent_with_its_esim_product_key(): void
+    public function test_inactive_product_key_is_hidden_from_the_buyer_and_flagged_to_the_team(): void
     {
-        $europe = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_10gb')->firstOrFail();
+        $europe = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_20gb')->firstOrFail();
+        $europe->update(['api_operator' => 'callback', 'api_tip' => 'esim', 'api_code' => '45242']);
+        $this->sendReply = 'OK|3|Aktif Kontor callbackesim45242|0.00|'; // live answer 2026-11-17
 
-        Livewire::actingAs($this->customer)->test(BuyPackage::class)
-            ->call('selectRegion', 'europe')
+        $component = Livewire::actingAs($this->customer)->test(BuyPackage::class)
             ->call('selectPackage', $europe->id)
-            ->set('phoneNumber', '51234567')
+            ->set('phoneNumber', '21684186')
             ->call('placeOrder')
-            ->assertHasNoErrors();
+            ->assertHasErrors('order')
+            ->assertSee(__('messages.sim_api_failed_customer', ['reason' => __('messages.sim_api_supplier_unavailable')]))
+            ->assertDontSee('callbackesim');
 
-        $send = $this->sentTo('tl_servis.php')->sole();
-        $this->assertSame(['callback', 'esim', '45241', '5051234567'], [$send['operator'], $send['tip'], $send['kontor'], $send['gsmno']]);
-        $this->assertSame(SimOrder::API_PROCESSING, SimOrder::sole()->api_status);
-        $this->assertStringContainsString('🤖 جاري التحميل', $this->groupMessage());
+        $order = SimOrder::sole();
+        $this->assertSame(SimOrder::STATUS_REJECTED, $order->status);
+        $this->assertEquals(1000, $this->customer->fresh()->balance); // refunded
+        $this->assertStringNotContainsString('callbackesim', (string) $order->admin_notes);
+        $this->assertStringContainsString('⚙️ كود الباقة غير مفعّل عند المورد (Aktif Kontor callbackesim45242)', $this->groupMessage());
+        $this->assertTrue(SimOrder::isSupplierProductProblem('Aktif Kontor turkcell3gcep5'));
+        $this->assertFalse(SimOrder::isSupplierProductProblem('Numara Tele CARD Değil'));
+    }
+
+    public function test_europe_reset_keeps_a_key_an_admin_typed(): void
+    {
+        $five = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_5gb')->firstOrFail();
+        $ten = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_10gb')->firstOrFail();
+        $five->update(['api_operator' => 'callback', 'api_tip' => 'esim', 'api_code' => '45240']); // ours → cleared
+        $ten->update(['api_operator' => 'callback', 'api_tip' => 'avrupa', 'api_code' => '45241']); // admin's → kept
+
+        (require database_path('migrations/2026_11_17_000001_make_europe_packages_manual_until_api_tip_confirmed.php'))->up();
+
+        $this->assertFalse($five->fresh()->isApiReady());
+        $this->assertSame('avrupa', $ten->fresh()->api_tip);
     }
 
     public function test_manual_packages_and_missing_credentials_never_call_the_supplier(): void
@@ -512,7 +527,7 @@ class SimAutoSendTest extends TestCase
             ->assertSee(__('messages.sim_instant_load'))
             ->assertSee('≈ 54 ₺ للجيجا') // 5 GB at 270
             ->call('selectRegion', 'europe')
-            ->assertSee(__('messages.sim_instant_load')); // Europe loads automatically too
+            ->assertDontSee(__('messages.sim_instant_load')); // Europe is manual until its API tip is confirmed
 
         app()->setLocale('tr');
         $this->assertSame('6 Ay', SimPackage::where('validity_days', 180)->first()->durationLabel());

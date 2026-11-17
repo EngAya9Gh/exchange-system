@@ -106,12 +106,21 @@ class SimOrder extends Model
     }
 
     /**
+     * The product key (operator + tip + code) is not an active product on our account:
+     * "Aktif Kontor callbackesim45242". Our configuration problem, never the buyer's.
+     */
+    public static function isSupplierProductProblem(?string $message): bool
+    {
+        return (bool) preg_match('/^\s*aktif\s+kontor\b/iu', (string) $message);
+    }
+
+    /**
      * The supplier's reason, safe to show to the buyer: our balance / cost are never shown
      * ("Bu İşlem İçin Bakiyeniz Yeterli Değildir. - BAK=35 AL=220" → "service temporarily unavailable").
      */
     public static function publicSupplierReason(?string $message): string
     {
-        if (static::isSupplierBalanceProblem($message)) {
+        if (static::isSupplierBalanceProblem($message) || static::isSupplierProductProblem($message)) {
             return __('messages.sim_api_supplier_unavailable');
         }
 
