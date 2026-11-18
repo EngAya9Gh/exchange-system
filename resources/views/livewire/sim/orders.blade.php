@@ -177,6 +177,9 @@
                                         </button>
                                     @endif
                                 </div>
+                                @if($order->api_status === null && SimOrder::isSupplierProductProblem($order->api_message))
+                                    <div class="text-[10px] font-bold text-amber-700 mt-1 max-w-[200px] whitespace-normal" title="{{ $order->api_message }}">⚙️ {{ __('messages.sim_api_fell_back_manual') }}</div>
+                                @endif
                                 @if($order->api_status === SimOrder::API_FAILED && $order->api_message)
                                     <div class="text-[10px] text-rose-600 mt-1 max-w-[200px] whitespace-normal">{{ $order->api_message }}</div>
                                 @endif

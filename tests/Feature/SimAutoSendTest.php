@@ -109,11 +109,12 @@ class SimAutoSendTest extends TestCase
             $this->assertTrue($package->isApiReady());
         }
 
-        // Europe: callback/esim/4524x was refused live ("Aktif Kontor callbackesim45242") → manual until the supplier confirms
-        foreach (SimPackage::where('region', 'europe')->get() as $package) {
-            $this->assertFalse($package->isApiReady());
-            $this->assertNull($package->api_code);
-        }
+        // Europe: the panel's own key (Callback / eSIM / 4524x, same letters), tried since 2026-11-18
+        $this->assertSame([
+            'AVRUPA_FİZİKSEL_30gun_5gb' => ['Callback', 'eSIM', '45240'],
+            'AVRUPA_FİZİKSEL_30gun_10gb' => ['Callback', 'eSIM', '45241'],
+            'AVRUPA_FİZİKSEL_30gun_20gb' => ['Callback', 'eSIM', '45242'],
+        ], SimPackage::where('region', 'europe')->ordered()->get()->mapWithKeys(fn ($p) => [$p->supplier_code => [$p->api_operator, $p->api_tip, $p->api_code]])->all());
     }
 
     public function test_accepted_load_is_sent_with_the_panel_code_and_tracked(): void
@@ -187,8 +188,8 @@ class SimAutoSendTest extends TestCase
         }
         Livewire::actingAs($this->customer)->test(Orders::class)->assertDontSee('BAK=')->assertDontSee('Bakiyeniz');
 
-        // The team is alerted in the group to top up
-        $this->assertStringContainsString('🚨 رصيدنا عند kontor86 لا يكفي', $this->groupMessage());
+        // The team is alerted in the group that the account balance is too low
+        $this->assertStringContainsString('🚨 رصيد حساب kontor86 غير كافٍ لإتمام التحميل', $this->groupMessage());
     }
 
     public function test_public_reason_keeps_normal_supplier_reasons(): void
@@ -248,27 +249,67 @@ class SimAutoSendTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_inactive_product_key_is_hidden_from_the_buyer_and_flagged_to_the_team(): void
+    public function test_inactive_product_key_falls_back_to_manual_and_stops_trying(): void
     {
-        $europe = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_20gb')->firstOrFail();
-        $europe->update(['api_operator' => 'callback', 'api_tip' => 'esim', 'api_code' => '45242']);
-        $this->sendReply = 'OK|3|Aktif Kontor callbackesim45242|0.00|'; // live answer 2026-11-17
+        $europe = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_20gb')->firstOrFail(); // price 1000
+        $this->sendReply = 'OK|3|Aktif Kontor CallbackeSIM45242|0.00|'; // "code not active" (live format)
 
         $component = Livewire::actingAs($this->customer)->test(BuyPackage::class)
             ->call('selectPackage', $europe->id)
             ->set('phoneNumber', '21684186')
             ->call('placeOrder')
-            ->assertHasErrors('order')
-            ->assertSee(__('messages.sim_api_failed_customer', ['reason' => __('messages.sim_api_supplier_unavailable')]))
-            ->assertDontSee('callbackesim');
+            ->assertHasNoErrors() // the buyer's order goes through
+            ->assertDontSee('Aktif Kontor');
 
         $order = SimOrder::sole();
-        $this->assertSame(SimOrder::STATUS_REJECTED, $order->status);
-        $this->assertEquals(1000, $this->customer->fresh()->balance); // refunded
-        $this->assertStringNotContainsString('callbackesim', (string) $order->admin_notes);
-        $this->assertStringContainsString('⚙️ كود الباقة غير مفعّل عند المورد (Aktif Kontor callbackesim45242)', $this->groupMessage());
+        $component->assertSee(__('messages.sim_order_created', ['number' => $order->order_number]));
+        $this->assertSame(SimOrder::STATUS_COMPLETED, $order->status); // paid, not refunded
+        $this->assertNull($order->api_status);                       // → manual
+        $this->assertEquals(0, $this->customer->fresh()->balance);
+        $this->assertStringContainsString('⚙️ لم يقبل المورد التحميل التلقائي لهذه الباقة (Aktif Kontor CallbackeSIM45242)، والطلب بانتظار التحميل اليدوي', $this->groupMessage());
+
+        // The package stops trying: the next order is manual straight away
+        $this->assertFalse($europe->fresh()->isApiReady());
+        $this->customer->update(['balance' => 1000]);
+        app(SimOrderService::class)->placeOrder($this->customer, $europe->id, '5021684187');
+        $this->assertCount(1, $this->sentTo('tl_servis.php'));
+
+        // The team sees why it is manual
+        Livewire::actingAs($this->admin)->test(Orders::class)->assertSee(__('messages.sim_api_fell_back_manual'));
+
+        // Other refusals still refund (e.g. our balance)
         $this->assertTrue(SimOrder::isSupplierProductProblem('Aktif Kontor turkcell3gcep5'));
         $this->assertFalse(SimOrder::isSupplierProductProblem('Numara Tele CARD Değil'));
+        $this->assertSame(__('messages.sim_api_supplier_unavailable'), SimOrder::publicSupplierReason('Aktif Kontor callbackesim45242'));
+    }
+
+    public function test_team_and_admin_messages_are_statements_not_orders(): void
+    {
+        $keys = ['sim_group_api_no_balance', 'sim_group_api_bad_product', 'sim_group_api_fallback_manual',
+            'sim_group_cost_above_price', 'sim_supplier_not_connected', 'sim_api_fell_back_manual'];
+        $orders = ['اشحنوا', 'حمّلوها', 'حملوها', 'راجعوا', 'أعيدوا', 'عدّلوا', 'تأكد ', 'yükleyin', 'kontrol edin', 'Top up', 'by hand', 'Check the'];
+
+        foreach ($keys as $key) {
+            foreach (['ar', 'tr', 'en'] as $locale) {
+                $text = __("messages.{$key}", [], $locale);
+                foreach ($orders as $word) {
+                    $this->assertStringNotContainsString($word, $text, "{$locale}.{$key}");
+                }
+            }
+        }
+    }
+
+    public function test_europe_panel_key_migration_keeps_a_key_an_admin_typed(): void
+    {
+        $five = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_5gb')->firstOrFail();
+        $ten = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_10gb')->firstOrFail();
+        $five->update(['api_operator' => null, 'api_tip' => null, 'api_code' => null]);
+        $ten->update(['api_operator' => 'X', 'api_tip' => 'Y', 'api_code' => '1']);
+
+        (require database_path('migrations/2026_11_18_000001_set_europe_packages_to_panel_api_key.php'))->up();
+
+        $this->assertSame(['Callback', 'eSIM', '45240'], [$five->fresh()->api_operator, $five->fresh()->api_tip, $five->fresh()->api_code]);
+        $this->assertSame(['X', 'Y', '1'], [$ten->fresh()->api_operator, $ten->fresh()->api_tip, $ten->fresh()->api_code]);
     }
 
     public function test_europe_reset_keeps_a_key_an_admin_typed(): void
@@ -340,7 +381,7 @@ class SimAutoSendTest extends TestCase
             ->assertDontSee('validation.regex');
         $this->assertTrue($twentyGb->fresh()->isApiReady()); // nothing saved
 
-        // Clearing all three makes it manual; spaces / capitals are cleaned
+        // Clearing all three makes it manual; spaces are trimmed, letters kept as typed (panel: Callback / TeleCard / eSIM)
         Livewire::actingAs($this->admin)->test(PackagesManager::class)
             ->call('edit', $twentyGb->id)
             ->set('apiOperator', '')->set('apiTip', '')->set('apiCode', '')
@@ -355,8 +396,8 @@ class SimAutoSendTest extends TestCase
             ->set('apiCode', ' 26250 ')
             ->call('save')
             ->assertHasNoErrors()
-            ->assertSee('🤖 API callback·telecard·26250');
-        $this->assertSame(['callback', 'telecard', '26250'], [$twentyGb->fresh()->api_operator, $twentyGb->fresh()->api_tip, $twentyGb->fresh()->api_code]);
+            ->assertSee('🤖 API Callback·TeleCard·26250');
+        $this->assertSame(['Callback', 'TeleCard', '26250'], [$twentyGb->fresh()->api_operator, $twentyGb->fresh()->api_tip, $twentyGb->fresh()->api_code]);
     }
 
     protected function groupMessages(): \Illuminate\Support\Collection
@@ -527,7 +568,7 @@ class SimAutoSendTest extends TestCase
             ->assertSee(__('messages.sim_instant_load'))
             ->assertSee('≈ 54 ₺ للجيجا') // 5 GB at 270
             ->call('selectRegion', 'europe')
-            ->assertDontSee(__('messages.sim_instant_load')); // Europe is manual until its API tip is confirmed
+            ->assertSee(__('messages.sim_instant_load')); // Europe has the panel's key (falls back to manual if refused)
 
         app()->setLocale('tr');
         $this->assertSame('6 Ay', SimPackage::where('validity_days', 180)->first()->durationLabel());

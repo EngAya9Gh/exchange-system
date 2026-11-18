@@ -166,8 +166,9 @@ class PackagesManager extends Component
             'description_ar' => trim($this->descriptionAr) ?: null,
             'description_tr' => trim($this->descriptionTr) ?: null,
             'supplier_code' => trim($this->supplierCode) ?: null,
-            'api_operator' => strtolower($apiParts[0]) ?: null,
-            'api_tip' => strtolower($apiParts[1]) ?: null,
+            // Exactly as typed (only trimmed): same letters as the supplier panel, e.g. Callback / eSIM
+            'api_operator' => $apiParts[0] ?: null,
+            'api_tip' => $apiParts[1] ?: null,
             'api_code' => $apiParts[2] ?: null,
             'is_active' => $this->isActive,
             'sort_order' => (int) ($this->sortOrder ?: 0),

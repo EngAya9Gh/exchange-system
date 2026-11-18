@@ -118,6 +118,10 @@ class SimOrderGroupNotifier
         $apiLine = match ($order->api_status) {
             SimOrder::API_PROCESSING, SimOrder::API_SUCCESS => '🤖 ' . $t('sim_group_api_sent'),
             SimOrder::API_UNKNOWN => '⏳ ' . $t('sim_group_api_unknown'),
+            // The supplier refused our product key: the paid order waits for a manual load
+            null => SimOrder::isSupplierProductProblem($order->api_message)
+                ? '⚙️ ' . __('messages.sim_group_api_fallback_manual', ['details' => (string) $order->api_message], 'ar')
+                : null,
             SimOrder::API_FAILED => match (true) {
                 SimOrder::isSupplierBalanceProblem($order->api_message) => '🚨 ' . __('messages.sim_group_api_no_balance', ['details' => (string) $order->api_message], 'ar'),
                 SimOrder::isSupplierProductProblem($order->api_message) => '⚙️ ' . __('messages.sim_group_api_bad_product', ['details' => (string) $order->api_message], 'ar'),

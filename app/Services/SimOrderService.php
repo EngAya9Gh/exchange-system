@@ -145,6 +145,16 @@ class SimOrderService
             return;
         }
 
+        if ($result['status'] === KontorApiService::SEND_FAILED && SimOrder::isSupplierProductProblem($result['message'])) {
+            // "Aktif Kontor …": our product key is not active at the supplier, nothing was loaded or charged.
+            // Our setup problem, not the buyer's: the paid order goes to the team as a manual load (group ⚙️),
+            // and this package stops trying until an admin re-enters a working key.
+            $order->update(['api_status' => null, 'api_message' => $result['message'], 'api_checked_at' => now()]);
+            $package->update(['api_operator' => null, 'api_tip' => null, 'api_code' => null]);
+            Log::warning("kontor86 refused the product key of package {$package->id} ({$result['message']}); order {$order->order_number} falls back to manual, auto-send disabled for this package.");
+            return;
+        }
+
         if ($result['status'] === KontorApiService::SEND_FAILED) {
             // Definite refusal: nothing was loaded → refund now (the buyer sees the error on screen)
             $order->update(['api_status' => SimOrder::API_FAILED, 'api_message' => $result['message'], 'api_checked_at' => now()]);
