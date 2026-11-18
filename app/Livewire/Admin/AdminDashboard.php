@@ -171,7 +171,7 @@ class AdminDashboard extends Component
         $rateService = app(ExchangeRateService::class);
         $commissionService = app(CommissionCalculator::class);
 
-        $this->exchange_rate = $rateService->getRate($this->source_currency, $this->target_currency);
+        $this->exchange_rate = $rateService->rateForUser(auth()->user(), $this->source_currency, $this->target_currency);
 
         if (empty($this->received_amount) || !is_numeric($this->received_amount) || $this->received_amount <= 0) {
             $this->amount = 0.0;
@@ -201,7 +201,7 @@ class AdminDashboard extends Component
         $commissionService = app(CommissionCalculator::class);
 
         // Always fetch the exchange rate regardless of amount
-        $this->exchange_rate = $rateService->getRate($this->source_currency, $this->target_currency);
+        $this->exchange_rate = $rateService->rateForUser(auth()->user(), $this->source_currency, $this->target_currency);
 
         if (empty($this->amount) || !is_numeric($this->amount) || $this->amount <= 0) {
             $this->commission = 0.0;
@@ -242,6 +242,7 @@ class AdminDashboard extends Component
                     'updated_by' => auth()->user()->name
                 ]);
                 session()->flash('rate_success', 'تم تحديث سعر الصرف بنجاح.');
+                $this->flashCustomRateReminder();
             }
         }
     }
@@ -254,6 +255,17 @@ class AdminDashboard extends Component
         
         $this->loadRates();
         session()->flash('rate_success', 'تم جلب وتحديث أحدث أسعار الصرف من السوق العالمي (ExchangeRate-API) بنجاح.');
+        $this->flashCustomRateReminder();
+    }
+
+    /** After the general rate changes: customers with a fixed special Vodafone Cash rate are listed for review. */
+    protected function flashCustomRateReminder(): void
+    {
+        $count = User::customVodafoneRatesToReview(app(ExchangeRateService::class)->generalVodafoneRate())->count();
+
+        if ($count > 0) {
+            session()->flash('rate_warning', __('messages.custom_rate_after_general_change', ['count' => $count]));
+        }
     }
 
     // Submit a manual transfer
@@ -710,6 +722,11 @@ class AdminDashboard extends Component
         // Exchange Rates
         $exchangeRates = ExchangeRate::all();
 
+        // Special Vodafone Cash rates that were set on another general rate (reminder for user managers)
+        $customRatesToReview = $user->can('manage_users')
+            ? User::customVodafoneRatesToReview(app(ExchangeRateService::class)->generalVodafoneRate())
+            : collect();
+
         // Commissions
         $commissionTiers = CommissionTier::orderBy('min_amount')->get();
 
@@ -727,6 +744,7 @@ class AdminDashboard extends Component
             'incomingRequests',
             'transfers',
             'exchangeRates',
+            'customRatesToReview',
             'commissionTiers',
             'simPendingCount'
         ));

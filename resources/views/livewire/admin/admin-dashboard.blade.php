@@ -458,6 +458,20 @@
                 <livewire:telegram-link />
             @endif
 
+            {{-- Reminder: special Vodafone Cash rates stay fixed, so they are flagged when the general rate changes --}}
+            @if($customRatesToReview->isNotEmpty() && $activeTab !== 'users')
+                <div class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                    <div class="text-sm text-amber-900">
+                        <span class="font-black">⚠️ {{ __('messages.custom_rate_review_title', ['count' => $customRatesToReview->count()]) }}</span>
+                        <span class="text-xs text-amber-800 ms-1">{{ __('messages.custom_rate_review_short') }}</span>
+                    </div>
+                    <button type="button" wire:click="$set('activeTab', 'users')"
+                        class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 transition">
+                        {{ __('messages.custom_rate_review_open') }}
+                    </button>
+                </div>
+            @endif
+
             <!-- TAB 1: General Dashboard -->
             @if ($activeTab === 'dashboard')
 
@@ -1338,6 +1352,11 @@
                 @if (session()->has('rate_success'))
                     <div class="mb-4 p-3 bg-emerald-50 text-emerald-800 text-sm rounded-lg border border-emerald-100">
                         {{ session('rate_success') }}
+                    </div>
+                @endif
+                @if (session()->has('rate_warning'))
+                    <div class="mb-4 p-3 bg-amber-50 text-amber-900 text-sm font-bold rounded-lg border border-amber-200">
+                        ⚠️ {{ session('rate_warning') }}
                     </div>
                 @endif
 

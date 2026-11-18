@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Admin;
 
 use App\Models\User;
+use App\Services\ExchangeRateService;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -27,6 +28,8 @@ class UserManagement extends Component
     public float $balance = 0.0;
     public bool $has_unlimited_balance = false;
     public float $balance_limit = 0.0;
+    // Special Vodafone Cash rate (TRY → EGP); empty = the general rate
+    public string $custom_vodafone_rate = '';
 
     public bool $is_active = true;
     public bool $two_factor_enabled = false;
@@ -70,6 +73,7 @@ class UserManagement extends Component
         $this->balance = (float) $user->balance;
         $this->has_unlimited_balance = (bool) $user->has_unlimited_balance;
         $this->balance_limit = (float) $user->balance_limit;
+        $this->custom_vodafone_rate = $user->hasCustomVodafoneRate() ? static::formatRate((float) $user->custom_vodafone_rate) : '';
         $this->is_active = $user->is_active;
         $this->two_factor_enabled = $user->two_factor_enabled;
         $this->receives_telegram_alerts = $user->hasDirectPermission('receive_telegram_alerts');
@@ -88,13 +92,19 @@ class UserManagement extends Component
             'has_unlimited_balance' => 'required|boolean',
             'balance_limit' => 'required_if:has_unlimited_balance,false|numeric|min:0',
             'role' => 'required|exists:roles,name',
+            'custom_vodafone_rate' => 'nullable|numeric|min:0.0001|max:100000',
         ];
 
         if (!$this->editingUserId || !empty($this->password)) {
             $rules['password'] = 'required|min:8';
         }
 
-        $this->validate($rules);
+        $this->custom_vodafone_rate = trim(str_replace(',', '.', $this->custom_vodafone_rate));
+        $this->validate($rules, [
+            'custom_vodafone_rate.numeric' => __('messages.custom_rate_invalid'),
+            'custom_vodafone_rate.min' => __('messages.custom_rate_invalid'),
+            'custom_vodafone_rate.max' => __('messages.custom_rate_invalid'),
+        ]);
 
         $data = [
             'name' => $this->name,
@@ -107,6 +117,18 @@ class UserManagement extends Component
             'is_active' => $this->is_active,
             'two_factor_enabled' => $this->two_factor_enabled,
         ];
+
+        // Special rate: fixed until changed by hand. Saving it records today's general rate,
+        // so a reminder appears when the general rate moves away from it.
+        if ($this->custom_vodafone_rate === '') {
+            $data += ['custom_vodafone_rate' => null, 'custom_vodafone_rate_base' => null, 'custom_vodafone_rate_reviewed_at' => null];
+        } else {
+            $data += [
+                'custom_vodafone_rate' => round((float) $this->custom_vodafone_rate, 5),
+                'custom_vodafone_rate_base' => app(ExchangeRateService::class)->generalVodafoneRate(),
+                'custom_vodafone_rate_reviewed_at' => now(),
+            ];
+        }
 
         if (!empty($this->password)) {
             $data['password'] = Hash::make($this->password);
@@ -212,6 +234,35 @@ class UserManagement extends Component
         session()->flash('success', 'تم حذف المستخدم بنجاح.');
     }
 
+    /** Keep this customer's special rate as it is, reviewed against today's general rate. */
+    public function keepCustomRate(int $id): void
+    {
+        $user = User::findOrFail($id);
+        $user->markCustomVodafoneRateReviewed(app(ExchangeRateService::class)->generalVodafoneRate());
+        session()->flash('success', __('messages.custom_rate_kept', ['name' => $user->name]));
+    }
+
+    /** Keep every special rate that is waiting for review as it is. */
+    public function keepAllCustomRates(): void
+    {
+        $general = app(ExchangeRateService::class)->generalVodafoneRate();
+        $users = User::customVodafoneRatesToReview($general);
+
+        foreach ($users as $user) {
+            $user->markCustomVodafoneRateReviewed($general);
+        }
+
+        session()->flash('success', __('messages.custom_rate_all_kept', ['count' => $users->count()]));
+    }
+
+    /** 1.66000 → "1.66", 1.70000 → "1.70", 1.65500 → "1.655" (at least two decimals) */
+    public static function formatRate(float $rate): string
+    {
+        [$whole, $decimals] = explode('.', number_format($rate, 5, '.', ''));
+
+        return $whole . '.' . str_pad(rtrim($decimals, '0'), 2, '0');
+    }
+
     public function closeModal(): void
     {
         $this->showFormModal = false;
@@ -220,7 +271,7 @@ class UserManagement extends Component
 
     private function resetForm(): void
     {
-        $this->reset(['editingUserId', 'name', 'username', 'email', 'phone', 'password', 'balance', 'has_unlimited_balance', 'balance_limit', 'role', 'is_active', 'two_factor_enabled', 'receives_telegram_alerts']);
+        $this->reset(['editingUserId', 'name', 'username', 'email', 'phone', 'password', 'balance', 'has_unlimited_balance', 'balance_limit', 'custom_vodafone_rate', 'role', 'is_active', 'two_factor_enabled', 'receives_telegram_alerts']);
         $this->resetValidation();
         $this->role = 'Customer';
     }
@@ -244,6 +295,10 @@ class UserManagement extends Component
         $users = $query->latest()->paginate(10);
         $availableRoles = \Spatie\Permission\Models\Role::all();
 
-        return view('livewire.admin.user-management', compact('users', 'availableRoles'));
+        $generalVodafoneRate = app(ExchangeRateService::class)->generalVodafoneRate();
+        $customRatesToReview = User::customVodafoneRatesToReview($generalVodafoneRate);
+        $editingUser = $this->editingUserId ? User::find($this->editingUserId) : null;
+
+        return view('livewire.admin.user-management', compact('users', 'availableRoles', 'generalVodafoneRate', 'customRatesToReview', 'editingUser'));
     }
 }

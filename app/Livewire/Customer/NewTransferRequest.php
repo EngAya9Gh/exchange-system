@@ -62,7 +62,8 @@ class NewTransferRequest extends Component
         $rateService = app(ExchangeRateService::class);
         $commissionService = app(CommissionCalculator::class);
 
-        $this->exchange_rate = $rateService->getRate($this->currency, 'EGP');
+        // The customer's special Vodafone Cash rate if the admin set one, else the general rate
+        $this->exchange_rate = $rateService->rateForUser(auth()->user(), $this->currency, 'EGP');
 
         if (empty($this->received_amount) || !is_numeric($this->received_amount) || $this->received_amount <= 0) {
             $this->amount = 0.0;
@@ -91,7 +92,8 @@ class NewTransferRequest extends Component
         $rateService = app(ExchangeRateService::class);
         $commissionService = app(CommissionCalculator::class);
 
-        $this->exchange_rate = $rateService->getRate($this->currency, 'EGP');
+        // The customer's special Vodafone Cash rate if the admin set one, else the general rate
+        $this->exchange_rate = $rateService->rateForUser(auth()->user(), $this->currency, 'EGP');
 
         if (empty($this->amount) || !is_numeric($this->amount) || $this->amount <= 0) {
             $this->commission = 0.0;

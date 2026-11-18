@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\ExchangeRate;
+use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -39,6 +40,28 @@ class ExchangeRateService
 
         // 2. Hardcoded Fallbacks
         return $this->getFallbackRate($from, $to);
+    }
+
+    /**
+     * The rate this user gets: their special Vodafone Cash rate (TRY → EGP) when the admin set one,
+     * otherwise the general rate. Other currencies always use the general rate.
+     */
+    public function rateForUser(?User $user, string $from, string $to): float
+    {
+        if ($user
+            && $user->hasCustomVodafoneRate()
+            && strtoupper($from) === User::VODAFONE_RATE_FROM
+            && strtoupper($to) === User::VODAFONE_RATE_TO) {
+            return (float) $user->custom_vodafone_rate;
+        }
+
+        return $this->getRate($from, $to);
+    }
+
+    /** The general Vodafone Cash rate (TRY → EGP) everyone gets unless they have a special one. */
+    public function generalVodafoneRate(): float
+    {
+        return $this->getRate(User::VODAFONE_RATE_FROM, User::VODAFONE_RATE_TO);
     }
 
     /**

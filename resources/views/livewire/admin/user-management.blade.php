@@ -32,6 +32,55 @@
         </div>
     @endif
 
+    {{-- Special Vodafone Cash rates set on another general rate: they stay fixed, so they are listed for review --}}
+    @if($customRatesToReview->isNotEmpty())
+        <div class="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <div class="text-sm font-black text-amber-900">⚠️ {{ __('messages.custom_rate_review_title', ['count' => $customRatesToReview->count()]) }}</div>
+                    <p class="text-xs text-amber-800 mt-1">{{ __('messages.custom_rate_review_desc', ['rate' => \App\Livewire\Admin\UserManagement::formatRate($generalVodafoneRate)]) }}</p>
+                </div>
+                <button type="button" wire:click="keepAllCustomRates" wire:loading.attr="disabled"
+                    class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 transition">
+                    {{ __('messages.custom_rate_keep_all') }}
+                </button>
+            </div>
+            <div class="mt-3 overflow-x-auto">
+                <table class="w-full text-xs text-start">
+                    <thead class="text-amber-900/70">
+                        <tr>
+                            <th class="py-1.5 pe-4 text-start font-bold">{{ __('messages.custom_rate_col_customer') }}</th>
+                            <th class="py-1.5 pe-4 text-start font-bold">{{ __('messages.custom_rate_col_special') }}</th>
+                            <th class="py-1.5 pe-4 text-start font-bold">{{ __('messages.custom_rate_col_base') }}</th>
+                            <th class="py-1.5 pe-4 text-start font-bold">{{ __('messages.custom_rate_col_current') }}</th>
+                            <th class="py-1.5"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-amber-200/70">
+                        @foreach($customRatesToReview as $reviewUser)
+                            @php $isAbove = (float) $reviewUser->custom_vodafone_rate > $generalVodafoneRate; @endphp
+                            <tr wire:key="custom-rate-review-{{ $reviewUser->id }}">
+                                <td class="py-2 pe-4 font-bold text-slate-800">{{ $reviewUser->name }}</td>
+                                <td class="py-2 pe-4 font-black text-slate-900">
+                                    <span dir="ltr">{{ \App\Livewire\Admin\UserManagement::formatRate((float) $reviewUser->custom_vodafone_rate) }}</span>
+                                    @if($isAbove)
+                                        <span class="ms-1 rounded-full bg-rose-100 text-rose-700 px-2 py-0.5 text-[10px] font-bold">{{ __('messages.custom_rate_above_general') }}</span>
+                                    @endif
+                                </td>
+                                <td class="py-2 pe-4 text-slate-600" dir="ltr">{{ $reviewUser->custom_vodafone_rate_base !== null ? \App\Livewire\Admin\UserManagement::formatRate((float) $reviewUser->custom_vodafone_rate_base) : '—' }}</td>
+                                <td class="py-2 pe-4 font-bold text-slate-800" dir="ltr">{{ \App\Livewire\Admin\UserManagement::formatRate($generalVodafoneRate) }}</td>
+                                <td class="py-2 text-end whitespace-nowrap">
+                                    <button type="button" wire:click="editUser({{ $reviewUser->id }})" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-primary-600 text-white hover:bg-primary-700 transition">{{ __('messages.edit') }}</button>
+                                    <button type="button" wire:click="keepCustomRate({{ $reviewUser->id }})" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 transition">{{ __('messages.custom_rate_keep') }}</button>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
     <!-- Users Table -->
     <x-card class="overflow-x-auto">
         <table class="w-full text-sm text-start text-gray-500">
@@ -49,7 +98,20 @@
             <tbody>
                 @forelse($users as $user)
                     <tr class="bg-white/30 border-b border-white/30 hover:bg-white/60 transition-colors">
-                        <td class="px-6 py-4 font-bold text-gray-900">{{ $user->name }}</td>
+                        <td class="px-6 py-4 font-bold text-gray-900">
+                            {{ $user->name }}
+                            @if($user->hasCustomVodafoneRate())
+                                @php $needsReview = $user->customVodafoneRateNeedsReview($generalVodafoneRate); @endphp
+                                <div class="mt-1">
+                                    <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold {{ $needsReview ? 'bg-amber-100 text-amber-800' : 'bg-indigo-50 text-indigo-700' }}"
+                                        title="{{ __('messages.custom_rate_label') }}">
+                                        @if($needsReview)<span>⚠️</span>@endif
+                                        <span>{{ __('messages.custom_rate_badge') }}</span>
+                                        <span dir="ltr">{{ \App\Livewire\Admin\UserManagement::formatRate((float) $user->custom_vodafone_rate) }}</span>
+                                    </span>
+                                </div>
+                            @endif
+                        </td>
                         <td class="px-6 py-4" dir="ltr">{{ $user->username }}</td>
                         <td class="px-6 py-4" dir="ltr">{{ $user->phone ?? '-' }}</td>
                         <td class="px-6 py-4 font-bold text-center">
@@ -168,6 +230,24 @@
                                 <x-input-error :messages="$errors->get('balance_limit')" class="mt-2" />
                             </div>
                         @endif
+                        {{-- Special Vodafone Cash rate: same account type and screens, only the rate changes --}}
+                        <div wire:key="field-custom-rate" class="mt-2 bg-indigo-50/60 p-3 rounded-lg border border-indigo-100">
+                            <x-input-label for="custom_vodafone_rate" value="{{ __('messages.custom_rate_label') }} (TRY → EGP)" />
+                            <x-text-input id="custom_vodafone_rate" wire:model="custom_vodafone_rate" type="text" inputmode="decimal" dir="ltr"
+                                placeholder="{{ \App\Livewire\Admin\UserManagement::formatRate($generalVodafoneRate) }}"
+                                class="mt-1 block w-full text-start font-bold text-indigo-700" autocomplete="off" />
+                            <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">{{ __('messages.custom_rate_hint', ['rate' => \App\Livewire\Admin\UserManagement::formatRate($generalVodafoneRate)]) }}</p>
+                            @if($editingUser && $editingUser->customVodafoneRateNeedsReview($generalVodafoneRate) && $editingUser->custom_vodafone_rate_base !== null)
+                                <p class="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 mt-1.5">
+                                    ⚠️ {{ __('messages.custom_rate_changed_note', [
+                                        'base' => \App\Livewire\Admin\UserManagement::formatRate((float) $editingUser->custom_vodafone_rate_base),
+                                        'current' => \App\Livewire\Admin\UserManagement::formatRate($generalVodafoneRate),
+                                    ]) }}
+                                </p>
+                            @endif
+                            <x-input-error :messages="$errors->get('custom_vodafone_rate')" class="mt-2" />
+                        </div>
+
                         <div wire:key="field-password">
                             <x-input-label value="{{ __('messages.password') }}{{ $editingUserId ? __('messages.leave_blank_to_keep') : '' }}" />
                             <x-password-input wire:model="password" class="mt-1 block w-full" autocomplete="new-password" />
