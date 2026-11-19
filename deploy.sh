@@ -22,7 +22,7 @@ npm run build
 
 # Run database migrations
 php artisan migrate --force
-
+#
 # Clear all existing caches
 php artisan optimize:clear
 php artisan cache:clear

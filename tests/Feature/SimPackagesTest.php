@@ -45,6 +45,7 @@ class SimPackagesTest extends TestCase
         config(['whatsapp.providers.wakeel.api_key' => 'test-key']);
         config(['services.kontor.dealer_code' => null, 'services.kontor.password' => null]); // never call kontor86 here
 
+        //
         Notification::fake();
         app()->setLocale('ar');
         app(PermissionRegistrar::class)->forgetCachedPermissions();
