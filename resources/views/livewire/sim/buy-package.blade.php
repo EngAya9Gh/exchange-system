@@ -78,7 +78,7 @@
                 @include('livewire.sim.partials.package-card', [
                     'package' => $package,
                     'isSelected' => $selectedPackageId === $package->id,
-                    'instant' => $apiConfigured && $package->isApiReady(),
+                    'instant' => collect($autoSuppliers)->contains(fn (string $supplier) => $package->isApiReadyFor($supplier)),
                 ])
             @empty
                 <div class="col-span-full text-center text-slate-400 py-10 font-bold">{{ __('messages.sim_no_packages') }}</div>

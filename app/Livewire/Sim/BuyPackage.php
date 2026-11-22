@@ -194,9 +194,10 @@ class BuyPackage extends Component
             'tabs' => SimPackage::visibleTabs($packagesByTab),
             'selectedPackage' => $this->selectedPackageId ? $packages->firstWhere('id', $this->selectedPackageId) : null,
             'isExemptFromCharge' => app(SimOrderService::class)->isExemptFromCharge($user),
-            'supplierBalance' => $this->supplierBalance(),
+            'supplierBalances' => $this->supplierBalances(),
             // "⚡ instant loading" chip on packages sent automatically through kontor86
-            'apiConfigured' => app(\App\Services\KontorApiService::class)->autoSendActive(),
+            // Suppliers sending orders right now (a package with a key at one of them loads automatically)
+            'autoSuppliers' => array_keys(array_filter(\App\Services\KontorApiService::overview(), fn (array $s) => $s['active'])),
         ]);
     }
 }

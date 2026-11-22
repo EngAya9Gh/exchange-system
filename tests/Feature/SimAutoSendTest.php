@@ -286,7 +286,9 @@ class SimAutoSendTest extends TestCase
     public function test_team_and_admin_messages_are_statements_not_orders(): void
     {
         $keys = ['sim_group_api_no_balance', 'sim_group_api_bad_product', 'sim_group_api_fallback_manual',
-            'sim_group_cost_above_price', 'sim_supplier_not_connected', 'sim_api_fell_back_manual'];
+            'sim_group_cost_above_price', 'sim_supplier_not_connected', 'sim_api_fell_back_manual',
+            'sim_group_auto_send_paused', 'sim_group_auto_send_paused_switched', 'sim_group_supplier_low_balance',
+            'sim_group_supplier_refused', 'sim_suppliers_desc', 'sim_supplier_not_connected_of', 'kontor_desc'];
         $orders = ['اشحنوا', 'حمّلوها', 'حملوها', 'راجعوا', 'أعيدوا', 'عدّلوا', 'تأكد ', 'yükleyin', 'kontrol edin', 'Top up', 'by hand', 'Check the'];
 
         foreach ($keys as $key) {
@@ -816,7 +818,7 @@ class SimAutoSendTest extends TestCase
     {
         Livewire::actingAs($this->admin)->test(\App\Livewire\Sim\KontorSettings::class)
             ->call('pauseAutoSend')
-            ->assertSee(__('messages.sim_auto_send_paused_flash'))
+            ->assertSee(__('messages.sim_auto_send_paused_flash', ['supplier' => 'kontor86']))
             ->assertSee(__('messages.sim_auto_send_resume'));
 
         $this->assertTrue(app(\App\Services\KontorApiService::class)->isAutoSendPaused());
@@ -863,7 +865,7 @@ class SimAutoSendTest extends TestCase
 
         Livewire::actingAs($this->admin)->test(Orders::class)
             ->call('resumeAutoSend')
-            ->assertSee(__('messages.sim_auto_send_resumed_flash'))
+            ->assertSee(__('messages.sim_auto_send_resumed_flash', ['supplier' => 'kontor86']))
             ->assertDontSee(__('messages.sim_auto_send_banner'));
 
         $this->assertFalse(app(\App\Services\KontorApiService::class)->isAutoSendPaused());

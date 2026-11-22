@@ -8,33 +8,34 @@ use App\Services\WhatsApp\SimOrderGroupNotifier;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Emergency switch for automatic loading through kontor86 (SIM managers only).
- * Paused: new orders are still charged, but go to the "Tele CARD" WhatsApp group for a manual load
- * instead of the supplier. Loads already sent keep being followed up (sims:check-api, «تحقق الآن»).
+ * Emergency switch for automatic loading, one per supplier (SIM managers only).
+ * Paused: new orders skip that supplier; with no other active supplier they are still charged and go to the
+ * "Tele CARD" WhatsApp group for a manual load. Loads already sent keep being followed up (sims:check-api, «تحقق الآن»).
  */
 trait ControlsAutoSend
 {
-    public function pauseAutoSend(): void
+    public function pauseAutoSend(string $supplier = KontorApiService::SUPPLIER_KONTOR86): void
     {
-        $this->switchAutoSend(false);
+        $this->switchAutoSend($supplier, false);
     }
 
-    public function resumeAutoSend(): void
+    public function resumeAutoSend(string $supplier = KontorApiService::SUPPLIER_KONTOR86): void
     {
-        $this->switchAutoSend(true);
+        $this->switchAutoSend($supplier, true);
     }
 
-    protected function switchAutoSend(bool $enabled): void
+    protected function switchAutoSend(string $supplier, bool $enabled): void
     {
         abort_unless((bool) auth()->user()?->can('manage_sims'), 403);
+        abort_unless(in_array($supplier, KontorApiService::SUPPLIERS, true), 404);
 
-        $api = app(KontorApiService::class);
+        $api = KontorApiService::for($supplier);
         $user = auth()->user();
         $flash = $enabled ? 'messages.sim_auto_send_resumed_flash' : 'messages.sim_auto_send_paused_flash';
 
         // Two managers clicking at once: the second click changes nothing and posts nothing
         if ($api->isAutoSendPaused() !== $enabled) {
-            session()->flash('auto_send_flash', __($flash));
+            session()->flash('auto_send_flash', __($flash, ['supplier' => $supplier]));
             return;
         }
 
@@ -43,16 +44,27 @@ trait ControlsAutoSend
         ActivityLog::create([
             'user_id' => $user->id,
             'action' => $enabled ? 'sim_auto_send_resumed' : 'sim_auto_send_paused',
-            'description' => ($enabled ? 'استئناف' : 'إيقاف') . ' التحميل التلقائي للباقات عبر kontor86',
+            'description' => ($enabled ? 'استئناف' : 'إيقاف') . " التحميل التلقائي للباقات عبر {$supplier}",
             'ip_address' => request()->ip(),
         ]);
 
+        // While this one is paused, new orders go to the next active supplier (if any)
+        $nowVia = null;
+        if (!$enabled) {
+            foreach (KontorApiService::inPriorityOrder() as $other => $otherApi) {
+                if ($other !== $supplier && $otherApi->autoSendActive()) {
+                    $nowVia = $other;
+                    break;
+                }
+            }
+        }
+
         try {
-            app(SimOrderGroupNotifier::class)->sendAutoSendNotice(!$enabled, $user->name);
+            app(SimOrderGroupNotifier::class)->sendAutoSendNotice($supplier, !$enabled, $user->name, $nowVia);
         } catch (\Throwable $e) {
             Log::error('Failed to post the auto-send switch to the SIM group: ' . $e->getMessage());
         }
 
-        session()->flash('auto_send_flash', __($flash));
+        session()->flash('auto_send_flash', __($flash, ['supplier' => $supplier]));
     }
 }

@@ -46,6 +46,9 @@ class SimPackage extends Model
         'api_operator',
         'api_tip',
         'api_code',
+        'telekomtl_operator',
+        'telekomtl_tip',
+        'telekomtl_code',
         'is_active',
         'sort_order',
         'badge',
@@ -113,10 +116,46 @@ class SimPackage extends Model
         return str_starts_with($tab, self::REGION_EUROPE) ? '🇪🇺' : '🇹🇷';
     }
 
-    /** Sent automatically through the kontor86 API (all three product-key parts are set). */
+    /** Product key columns (operator, tip, code) per supplier: api_* is kontor86's. */
+    public const API_KEY_COLUMNS = [
+        'kontor86' => ['api_operator', 'api_tip', 'api_code'],
+        'telekomtl' => ['telekomtl_operator', 'telekomtl_tip', 'telekomtl_code'],
+    ];
+
+    /** @return array{0: string, 1: string, 2: string}|null operator, tip, code at this supplier (all three set) */
+    public function productKey(string $supplier): ?array
+    {
+        $columns = self::API_KEY_COLUMNS[$supplier] ?? null;
+        if ($columns === null) {
+            return null;
+        }
+
+        $key = array_map(fn (string $column) => (string) $this->{$column}, $columns);
+
+        return in_array('', array_map('trim', $key), true) ? null : $key;
+    }
+
+    public function isApiReadyFor(string $supplier): bool
+    {
+        return $this->productKey($supplier) !== null;
+    }
+
+    /** Can be sent automatically to at least one supplier (a complete product key there). */
     public function isApiReady(): bool
     {
-        return filled($this->api_operator) && filled($this->api_tip) && filled($this->api_code);
+        foreach (array_keys(self::API_KEY_COLUMNS) as $supplier) {
+            if ($this->isApiReadyFor($supplier)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** The supplier refused this key ("Aktif Kontor …"): stop trying it there until an admin re-enters it. */
+    public function clearProductKey(string $supplier): void
+    {
+        $this->update(array_fill_keys(self::API_KEY_COLUMNS[$supplier] ?? [], null));
     }
 
     /** "30 يوم", "6 أشهر" / "30 Gün", "6 Ay" (whole months when longer than 30 days) */

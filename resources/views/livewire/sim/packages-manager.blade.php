@@ -65,7 +65,12 @@
                                     <td class="px-4 py-3 text-xs whitespace-nowrap">
                                         <div class="font-mono text-slate-500" dir="ltr">{{ $package->supplier_code ?: '—' }}</div>
                                         @if($package->isApiReady())
-                                            <span class="inline-block mt-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700" dir="ltr">🤖 API {{ $package->api_operator }}·{{ $package->api_tip }}·{{ $package->api_code }}</span>
+                                            @if($package->isApiReadyFor('kontor86'))
+                                                <span class="inline-block mt-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700" dir="ltr">🤖 API {{ $package->api_operator }}·{{ $package->api_tip }}·{{ $package->api_code }}</span>
+                                            @endif
+                                            @if($package->isApiReadyFor('telekomtl'))
+                                                <span class="inline-block mt-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-teal-100 text-teal-800" dir="ltr">🤖 telekomtl {{ $package->telekomtl_operator }}·{{ $package->telekomtl_tip }}·{{ $package->telekomtl_code }}</span>
+                                            @endif
                                         @else
                                             <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500" title="{{ __('messages.sim_api_manual_hint') }}">
                                                 ✋ {{ __('messages.sim_api_manual') }}@if($package->api_code) <span dir="ltr">· {{ $package->api_code }}</span>@endif
@@ -232,6 +237,7 @@
                     <div class="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
                         <div class="text-sm font-black text-indigo-900">🤖 {{ __('messages.sim_api_section') }}</div>
                         <p class="text-[11px] text-indigo-700/80 mt-1 mb-3 leading-relaxed">{{ __('messages.sim_api_section_hint') }}</p>
+                        <div class="text-[11px] font-black text-indigo-900 mb-1.5" dir="ltr">kontor86</div>
                         <div class="grid grid-cols-3 gap-3" dir="ltr">
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_operator') }}</label>
@@ -249,6 +255,25 @@
                         @error('apiOperator') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
                         @error('apiTip') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
                         @error('apiCode') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
+
+                        <div class="text-[11px] font-black text-teal-800 mt-4 mb-1.5" dir="ltr">telekomtl</div>
+                        <div class="grid grid-cols-3 gap-3" dir="ltr">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_operator') }}</label>
+                                <input type="text" wire:model="tkOperator" maxlength="30" placeholder="operator" class="{{ $inputClass }} font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_tip') }}</label>
+                                <input type="text" wire:model="tkTip" maxlength="30" placeholder="tip" class="{{ $inputClass }} font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_code') }}</label>
+                                <input type="text" wire:model="tkCode" maxlength="30" placeholder="26240" class="{{ $inputClass }} font-mono">
+                            </div>
+                        </div>
+                        @error('tkOperator') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
+                        @error('tkTip') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
+                        @error('tkCode') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
                     </div>
 
                     <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t border-slate-100">

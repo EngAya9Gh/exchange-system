@@ -14,7 +14,7 @@
                     </span>
                 @endif
             </h3>
-            @if($supplierBalance !== null)
+            @if(!empty($supplierBalances))
                 <div class="mt-1.5">@include('livewire.sim.partials.supplier-balance')</div>
             @endif
         </div>
@@ -48,7 +48,7 @@
         </div>
     </div>
 
-    @if($canManage && $autoSendConfigured)
+    @if($canManage && collect($suppliersState)->contains('configured', true))
         @include('livewire.sim.partials.auto-send-switch', ['variant' => 'bar'])
     @endif
 
@@ -173,6 +173,9 @@
                                 @endphp
                                 <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
                                     <span class="text-[10px] font-black px-2 py-0.5 rounded-full {{ $apiBadge[0] }}" title="{{ $order->api_message }}">{{ $apiBadge[1] }}</span>
+                                    @if($order->api_supplier)
+                                        <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-800 text-white" dir="ltr">{{ $order->api_supplier }}</span>
+                                    @endif
                                     @if(in_array($order->api_status, SimOrder::API_OPEN_STATES, true))
                                         <button type="button" wire:click="checkSupplier({{ $order->id }})" wire:loading.attr="disabled" wire:target="checkSupplier({{ $order->id }})"
                                             class="text-[10px] font-black px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition disabled:opacity-50">
@@ -184,6 +187,10 @@
                                 @if($order->api_status === null && SimOrder::isSupplierProductProblem($order->api_message))
                                     <div class="text-[10px] font-bold text-amber-700 mt-1 max-w-[200px] whitespace-normal" title="{{ $order->api_message }}">⚙️ {{ __('messages.sim_api_fell_back_manual') }}</div>
                                 @endif
+                                @foreach($order->apiRefusals() as $refusedBy => $refusalReason)
+                                    @continue($refusedBy === $order->api_supplier && $order->api_status !== SimOrder::API_PROCESSING && $order->api_status !== SimOrder::API_SUCCESS && $order->api_status !== SimOrder::API_UNKNOWN)
+                                    <div class="text-[10px] text-slate-500 mt-1 max-w-[220px] whitespace-normal">↪️ {{ __('messages.sim_api_tried_before') }} <span class="font-bold" dir="ltr">{{ $refusedBy }}</span>: {{ \Illuminate\Support\Str::limit($refusalReason, 80) }}</div>
+                                @endforeach
                                 @if($order->api_status === SimOrder::API_FAILED && $order->api_message)
                                     <div class="text-[10px] text-rose-600 mt-1 max-w-[200px] whitespace-normal">{{ $order->api_message }}</div>
                                 @endif

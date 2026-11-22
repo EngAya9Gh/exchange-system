@@ -26,6 +26,10 @@ class PackagesManager extends Component
     public string $apiOperator = '';
     public string $apiTip = '';
     public string $apiCode = '';
+    // telekomtl product key (same three parts, its own codes)
+    public string $tkOperator = '';
+    public string $tkTip = '';
+    public string $tkCode = '';
     public bool $isActive = true;
     public $sortOrder = 0;
     public string $badge = '';
@@ -57,6 +61,9 @@ class PackagesManager extends Component
             'apiOperator' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
             'apiTip' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
             'apiCode' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
+            'tkOperator' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
+            'tkTip' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
+            'tkCode' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
             'isActive' => ['boolean'],
             'sortOrder' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'badge' => ['nullable', 'in:' . implode(',', SimPackage::BADGES)],
@@ -93,6 +100,9 @@ class PackagesManager extends Component
             'apiOperator' => __('messages.sim_api_operator'),
             'apiTip' => __('messages.sim_api_tip'),
             'apiCode' => __('messages.sim_api_code'),
+            'tkOperator' => __('messages.sim_api_operator'),
+            'tkTip' => __('messages.sim_api_tip'),
+            'tkCode' => __('messages.sim_api_code'),
             'sortOrder' => __('messages.sim_sort_order'),
             'badge' => __('messages.sim_badge'),
         ];
@@ -127,6 +137,9 @@ class PackagesManager extends Component
         $this->apiOperator = (string) $package->api_operator;
         $this->apiTip = (string) $package->api_tip;
         $this->apiCode = (string) $package->api_code;
+        $this->tkOperator = (string) $package->telekomtl_operator;
+        $this->tkTip = (string) $package->telekomtl_tip;
+        $this->tkCode = (string) $package->telekomtl_code;
         $this->isActive = $package->is_active;
         $this->sortOrder = $package->sort_order;
         $this->badge = (string) $package->badge;
@@ -141,15 +154,21 @@ class PackagesManager extends Component
         $this->apiOperator = trim($this->apiOperator);
         $this->apiTip = trim($this->apiTip);
         $this->apiCode = trim($this->apiCode);
+        $this->tkOperator = trim($this->tkOperator);
+        $this->tkTip = trim($this->tkTip);
+        $this->tkCode = trim($this->tkCode);
 
         $this->validate();
 
-        // The API product key only works complete: all three or none
-        $apiParts = array_map('trim', [$this->apiOperator, $this->apiTip, $this->apiCode]);
-        $filled = count(array_filter($apiParts, fn ($v) => $v !== ''));
-        if ($filled > 0 && $filled < 3) {
-            $this->addError('apiCode', __('messages.sim_api_fields_incomplete'));
-            return;
+        // A product key only works complete: all three or none (per supplier)
+        $apiParts = [$this->apiOperator, $this->apiTip, $this->apiCode];
+        $tkParts = [$this->tkOperator, $this->tkTip, $this->tkCode];
+        foreach (['apiCode' => $apiParts, 'tkCode' => $tkParts] as $errorField => $parts) {
+            $filled = count(array_filter($parts, fn ($v) => $v !== ''));
+            if ($filled > 0 && $filled < 3) {
+                $this->addError($errorField, __('messages.sim_api_fields_incomplete'));
+                return;
+            }
         }
 
         $generated = SimPackage::generateNames($this->region, $this->simType, (int) $this->dataGb, (int) $this->validityDays);
@@ -170,6 +189,9 @@ class PackagesManager extends Component
             'api_operator' => $apiParts[0] ?: null,
             'api_tip' => $apiParts[1] ?: null,
             'api_code' => $apiParts[2] ?: null,
+            'telekomtl_operator' => $tkParts[0] ?: null,
+            'telekomtl_tip' => $tkParts[1] ?: null,
+            'telekomtl_code' => $tkParts[2] ?: null,
             'is_active' => $this->isActive,
             'sort_order' => (int) ($this->sortOrder ?: 0),
             'badge' => $this->badge ?: null,
@@ -212,7 +234,7 @@ class PackagesManager extends Component
         $this->resetValidation();
         $this->reset([
             'editingId', 'region', 'simType', 'networkName', 'dataGb', 'validityDays', 'price',
-            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'isActive', 'sortOrder', 'badge',
+            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'tkOperator', 'tkTip', 'tkCode', 'isActive', 'sortOrder', 'badge',
         ]);
     }
 

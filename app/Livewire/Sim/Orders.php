@@ -307,10 +307,9 @@ class Orders extends Component
             'topPackages' => $canManage ? $this->topPackages($base, $stats['done_count']) : collect(),
             'pendingCount' => $canManage ? SimOrder::where('status', SimOrder::STATUS_PENDING)->count() : 0,
             // Our balance at kontor86 (also shows at a glance whether the API connection works)
-            'supplierBalance' => $this->supplierBalance(),
-            // Emergency switch (SIM managers only)
-            'autoSendConfigured' => $canManage && app(\App\Services\KontorApiService::class)->isConfigured(),
-            'autoSendPause' => $canManage ? app(\App\Services\KontorApiService::class)->autoSendPauseInfo() : null,
+            'supplierBalances' => $this->supplierBalances(),
+            // Emergency switches, one per connected supplier (SIM managers only)
+            'suppliersState' => $canManage ? \App\Services\KontorApiService::overview() : [],
         ]);
     }
 }

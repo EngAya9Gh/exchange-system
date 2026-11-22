@@ -103,73 +103,126 @@ class SimOrderService
     }
 
     /**
-     * Sends the order to kontor86 when its package has an API product key.
-     * Manual packages, missing credentials, or automatic sending paused by an admin (emergency switch)
-     * leave the order untouched: it is charged as usual and loaded by hand from the WhatsApp group.
+     * Sends the order to a supplier automatically (kontor86 / telekomtl, same ZNET API).
+     *
+     * Suppliers are tried in priority order (the admin's primary one first), skipping any supplier that is
+     * not set up, paused (emergency switch) or has no product key for this package.
+     *  - accepted → tracked at that supplier.
+     *  - no answer / "8" → unknown, checked later at that supplier; never sent to another one (it could load twice).
+     *  - refused because of the supplier account (no balance, inactive product, credentials): nothing was loaded
+     *    or charged there → the next supplier is tried, and the group is told why.
+     *  - refused because of the order itself (e.g. same number and amount within 10 minutes) → refund.
+     * When every supplier refused for its own reasons: an inactive product → the paid order is loaded by hand;
+     * otherwise (balance / credentials everywhere) → refund, as with a single supplier.
+     * No supplier available at all → the order stays manual (WhatsApp group), charged as usual.
      */
     public function sendToSupplier(SimOrder $order): void
     {
         $package = $order->package;
-        $api = app(KontorApiService::class);
-
-        if (!$package || !$package->isApiReady() || !$api->autoSendActive()) {
+        if (!$package) {
             return;
         }
 
         // tekilnumara must be digits only; the order number is unique ("SIM2611101234" → "2611101234")
         $uniqueId = preg_replace('/\D+/', '', (string) $order->order_number);
 
-        // Marked BEFORE the call: if anything breaks mid-request we still know it must be checked
-        $order->update(['api_status' => SimOrder::API_UNKNOWN, 'api_unique_id' => $uniqueId]);
+        $refusals = [];              // supplier => reason, for suppliers that refused for their own reasons
+        $productRefusal = null;      // [supplier, reason] of the last "Aktif Kontor" refusal
 
-        try {
-            $result = $api->sendTopUp(
-                (string) $package->api_operator,
-                (string) $package->api_tip,
-                (string) $package->api_code,
-                (string) $order->phone_number,
-                $uniqueId
-            );
-        } catch (\Throwable $e) {
-            Log::error('kontor86 send failed for SIM order ' . $order->order_number . ': ' . $e->getMessage());
-            $order->update(['api_message' => mb_substr($e->getMessage(), 0, 500), 'api_checked_at' => now()]);
+        foreach (KontorApiService::inPriorityOrder() as $supplier => $api) {
+            $key = $package->productKey($supplier);
+            if ($key === null || !$api->autoSendActive()) {
+                continue;
+            }
+
+            // Marked BEFORE the call: if anything breaks mid-request we still know it must be checked (here)
+            $order->update([
+                'api_status' => SimOrder::API_UNKNOWN,
+                'api_supplier' => $supplier,
+                'api_unique_id' => $uniqueId,
+                'api_note' => $this->refusalNote($refusals),
+            ]);
+
+            try {
+                $result = $api->sendTopUp($key[0], $key[1], $key[2], (string) $order->phone_number, $uniqueId);
+            } catch (\Throwable $e) {
+                Log::error("{$supplier} send failed for SIM order {$order->order_number}: " . $e->getMessage());
+                $order->update(['api_message' => mb_substr($e->getMessage(), 0, 500), 'api_checked_at' => now()]);
+                return;
+            }
+
+            if ($result['ok']) {
+                $order->update([
+                    'api_status' => SimOrder::API_PROCESSING,
+                    'api_cost' => $result['cost'],
+                    'api_message' => $result['message'],
+                    'api_checked_at' => now(),
+                ]);
+                return;
+            }
+
+            if ($result['status'] === KontorApiService::SEND_FAILED && SimOrder::isSupplierSideProblem($result['message'])) {
+                $refusals[$supplier] = $result['message'];
+                if (SimOrder::isSupplierProductProblem($result['message'])) {
+                    // This key is not active there: stop trying it at this supplier until an admin re-enters it
+                    $productRefusal = [$supplier, $result['message']];
+                    $package->clearProductKey($supplier);
+                    Log::warning("{$supplier} refused the product key of package {$package->id} ({$result['message']}); auto-send there disabled for this package.");
+                }
+                continue;
+            }
+
+            if ($result['status'] === KontorApiService::SEND_FAILED) {
+                // Definite refusal of this order: nothing was loaded → refund now (the buyer sees the error on screen)
+                $order->update(['api_status' => SimOrder::API_FAILED, 'api_message' => $result['message'], 'api_checked_at' => now()]);
+                // admin_notes is visible to the buyer → customer-safe reason; the raw one stays in api_message (team only)
+                $this->reject($order, null, __('messages.sim_api_refused_reason', ['reason' => SimOrder::publicSupplierReason($result['message'])], 'ar'), false);
+                return;
+            }
+
+            // 8 / no answer / undocumented answer: we don't know → check later, never refund blindly
+            $order->update(['api_message' => $result['message'], 'api_checked_at' => now()]);
             return;
         }
 
-        if ($result['ok']) {
+        if ($refusals === []) {
+            return; // no supplier available: manual load from the WhatsApp group
+        }
+
+        $note = $this->refusalNote($refusals);
+
+        if ($productRefusal !== null) {
+            // Our setup problem, not the buyer's: the paid order goes to the team as a manual load (group ⚙️)
             $order->update([
-                'api_status' => SimOrder::API_PROCESSING,
-                'api_cost' => $result['cost'],
-                'api_message' => $result['message'],
+                'api_status' => null,
+                'api_supplier' => $productRefusal[0],
+                'api_message' => $productRefusal[1],
+                'api_note' => count($refusals) > 1 ? $note : null,
                 'api_checked_at' => now(),
             ]);
             return;
         }
 
-        if ($result['status'] === KontorApiService::SEND_FAILED && SimOrder::isSupplierProductProblem($result['message'])) {
-            // "Aktif Kontor …": our product key is not active at the supplier, nothing was loaded or charged.
-            // Our setup problem, not the buyer's: the paid order goes to the team as a manual load (group ⚙️),
-            // and this package stops trying until an admin re-enters a working key.
-            $order->update(['api_status' => null, 'api_message' => $result['message'], 'api_checked_at' => now()]);
-            $package->update(['api_operator' => null, 'api_tip' => null, 'api_code' => null]);
-            Log::warning("kontor86 refused the product key of package {$package->id} ({$result['message']}); order {$order->order_number} falls back to manual, auto-send disabled for this package.");
-            return;
-        }
+        // No balance / no access at every supplier: refund (the team gets 🚨 in the group)
+        $lastSupplier = array_key_last($refusals);
+        $order->update([
+            'api_status' => SimOrder::API_FAILED,
+            'api_supplier' => $lastSupplier,
+            'api_message' => $refusals[$lastSupplier],
+            'api_note' => count($refusals) > 1 ? $note : null,
+            'api_checked_at' => now(),
+        ]);
+        $this->reject($order, null, __('messages.sim_api_refused_reason', ['reason' => SimOrder::publicSupplierReason($refusals[$lastSupplier])], 'ar'), false);
+    }
 
-        if ($result['status'] === KontorApiService::SEND_FAILED) {
-            // Definite refusal: nothing was loaded → refund now (the buyer sees the error on screen)
-            $order->update(['api_status' => SimOrder::API_FAILED, 'api_message' => $result['message'], 'api_checked_at' => now()]);
-            // admin_notes is visible to the buyer → customer-safe reason; the raw one stays in api_message (team only)
-            $this->reject($order, null, __('messages.sim_api_refused_reason', ['reason' => SimOrder::publicSupplierReason($result['message'])], 'ar'), false);
-            return;
-        }
-
-        // 8 / no answer / undocumented answer: we don't know → check later, never refund blindly
-        $order->update(['api_message' => $result['message'], 'api_checked_at' => now()]);
+    /** {"kontor86": "Bu İşlem İçin Bakiyeniz Yeterli Değildir…"} (team only, read with SimOrder::apiRefusals()) */
+    protected function refusalNote(array $refusals): ?string
+    {
+        return $refusals === [] ? null : json_encode($refusals, JSON_UNESCAPED_UNICODE);
     }
 
     /**
-     * Asks kontor86 about an automatic load and mirrors the answer in our system:
+     * Asks the supplier of an automatic load about it and mirrors the answer in our system:
      *  - still open (processing / unknown): loaded → done, buyer + group told; cancelled → refund, buyer + group told.
      *  - loaded in the last 24 h (re-checked hourly by sims:check-api): only a later cancellation is applied → refund, buyer + group told.
      * Every change is a guarded transition, so the cron and the «تحقق الآن» button can never apply it twice.
@@ -185,7 +238,9 @@ class SimOrderService
             return (string) $order->api_status;
         }
 
-        $result = app(KontorApiService::class)->checkTopUp((string) $order->api_unique_id);
+        // Asked at the supplier the load was sent to (orders before 2026-11-22 all went to kontor86)
+        $result = KontorApiService::for($order->api_supplier ?: KontorApiService::SUPPLIER_KONTOR86)
+            ->checkTopUp((string) $order->api_unique_id);
         $from = $isOpen ? SimOrder::API_OPEN_STATES : [SimOrder::API_SUCCESS];
 
         if ($result['state'] === 'success' && $isOpen) {

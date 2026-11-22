@@ -52,6 +52,15 @@ return [
         'timeout' => (int) env('KONTOR_API_TIMEOUT', 30),
     ],
 
+    // telekomtl.com dealer API: same ZNET software and endpoints as kontor86, another account.
+    // HTTP only (the server resets HTTPS connections, checked 2026-11-22).
+    'telekomtl' => [
+        'base_url' => env('TELEKOMTL_API_URL', 'http://bayi.telekomtl.com/servis'),
+        'dealer_code' => env('TELEKOMTL_DEALER_CODE'),
+        'password' => env('TELEKOMTL_API_PASSWORD'),
+        'timeout' => (int) env('TELEKOMTL_API_TIMEOUT', 30),
+    ],
+
     'sim' => [
         // Supplier page that shows the remaining data/days of a SIM (by query code or last 6-7 ICCID digits)
         'balance_check_url' => env('SIM_BALANCE_CHECK_URL', 'https://esimqrcode.web.app/query'),

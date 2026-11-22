@@ -45,11 +45,20 @@ class SimOrderGroupNotifier
         return $this->whatsapp->provider('wakeel')->send($groupId, $message);
     }
 
-    /** Tells the group that automatic loading was paused / resumed from the admin panel. */
-    public function sendAutoSendNotice(bool $paused, string $byName): bool
+    /**
+     * Tells the group that automatic loading through one supplier was paused / resumed from the admin panel.
+     * $nowVia: the supplier new orders go to while this one is paused (null = none → manual loads).
+     */
+    public function sendAutoSendNotice(string $supplier, bool $paused, string $byName, ?string $nowVia = null): bool
     {
-        $message = ($paused ? '⏸️ *' : '▶️ *')
-            . __($paused ? 'messages.sim_group_auto_send_paused' : 'messages.sim_group_auto_send_resumed', [], 'ar') . '*'
+        $text = match (true) {
+            !$paused => __('messages.sim_group_auto_send_resumed', [], 'ar'),
+            $nowVia !== null => __('messages.sim_group_auto_send_paused_switched', ['supplier' => $supplier, 'other' => $nowVia], 'ar'),
+            default => __('messages.sim_group_auto_send_paused', [], 'ar'),
+        };
+
+        $message = ($paused ? '⏸️ *' : '▶️ *') . $text . '*'
+            . "\n🔌 " . $supplier
             . "\n👤 " . $byName;
 
         return $this->post($message, 'auto-send notice');
@@ -88,6 +97,9 @@ class SimOrderGroupNotifier
             '📦 ' . $this->shortPackageName($order),
             '🧾 ' . $order->order_number,
         ];
+        if ($order->api_supplier) {
+            $lines[] = '🔌 ' . $order->api_supplier;
+        }
 
         if ($order->api_status === SimOrder::API_FAILED && !$isBalanceProblem && filled($order->api_message)) {
             $lines[] = '📝 ' . __('messages.sim_group_reason', [], 'ar') . ': ' . $order->api_message;
@@ -125,15 +137,16 @@ class SimOrderGroupNotifier
             $lines[] = '📝 ' . $t('sim_notes_short') . ': ' . $order->notes;
         }
 
-        // Automatic (kontor86) orders: tell the team NOT to load them by hand. Manual orders: unchanged.
+        // Automatic orders: tell the team NOT to load them by hand (and through which supplier). Manual orders: unchanged.
+        $via = $order->api_supplier ? ' · ' . $order->api_supplier : '';
         $apiLine = match ($order->api_status) {
-            SimOrder::API_PROCESSING, SimOrder::API_SUCCESS => '🤖 ' . $t('sim_group_api_sent'),
-            SimOrder::API_UNKNOWN => '⏳ ' . $t('sim_group_api_unknown'),
+            SimOrder::API_PROCESSING, SimOrder::API_SUCCESS => '🤖 ' . $t('sim_group_api_sent') . $via,
+            SimOrder::API_UNKNOWN => '⏳ ' . $t('sim_group_api_unknown') . $via,
             // The supplier refused our product key: the paid order waits for a manual load
             null => match (true) {
                 SimOrder::isSupplierProductProblem($order->api_message) => '⚙️ ' . __('messages.sim_group_api_fallback_manual', ['details' => (string) $order->api_message], 'ar'),
-                // Would have loaded automatically, but sending is paused by an admin
-                (bool) $order->package?->isApiReady() && app(\App\Services\KontorApiService::class)->isAutoSendPaused() => '⏸️ ' . $t('sim_group_api_paused'),
+                // Would have loaded automatically, but every supplier holding its key is paused by an admin
+                $this->pausedEverywhere($order) => '⏸️ ' . $t('sim_group_api_paused'),
                 default => null,
             },
             SimOrder::API_FAILED => match (true) {
@@ -148,6 +161,16 @@ class SimOrderGroupNotifier
             $lines[] = $apiLine;
         }
 
+        // Suppliers that refused first (their own problem): the team sees why, and gets 🚨 for an empty balance
+        foreach ($order->apiRefusals() as $supplier => $reason) {
+            if ($supplier === $order->api_supplier && $order->api_status !== SimOrder::API_PROCESSING && $order->api_status !== SimOrder::API_UNKNOWN) {
+                continue; // already explained by the line above
+            }
+            $lines[] = SimOrder::isSupplierBalanceProblem($reason)
+                ? '🚨 ' . __('messages.sim_group_supplier_low_balance', ['supplier' => $supplier], 'ar')
+                : '↪️ ' . __('messages.sim_group_supplier_refused', ['supplier' => $supplier, 'details' => $reason], 'ar');
+        }
+
         // The supplier raised its cost above our sale price: we would sell at a loss
         if ($order->api_cost !== null && (float) $order->api_cost > (float) $order->price) {
             $lines[] = '⚠️ ' . __('messages.sim_group_cost_above_price', [
@@ -157,6 +180,31 @@ class SimOrderGroupNotifier
         }
 
         return implode("\n", $lines);
+    }
+
+    /** The package has a product key, but no supplier holding one is active and at least one of them is paused. */
+    protected function pausedEverywhere(SimOrder $order): bool
+    {
+        $package = $order->package;
+        if (!$package) {
+            return false;
+        }
+
+        $keyed = array_filter(\App\Services\KontorApiService::SUPPLIERS, fn (string $s) => $package->isApiReadyFor($s));
+        if ($keyed === []) {
+            return false;
+        }
+
+        $anyPaused = false;
+        foreach ($keyed as $supplier) {
+            $api = \App\Services\KontorApiService::for($supplier);
+            if ($api->autoSendActive()) {
+                return false;
+            }
+            $anyPaused = $anyPaused || $api->isAutoSendPaused();
+        }
+
+        return $anyPaused;
     }
 
     /** "تركيا 10 جيجا - 30 يوم", "تركيا 50 جيجا - 6 أشهر", "أوروبا 5 جيجا - 30 يوم" */

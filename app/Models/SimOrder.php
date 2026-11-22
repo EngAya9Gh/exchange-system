@@ -41,9 +41,11 @@ class SimOrder extends Model
         'processed_by',
         'processed_at',
         'api_status',
+        'api_supplier',
         'api_unique_id',
         'api_cost',
         'api_message',
+        'api_note',
         'api_checked_at',
     ];
 
@@ -112,6 +114,35 @@ class SimOrder extends Model
     public static function isSupplierProductProblem(?string $message): bool
     {
         return (bool) preg_match('/^\s*aktif\s+kontor\b/iu', (string) $message);
+    }
+
+    /**
+     * Suppliers that refused this order for their own reasons before it was sent elsewhere.
+     *
+     * @return array<string, string> supplier => reason
+     */
+    public function apiRefusals(): array
+    {
+        $decoded = json_decode((string) $this->api_note, true);
+
+        return is_array($decoded) ? array_map('strval', $decoded) : [];
+    }
+
+    /** The supplier rejected our account (no API permission / wrong password / no answer body). */
+    public static function isSupplierAccountProblem(?string $message): bool
+    {
+        return (bool) preg_match('/API_BAGLANTI_HATASI|EMPTY_RESPONSE|bayi\s*kodu\s+ya\s*da\s+[sş]ifre|api\s+yetkisi/iu', (string) $message);
+    }
+
+    /**
+     * A refusal caused by the supplier account, not by this order (balance, inactive product, credentials):
+     * nothing was loaded or charged there, so the order can be tried at the next supplier.
+     */
+    public static function isSupplierSideProblem(?string $message): bool
+    {
+        return static::isSupplierBalanceProblem($message)
+            || static::isSupplierProductProblem($message)
+            || static::isSupplierAccountProblem($message);
     }
 
     /**
