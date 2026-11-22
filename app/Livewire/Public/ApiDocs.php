@@ -31,7 +31,7 @@ class ApiDocs extends Component
     {
         $baseUrl = rtrim(url('/api/v1'), '/');
         $ar = $this->lang === 'ar';
-        $t = fn (string $arText, string $trText) => $ar ? $arText : $trText;
+        $t = fn(string $arText, string $trText) => $ar ? $arText : $trText;
 
         $exampleOrder = <<<JSON
 {
@@ -63,7 +63,9 @@ JSON;
 
         $endpoints = [
             [
-                'id' => 'balance', 'method' => 'GET', 'path' => '/balance',
+                'id' => 'balance',
+                'method' => 'GET',
+                'path' => '/balance',
                 'title' => $t('معرفة الرصيد', 'Bakiye sorgulama'),
                 'desc' => $t('يعيد رصيد حسابك المتاح لشراء الباقات.', 'Paket almak için kullanılabilir hesap bakiyenizi döndürür.'),
                 'curl' => "curl {$baseUrl}/balance \\\n  -H \"Authorization: Bearer vc_YOUR_KEY\"",
@@ -71,7 +73,9 @@ JSON;
                 'params' => [],
             ],
             [
-                'id' => 'packages', 'method' => 'GET', 'path' => '/packages',
+                'id' => 'packages',
+                'method' => 'GET',
+                'path' => '/packages',
                 'title' => $t('قائمة الباقات', 'Paket listesi'),
                 'desc' => $t('الباقات المتاحة للبيع الآن مع أسعارها. رقم الباقة (id) هو ما يُرسل عند الطلب.', 'Şu an satışta olan paketler ve fiyatları. Talep gönderirken paket numarası (id) kullanılır.'),
                 'curl' => "curl {$baseUrl}/packages \\\n  -H \"Authorization: Bearer vc_YOUR_KEY\"",
@@ -79,7 +83,9 @@ JSON;
                 'params' => [],
             ],
             [
-                'id' => 'create-order', 'method' => 'POST', 'path' => '/orders',
+                'id' => 'create-order',
+                'method' => 'POST',
+                'path' => '/orders',
                 'title' => $t('طلب باقة', 'Paket talebi'),
                 'desc' => $t('يُخصم سعر الباقة من رصيدك وتُحمَّل على الرقم. الحالة الأولى غالباً pending، ثم تصبح success أو failed.', 'Paket fiyatı bakiyenizden düşülür ve numaraya yüklenir. İlk durum genelde pending olur, sonra success veya failed olur.'),
                 'curl' => "curl -X POST {$baseUrl}/orders \\\n  -H \"Authorization: Bearer vc_YOUR_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"package_id\": 3, \"phone\": \"5051234567\", \"reference\": \"ORDER-1001\"}'",
@@ -93,7 +99,9 @@ JSON;
                 ],
             ],
             [
-                'id' => 'order-status', 'method' => 'GET', 'path' => '/orders/{id}',
+                'id' => 'order-status',
+                'method' => 'GET',
+                'path' => '/orders/{id}',
                 'title' => $t('حالة الطلب', 'Talep durumu'),
                 'desc' => $t('{id} هو رقم طلبنا (order_number) أو رقم الطلب في نظامك (reference).', '{id}, bizim talep numaramız (order_number) veya sizin talep numaranızdır (reference).'),
                 'curl' => "curl {$baseUrl}/orders/ORDER-1001 \\\n  -H \"Authorization: Bearer vc_YOUR_KEY\"",
@@ -109,7 +117,7 @@ JSON;
         ];
 
         $errorCodes = [
-            ['unauthorized', 401, $t('المفتاح غير موجود أو غير صحيح أو موقوف.', 'Anahtar eksik, hatalı veya durdurulmuş.')],
+            ['unauthorized', 401, $t('المفتاح غير موجود أو غير صحيح أو متوقف.', 'Anahtar eksik, hatalı veya durdurulmuş.')],
             ['ip_not_allowed', 403, $t('عنوان IP غير مسموح لهذا المفتاح.', 'Bu IP adresine bu anahtar için izin verilmiyor.')],
             ['validation_error', 422, $t('حقل ناقص أو غير صحيح (التفاصيل في fields).', 'Eksik veya hatalı alan (ayrıntılar fields içinde).')],
             ['package_unavailable', 422, $t('الباقة غير موجودة أو غير متاحة للبيع.', 'Paket yok veya satışta değil.')],

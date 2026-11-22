@@ -191,7 +191,7 @@ return [
     'role_agent' => 'وكيل',
     'role_customer' => 'عميل',
     'status_active' => 'نشط',
-    'status_suspended' => 'موقوف',
+    'status_suspended' => 'متوقف',
     'edit_user' => 'تعديل المستخدم',
     'edit' => 'تعديل',
     'suspend' => 'إيقاف',
@@ -323,7 +323,7 @@ return [
     'method_sham_cash' => 'شام كاش',
     'method_uption' => 'أبشن',
     'method_twasul' => 'تواصل',
-    
+
     // Bill Payments History
     'bill_payments_history' => 'سجل دفع الفواتير',
     'search_bill_placeholder' => 'بحث برقم المرجع أو المشترك أو اسم الوكيل...',
@@ -340,7 +340,7 @@ return [
     'status' => 'الحالة',
     'failed_refunded' => 'فاشلة/مستردة',
     'no_bills_found' => 'لا يوجد فواتير مسجلة لعرضها حالياً.',
-    
+
     // Bill Payments Dashboard
     'bill_payments_system' => 'نظام دفع الفواتير',
     'view_bill_history' => 'عرض سجل الفواتير',
@@ -529,7 +529,7 @@ return [
     'custom_rate_after_general_change' => 'لدى :count من الحسابات سعر فودافون كاش خاص ثابت لم يتغيّر مع السعر العام الجديد، ومراجعته متاحة من «إدارة المستخدمين».',
     'sim_auto_send_title' => 'التحميل التلقائي عبر kontor86',
     'sim_auto_send_on' => 'يعمل',
-    'sim_auto_send_off' => 'موقوف',
+    'sim_auto_send_off' => 'متوقف',
     'sim_auto_send_not_set' => 'غير مربوط',
     'sim_auto_send_on_desc' => 'الطلبات تُرسل إلى المورد فور الشراء وتُتابَع تلقائياً.',
     'sim_auto_send_off_desc' => 'الطلبات الجديدة يُخصم رصيدها كالمعتاد وتصل إلى مجموعة الواتساب للتحميل اليدوي، ولا تُرسل إلى المورد. متابعة الطلبات المرسلة سابقاً مستمرة.',
@@ -540,10 +540,10 @@ return [
     'sim_auto_send_paused_by' => 'أُوقف بواسطة :name، :at',
     'sim_auto_send_paused_flash' => 'أُوقف التحميل التلقائي عبر :supplier.',
     'sim_auto_send_resumed_flash' => 'استُؤنف التحميل التلقائي عبر :supplier.',
-    'sim_auto_send_banner' => 'التحميل التلقائي موقوف: الطلبات الجديدة تصل إلى الكروب للتحميل اليدوي.',
+    'sim_auto_send_banner' => 'التحميل التلقائي متوقف: الطلبات الجديدة تصل إلى الكروب للتحميل اليدوي.',
     'sim_group_auto_send_paused' => 'أُوقف التحميل التلقائي مؤقتاً. الطلبات الجديدة تصل إلى هذه المجموعة للتحميل اليدوي، ويُخصم الرصيد من الزبون كالمعتاد.',
     'sim_group_auto_send_resumed' => 'استُؤنف التحميل التلقائي. الطلبات الجديدة تُرسل إلى المورد تلقائياً.',
-    'sim_group_api_paused' => 'التحميل التلقائي موقوف حالياً، والطلب بانتظار التحميل اليدوي',
+    'sim_group_api_paused' => 'التحميل التلقائي متوقف حالياً، والطلب بانتظار التحميل اليدوي',
     'sim_supplier_balance_of' => 'رصيدنا عند :supplier',
     'sim_supplier_not_connected_of' => ':supplier غير متصل: يتطلب الربط تفعيل صلاحية API للحساب',
     'sim_supplier_primary' => 'المورد الأساسي',
@@ -674,7 +674,7 @@ return [
     'sim_description_tr' => 'الوصف بالتركي',
     'sim_sort_order' => 'ترتيب العرض',
     'sim_active' => 'متاحة للبيع',
-    'sim_inactive' => 'موقوفة',
+    'sim_inactive' => 'متوقفة',
     'sim_active_for_sale' => 'متاحة للبيع',
     'sim_names_autofill_hint' => 'اترك الاسم فارغاً ليتم توليده تلقائياً من الحجم والمدة والنوع.',
     'sim_package_saved' => 'تم حفظ الباقة بنجاح.',

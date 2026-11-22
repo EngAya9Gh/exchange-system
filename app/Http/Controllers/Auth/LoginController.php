@@ -22,7 +22,7 @@ class LoginController extends Controller
 
         $remember = $request->boolean('remember');
 
-        if (! Auth::attempt($request->only('username', 'password'), $remember)) {
+        if (!Auth::attempt($request->only('username', 'password'), $remember)) {
             throw ValidationException::withMessages([
                 'username' => 'بيانات الدخول غير صحيحة. يرجى التأكد من اسم المستخدم وكلمة المرور.',
             ]);
@@ -38,7 +38,7 @@ class LoginController extends Controller
             $request->session()->regenerateToken();
 
             throw ValidationException::withMessages([
-                'username' => 'عذراً، هذا الحساب موقوف. يرجى مراجعة الإدارة.',
+                'username' => 'عذراً، هذا الحساب متوقف. يرجى مراجعة الإدارة.',
             ]);
         }
 
