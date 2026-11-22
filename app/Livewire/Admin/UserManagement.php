@@ -31,6 +31,12 @@ class UserManagement extends Component
     // Special Vodafone Cash rate (TRY → EGP); empty = the general rate
     public string $custom_vodafone_rate = '';
 
+    // Partner API (other systems order SIM packages with this account's balance)
+    public bool $api_enabled = false;
+    public string $api_allowed_ips = '';
+    /** A key just created: shown once in the form, never stored in clear */
+    public ?string $newApiToken = null;
+
     public bool $is_active = true;
     public bool $two_factor_enabled = false;
     public bool $receives_telegram_alerts = false;
@@ -66,7 +72,7 @@ class UserManagement extends Component
         
         $this->editingUserId = $user->id;
         $this->name = $user->name;
-        $this->username = $user->username;
+        $this->username = (string) $user->username; // accounts created by sign-up have no username
         $this->email = $user->email ?? '';
         $this->phone = $user->phone ?? '';
         $this->role = $user->roles->first()?->name ?? 'Customer';
@@ -74,6 +80,9 @@ class UserManagement extends Component
         $this->has_unlimited_balance = (bool) $user->has_unlimited_balance;
         $this->balance_limit = (float) $user->balance_limit;
         $this->custom_vodafone_rate = $user->hasCustomVodafoneRate() ? static::formatRate((float) $user->custom_vodafone_rate) : '';
+        $this->api_enabled = (bool) $user->api_enabled;
+        $this->api_allowed_ips = (string) $user->api_allowed_ips;
+        $this->newApiToken = null;
         $this->is_active = $user->is_active;
         $this->two_factor_enabled = $user->two_factor_enabled;
         $this->receives_telegram_alerts = $user->hasDirectPermission('receive_telegram_alerts');
@@ -93,6 +102,14 @@ class UserManagement extends Component
             'balance_limit' => 'required_if:has_unlimited_balance,false|numeric|min:0',
             'role' => 'required|exists:roles,name',
             'custom_vodafone_rate' => 'nullable|numeric|min:0.0001|max:100000',
+            'api_allowed_ips' => ['nullable', 'string', 'max:1000', function ($attribute, $value, $fail) {
+                foreach (array_filter(array_map('trim', preg_split('/[\s,]+/', (string) $value))) as $ip) {
+                    if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+                        $fail(__('messages.api_invalid_ip', ['ip' => $ip]));
+                        return;
+                    }
+                }
+            }],
         ];
 
         if (!$this->editingUserId || !empty($this->password)) {
@@ -116,6 +133,8 @@ class UserManagement extends Component
             'balance_limit' => $this->balance_limit,
             'is_active' => $this->is_active,
             'two_factor_enabled' => $this->two_factor_enabled,
+            'api_enabled' => $this->api_enabled,
+            'api_allowed_ips' => trim($this->api_allowed_ips) ?: null,
         ];
 
         // Special rate: fixed until changed by hand. Saving it records today's general rate,
@@ -234,6 +253,26 @@ class UserManagement extends Component
         session()->flash('success', 'تم حذف المستخدم بنجاح.');
     }
 
+    /** Creates (or replaces) the account's partner API key; shown once in the form. */
+    public function generateApiKey(): void
+    {
+        abort_unless($this->editingUserId, 404);
+        $user = User::findOrFail($this->editingUserId);
+
+        $this->newApiToken = $user->issueApiToken();
+        $this->api_enabled = true;
+    }
+
+    /** The key stops working at once. */
+    public function revokeApiKey(): void
+    {
+        abort_unless($this->editingUserId, 404);
+        User::findOrFail($this->editingUserId)->revokeApiToken();
+
+        $this->newApiToken = null;
+        $this->api_enabled = false;
+    }
+
     /** Keep this customer's special rate as it is, reviewed against today's general rate. */
     public function keepCustomRate(int $id): void
     {
@@ -271,7 +310,7 @@ class UserManagement extends Component
 
     private function resetForm(): void
     {
-        $this->reset(['editingUserId', 'name', 'username', 'email', 'phone', 'password', 'balance', 'has_unlimited_balance', 'balance_limit', 'custom_vodafone_rate', 'role', 'is_active', 'two_factor_enabled', 'receives_telegram_alerts']);
+        $this->reset(['editingUserId', 'name', 'username', 'email', 'phone', 'password', 'balance', 'has_unlimited_balance', 'balance_limit', 'custom_vodafone_rate', 'api_enabled', 'api_allowed_ips', 'newApiToken', 'role', 'is_active', 'two_factor_enabled', 'receives_telegram_alerts']);
         $this->resetValidation();
         $this->role = 'Customer';
     }

@@ -22,6 +22,8 @@ Route::group([
     Route::get('rates', \App\Livewire\Public\ExchangeRates::class)->name('rates.public');
     // Public SIM balance check (no login) — marketing page that embeds the supplier's query page
     Route::get('sim-balance', \App\Livewire\Public\SimBalance::class)->name('sims.balance');
+    // Public documentation of the partner API (sent to partners who connect their system)
+    Route::get('api-docs', \App\Livewire\Public\ApiDocs::class)->name('api.docs');
     // Also add an alias for /egp
     Route::get('egp', \App\Livewire\Public\ExchangeRates::class)->name('egp.public');
 

@@ -47,6 +47,7 @@ class SimOrder extends Model
         'api_message',
         'api_note',
         'api_checked_at',
+        'client_reference',
     ];
 
     protected $casts = [
@@ -114,6 +115,37 @@ class SimOrder extends Model
     public static function isSupplierProductProblem(?string $message): bool
     {
         return (bool) preg_match('/^\s*aktif\s+kontor\b/iu', (string) $message);
+    }
+
+    /** Status for the partner API: pending (being loaded) / success / failed (refunded). */
+    public function partnerStatus(): string
+    {
+        return match (true) {
+            $this->status === self::STATUS_REJECTED => 'failed',
+            $this->status === self::STATUS_PENDING, in_array($this->api_status, self::API_OPEN_STATES, true) => 'pending',
+            default => 'success',
+        };
+    }
+
+    /** The order as the partner API returns it (no supplier names, costs or internal notes). */
+    public function toPartnerArray(): array
+    {
+        $status = $this->partnerStatus();
+
+        return [
+            'order_number' => $this->order_number,
+            'reference' => $this->client_reference,
+            'status' => $status,
+            'package_id' => $this->sim_package_id,
+            'package_name_ar' => $this->package_name_ar,
+            'package_name_tr' => $this->package_name_tr,
+            'phone' => $this->phone_number,
+            'price' => (float) $this->price,
+            'charged' => $status === 'failed' ? 0.0 : (float) $this->charged_amount,
+            'failure_reason' => $status === 'failed' ? ($this->admin_notes ?: null) : null,
+            'created_at' => $this->created_at?->toIso8601String(),
+            'updated_at' => $this->updated_at?->toIso8601String(),
+        ];
     }
 
     /**

@@ -133,6 +133,9 @@ class SimOrderGroupNotifier
         if ($order->customer_name) {
             $lines[] = '🙋 ' . $t('sim_customer_name_short') . ': ' . $order->customer_name;
         }
+        if ($order->client_reference) {
+            $lines[] = '🔗 API: ' . $order->client_reference;
+        }
         if ($order->notes) {
             $lines[] = '📝 ' . $t('sim_notes_short') . ': ' . $order->notes;
         }

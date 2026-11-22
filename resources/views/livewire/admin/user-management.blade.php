@@ -100,6 +100,9 @@
                     <tr class="bg-white/30 border-b border-white/30 hover:bg-white/60 transition-colors">
                         <td class="px-6 py-4 font-bold text-gray-900">
                             {{ $user->name }}
+                            @if($user->api_enabled && $user->hasApiToken())
+                                <span class="inline-flex items-center rounded-full bg-slate-800 text-white px-2 py-0.5 text-[10px] font-black align-middle" title="{{ __('messages.api_section_title') }}">🔌 API</span>
+                            @endif
                             @if($user->hasCustomVodafoneRate())
                                 @php $needsReview = $user->customVodafoneRateNeedsReview($generalVodafoneRate); @endphp
                                 <div class="mt-1">
@@ -247,6 +250,63 @@
                             @endif
                             <x-input-error :messages="$errors->get('custom_vodafone_rate')" class="mt-2" />
                         </div>
+
+                        {{-- Partner API: other systems order SIM packages with this account's balance --}}
+                        @if($editingUser)
+                            <div wire:key="field-partner-api" class="mt-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="text-sm font-black text-slate-800">🔌 {{ __('messages.api_section_title') }}</div>
+                                    <a href="{{ route('api.docs') }}" target="_blank" rel="noopener" class="text-[11px] font-bold text-primary-600 hover:underline">{{ __('messages.api_docs_link') }}</a>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">{{ __('messages.api_section_hint') }}</p>
+
+                                <label class="flex items-center gap-2 mt-3">
+                                    <input wire:model="api_enabled" type="checkbox" class="rounded border-gray-300 text-primary-600 shadow-sm focus:ring-primary-500">
+                                    <span class="text-sm font-bold text-slate-700">{{ __('messages.api_enabled_label') }}</span>
+                                </label>
+
+                                @if($newApiToken)
+                                    <div class="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3" x-data="{ copied: false }">
+                                        <div class="text-[11px] font-black text-emerald-900">{{ __('messages.api_key_new_title') }}</div>
+                                        <div class="mt-1.5 flex items-center gap-2">
+                                            <code class="flex-1 min-w-0 break-all rounded bg-white px-2 py-1.5 text-xs font-mono text-slate-800 border border-emerald-100" dir="ltr">{{ $newApiToken }}</code>
+                                            <button type="button" @click="navigator.clipboard.writeText(@js($newApiToken)); copied = true; setTimeout(() => copied = false, 1500)"
+                                                class="shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700">
+                                                <span x-show="!copied">{{ __('messages.sim_copy') }}</span><span x-show="copied" x-cloak>✓</span>
+                                            </button>
+                                        </div>
+                                        <p class="text-[11px] font-bold text-emerald-800 mt-1.5">{{ __('messages.api_key_shown_once') }}</p>
+                                    </div>
+                                @elseif($editingUser->hasApiToken())
+                                    <div class="mt-3 text-xs text-slate-600">
+                                        {{ __('messages.api_key_current') }} <code class="font-mono font-bold" dir="ltr">vc_…{{ $editingUser->api_token_hint }}</code>
+                                        · {{ __('messages.api_last_used') }}: <span dir="ltr">{{ $editingUser->api_last_used_at?->format('Y-m-d H:i') ?? __('messages.api_never_used') }}</span>
+                                    </div>
+                                @endif
+
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    <button type="button" wire:click="generateApiKey"
+                                        @if($editingUser->hasApiToken()) wire:confirm="{{ __('messages.api_key_replace_confirm') }}" @endif
+                                        class="px-3 py-1.5 rounded-lg text-xs font-black bg-slate-800 text-white hover:bg-slate-900 transition">
+                                        {{ $editingUser->hasApiToken() ? __('messages.api_key_regenerate') : __('messages.api_key_generate') }}
+                                    </button>
+                                    @if($editingUser->hasApiToken())
+                                        <button type="button" wire:click="revokeApiKey" wire:confirm="{{ __('messages.api_key_revoke_confirm') }}"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-black bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 transition">
+                                            {{ __('messages.api_key_revoke') }}
+                                        </button>
+                                    @endif
+                                </div>
+
+                                <div class="mt-3">
+                                    <x-input-label for="api_allowed_ips" value="{{ __('messages.api_allowed_ips_label') }}" />
+                                    <textarea id="api_allowed_ips" wire:model="api_allowed_ips" rows="2" dir="ltr" placeholder="203.0.113.10"
+                                        class="mt-1 block w-full rounded-md border-gray-300 text-sm font-mono shadow-sm focus:border-primary-500 focus:ring-primary-500"></textarea>
+                                    <p class="text-[11px] text-slate-500 mt-1">{{ __('messages.api_allowed_ips_hint') }}</p>
+                                    <x-input-error :messages="$errors->get('api_allowed_ips')" class="mt-2" />
+                                </div>
+                            </div>
+                        @endif
 
                         <div wire:key="field-password">
                             <x-input-label value="{{ __('messages.password') }}{{ $editingUserId ? __('messages.leave_blank_to_keep') : '' }}" />

@@ -44,6 +44,9 @@ class User extends Authenticatable
         'custom_vodafone_rate',
         'custom_vodafone_rate_base',
         'custom_vodafone_rate_reviewed_at',
+        // Partner API (the key itself is set only through issueApiToken())
+        'api_enabled',
+        'api_allowed_ips',
     ];
 
     /** Vodafone Cash transfers: Turkish lira → Egyptian pound */
@@ -59,6 +62,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'two_factor_secret',
+        'api_token_hash',
     ];
 
     /**
@@ -79,7 +83,56 @@ class User extends Authenticatable
             'custom_vodafone_rate' => 'decimal:5',
             'custom_vodafone_rate_base' => 'decimal:5',
             'custom_vodafone_rate_reviewed_at' => 'datetime',
+            'api_enabled' => 'boolean',
+            'api_last_used_at' => 'datetime',
         ];
+    }
+
+    /**
+     * New partner API key for this account (the old one stops working). Returned once, stored hashed.
+     */
+    public function issueApiToken(): string
+    {
+        $token = 'vc_' . \Illuminate\Support\Str::random(48);
+
+        $this->forceFill([
+            'api_token_hash' => hash('sha256', $token),
+            'api_token_hint' => substr($token, -4),
+            'api_enabled' => true,
+        ])->save();
+
+        return $token;
+    }
+
+    public function revokeApiToken(): void
+    {
+        $this->forceFill(['api_token_hash' => null, 'api_token_hint' => null, 'api_enabled' => false])->save();
+    }
+
+    public function hasApiToken(): bool
+    {
+        return filled($this->api_token_hash);
+    }
+
+    /** The active account behind a partner API key, or null. */
+    public static function findByApiToken(?string $token): ?self
+    {
+        if (!is_string($token) || !str_starts_with($token, 'vc_') || strlen($token) > 100) {
+            return null;
+        }
+
+        return static::where('api_token_hash', hash('sha256', $token))
+            ->where('api_enabled', true)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    /** IP whitelist (one per line or comma separated); empty = any IP. */
+    public function apiIpAllowed(?string $ip): bool
+    {
+        $allowed = array_filter(array_map('trim', preg_split('/[\s,]+/', (string) $this->api_allowed_ips)));
+
+        return $allowed === [] || in_array((string) $ip, $allowed, true);
     }
 
     /** A fixed TRY → EGP rate set by the admin for this account (it does not follow the general rate). */

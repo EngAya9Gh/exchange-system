@@ -35,12 +35,13 @@ class SimOrderService
         int $packageId,
         string $phoneNumber,
         ?string $customerName = null,
-        ?string $notes = null
+        ?string $notes = null,
+        ?string $clientReference = null
     ): SimOrder {
-        $order = DB::transaction(function () use ($user, $packageId, $phoneNumber, $customerName, $notes) {
+        $order = DB::transaction(function () use ($user, $packageId, $phoneNumber, $customerName, $notes, $clientReference) {
             $package = SimPackage::active()->find($packageId);
             if (!$package) {
-                throw new SimOrderException(__('messages.sim_package_unavailable'));
+                throw new SimOrderException(__('messages.sim_package_unavailable'), 'package_unavailable');
             }
 
             // Lock the user row so two simultaneous orders can't both pass the balance check
@@ -54,7 +55,7 @@ class SimOrderService
                     : ((float) $buyer->balance + (float) $buyer->balance_limit);
 
                 if ($price > $availableCredit) {
-                    throw new SimOrderException(__('messages.sim_insufficient_balance'));
+                    throw new SimOrderException(__('messages.sim_insufficient_balance'), 'insufficient_balance');
                 }
             }
 
@@ -71,6 +72,7 @@ class SimOrderService
                 'phone_number' => $phoneNumber,
                 'customer_name' => $customerName ?: null,
                 'notes' => $notes ?: null,
+                'client_reference' => $clientReference ?: null, // partner API (unique per account)
                 'status' => SimOrder::STATUS_COMPLETED, // activated immediately
                 'processed_at' => now(),
             ]);

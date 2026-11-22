@@ -118,6 +118,7 @@ class Orders extends Component
         if ($search !== '') {
             $query->where(function ($q) use ($search, $canManage) {
                 $q->where('order_number', 'like', "%{$search}%")
+                    ->orWhere('client_reference', 'like', "%{$search}%")
                     ->orWhere('phone_number', 'like', '%' . preg_replace('/[\s\-]+/', '', $search) . '%')
                     ->orWhere('customer_name', 'like', "%{$search}%");
 

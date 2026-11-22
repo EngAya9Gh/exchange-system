@@ -82,7 +82,15 @@
             <tbody class="divide-y divide-slate-100">
                 @forelse($orders as $order)
                     <tr wire:key="sim-order-{{ $order->id }}" class="hover:bg-slate-50/60 transition align-top">
-                        <td class="px-4 py-4 font-mono text-xs font-bold text-slate-800 whitespace-nowrap" dir="ltr">{{ $order->order_number }}</td>
+                        <td class="px-4 py-4 font-mono text-xs font-bold text-slate-800 whitespace-nowrap" dir="ltr">
+                            {{ $order->order_number }}
+                            @if($order->client_reference)
+                                <div class="mt-1 flex items-center gap-1 font-sans">
+                                    <span class="rounded-full bg-slate-800 text-white px-1.5 py-0.5 text-[9px] font-black">API</span>
+                                    <span class="text-[10px] font-semibold text-slate-500 font-mono" title="{{ __('messages.api_reference') }}">{{ $order->client_reference }}</span>
+                                </div>
+                            @endif
+                        </td>
 
                         @if($canManage)
                             <td class="px-4 py-4 font-bold text-slate-700 whitespace-nowrap">{{ $order->user?->name ?? '-' }}</td>

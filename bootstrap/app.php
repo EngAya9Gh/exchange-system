@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
             // Telegram webhook — uses 'api' middleware group (no CSRF, no auth, no 2FA, no session)
             Route::middleware('api')
                 ->group(base_path('routes/telegram.php'));
+
+            // Partner API v1 (other systems order SIM packages with an API key) — see /api-docs
+            Route::middleware('api')
+                ->group(base_path('routes/partner_api.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -49,6 +53,23 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // The partner API always answers JSON in its own format (404, 405, 429, 500 …)
+        $exceptions->shouldRenderJsonWhen(fn (\Illuminate\Http\Request $request) => $request->is('api/*'));
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            if (!$request->is('api/v1/*')) {
+                return null;
+            }
+            $status = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface ? $e->getStatusCode() : 500;
+            [$code, $message] = match ($status) {
+                404 => ['not_found', 'Unknown endpoint.'],
+                405 => ['method_not_allowed', 'Wrong HTTP method for this endpoint.'],
+                429 => ['too_many_requests', 'Too many requests: the limit is 60 per minute.'],
+                default => ['server_error', 'Unexpected error, please try again.'],
+            };
+
+            return response()->json(['ok' => false, 'error' => ['code' => $code, 'message' => $message]], $status);
+        });
+
         $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, \Illuminate\Http\Request $request) {
             return redirect()->back()->withInput($request->except('password'))->with('error', 'انتهت صلاحية الصفحة، يرجى المحاولة مجدداً.');
         });
