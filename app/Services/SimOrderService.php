@@ -129,7 +129,8 @@ class SimOrderService
         $refusals = [];              // supplier => reason, for suppliers that refused for their own reasons
         $productRefusal = null;      // [supplier, reason] of the last "Aktif Kontor" refusal
 
-        foreach (KontorApiService::inPriorityOrder() as $supplier => $api) {
+        // The package's preferred supplier first (e.g. the cheaper one for it), then the primary one
+        foreach (KontorApiService::inPriorityOrder($package->preferred_supplier) as $supplier => $api) {
             $key = $package->productKey($supplier);
             if ($key === null || !$api->autoSendActive()) {
                 continue;

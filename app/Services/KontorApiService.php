@@ -52,11 +52,15 @@ class KontorApiService
         return $supplier === self::SUPPLIER_KONTOR86 ? app(self::class) : new self($supplier);
     }
 
-    /** @return self[] keyed by supplier, the primary one first */
-    public static function inPriorityOrder(): array
+    /**
+     * @param  string|null  $first  a package's preferred supplier, tried before the primary one
+     * @return self[] keyed by supplier: $first, then the primary one, then the rest
+     */
+    public static function inPriorityOrder(?string $first = null): array
     {
         $primary = self::primarySupplier();
-        $order = array_unique(array_merge([$primary], self::SUPPLIERS));
+        $head = in_array($first, self::SUPPLIERS, true) ? [$first, $primary] : [$primary];
+        $order = array_values(array_unique(array_merge($head, self::SUPPLIERS)));
 
         return array_combine($order, array_map(fn (string $s) => self::for($s), $order));
     }

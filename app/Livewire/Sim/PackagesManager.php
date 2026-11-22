@@ -30,6 +30,8 @@ class PackagesManager extends Component
     public string $tkOperator = '';
     public string $tkTip = '';
     public string $tkCode = '';
+    // Supplier tried first for this package ('' = the primary supplier)
+    public string $preferredSupplier = '';
     public bool $isActive = true;
     public $sortOrder = 0;
     public string $badge = '';
@@ -64,6 +66,7 @@ class PackagesManager extends Component
             'tkOperator' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
             'tkTip' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
             'tkCode' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
+            'preferredSupplier' => ['nullable', 'in:' . implode(',', \App\Services\KontorApiService::SUPPLIERS)],
             'isActive' => ['boolean'],
             'sortOrder' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'badge' => ['nullable', 'in:' . implode(',', SimPackage::BADGES)],
@@ -140,6 +143,7 @@ class PackagesManager extends Component
         $this->tkOperator = (string) $package->telekomtl_operator;
         $this->tkTip = (string) $package->telekomtl_tip;
         $this->tkCode = (string) $package->telekomtl_code;
+        $this->preferredSupplier = (string) $package->preferred_supplier;
         $this->isActive = $package->is_active;
         $this->sortOrder = $package->sort_order;
         $this->badge = (string) $package->badge;
@@ -192,6 +196,7 @@ class PackagesManager extends Component
             'telekomtl_operator' => $tkParts[0] ?: null,
             'telekomtl_tip' => $tkParts[1] ?: null,
             'telekomtl_code' => $tkParts[2] ?: null,
+            'preferred_supplier' => $this->preferredSupplier ?: null,
             'is_active' => $this->isActive,
             'sort_order' => (int) ($this->sortOrder ?: 0),
             'badge' => $this->badge ?: null,
@@ -234,7 +239,7 @@ class PackagesManager extends Component
         $this->resetValidation();
         $this->reset([
             'editingId', 'region', 'simType', 'networkName', 'dataGb', 'validityDays', 'price',
-            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'tkOperator', 'tkTip', 'tkCode', 'isActive', 'sortOrder', 'badge',
+            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'tkOperator', 'tkTip', 'tkCode', 'preferredSupplier', 'isActive', 'sortOrder', 'badge',
         ]);
     }
 

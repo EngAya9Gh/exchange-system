@@ -281,4 +281,120 @@ class SimTwoSuppliersTest extends TestCase
             ->assertSee(__('messages.sim_supplier_balance_of', ['supplier' => 'telekomtl']))
             ->assertSee('3,960.00 ₺');
     }
+
+    public function test_europe_goes_to_telekomtl_first_with_its_panel_codes(): void
+    {
+        // From telekomtl's Callback list: "Callback (TeleCard) Avrupa 5/10/20 GB" = 1233 / 1234 / 12346
+        $europe = SimPackage::where('region', 'europe')->ordered()->get();
+        $this->assertSame([
+            'AVRUPA_FİZİKSEL_30gun_5gb' => ['Callback', 'TeleCard', '1233'],
+            'AVRUPA_FİZİKSEL_30gun_10gb' => ['Callback', 'TeleCard', '1234'],
+            'AVRUPA_FİZİKSEL_30gun_20gb' => ['Callback', 'TeleCard', '12346'],
+        ], $europe->mapWithKeys(fn ($p) => [$p->supplier_code => $p->productKey('telekomtl')])->all());
+        $this->assertSame(['telekomtl'], $europe->pluck('preferred_supplier')->unique()->values()->all());
+
+        // kontor86 stays the primary supplier, but a Europe order goes to telekomtl first
+        $this->customer->update(['balance' => 5000]);
+        $this->assertSame('kontor86', KontorApiService::primarySupplier());
+        $tenGb = $europe->firstWhere('supplier_code', 'AVRUPA_FİZİKSEL_30gun_10gb');
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $tenGb->id, '5021684186');
+
+        [$supplier, $request] = $this->sends()->sole();
+        $this->assertSame('telekomtl', $supplier);
+        $this->assertSame(['Callback', 'TeleCard', '1234', '5021684186'], [$request['operator'], $request['tip'], $request['kontor'], $request['gsmno']]);
+        $this->assertSame('telekomtl', $order->api_supplier);
+
+        // Turkey packages are not at telekomtl: they keep going to kontor86
+        app(SimOrderService::class)->placeOrder($this->customer, SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_10gb_30gun')->value('id'), '5051234567');
+        $this->assertSame('kontor86', $this->sends()->last()[0]);
+    }
+
+    public function test_preferred_supplier_falls_back_to_the_other_one(): void
+    {
+        $tenGb = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_10gb')->firstOrFail();
+        $this->send['telekomtl'] = 'OK|3|Bu İşlem İçin Bakiyeniz Yeterli Değildir. - BAK=10.0000 AL=295.00|295.00|';
+
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $tenGb->id, '5021684186');
+
+        $this->assertSame(['telekomtl', 'kontor86'], $this->sends()->map(fn ($s) => $s[0])->all());
+        $this->assertSame('kontor86', $order->api_supplier);
+        $this->assertSame(['Callback', 'eSIM', '45241'], [$this->sends()->last()[1]['operator'], $this->sends()->last()[1]['tip'], $this->sends()->last()[1]['kontor']]);
+    }
+
+    public function test_package_screen_sets_the_preferred_supplier(): void
+    {
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('edit', $this->fiveGb->id)
+            ->assertSet('preferredSupplier', '')
+            ->set('preferredSupplier', 'mars')
+            ->call('save')
+            ->assertHasErrors('preferredSupplier')
+            ->set('preferredSupplier', 'telekomtl')
+            ->call('save')
+            ->assertHasNoErrors();
+        $this->assertSame('telekomtl', $this->fiveGb->fresh()->preferred_supplier);
+
+        app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567');
+        $this->assertSame('telekomtl', $this->sends()->sole()[0]);
+
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('edit', $this->fiveGb->id)
+            ->set('preferredSupplier', '')
+            ->call('save');
+        $this->assertNull($this->fiveGb->fresh()->preferred_supplier);
+    }
+
+    public function test_europe_key_migration_keeps_what_an_admin_set(): void
+    {
+        $five = SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_5gb')->firstOrFail();
+        $five->update(['telekomtl_operator' => 'X', 'telekomtl_tip' => 'Y', 'telekomtl_code' => '9', 'preferred_supplier' => 'kontor86']);
+
+        (require database_path('migrations/2026_11_22_000002_set_telekomtl_europe_keys.php'))->up();
+
+        $this->assertSame(['X', 'Y', '9'], $five->fresh()->productKey('telekomtl'));
+        $this->assertSame('kontor86', $five->fresh()->preferred_supplier);
+    }
+
+    public function test_turk_telekom_esim_packages_load_through_telekomtl(): void
+    {
+        $tt = SimPackage::where('network_name', 'Türk Telekom')->ordered()->get();
+        $this->assertSame([
+            'TURKTELEKOM_ESIM_5gb_30gun' => [200, '115', true],
+            'TURKTELEKOM_ESIM_10gb_30gun' => [300, '175', false],   // panel says "28 Gün"
+            'TURKTELEKOM_ESIM_20gb_30gun' => [450, '330', false],   // panel says "28 Gün, 30 Gb"
+            'TURKTELEKOM_ESIM_30gb_30gun' => [600, '480', true],
+            'TURKTELEKOM_ESIM_50gb_30gun' => [750, '590', true],
+            'TURKTELEKOM_ESIM_50gb_180gun' => [900, '2000', false], // panel says "90 Gün, 20 Gb"
+            'TURKTELEKOM_ESIM_100gb_90gun' => [1900, '909090', true],
+        ], $tt->mapWithKeys(fn ($p) => [$p->supplier_code => [(int) $p->price, $p->telekomtl_code, $p->is_active]])->all());
+        foreach ($tt as $package) {
+            $this->assertSame(['local', 'esim', 'telekomtl'], [$package->region, $package->sim_type, $package->preferred_supplier]);
+            $this->assertFalse($package->isApiReadyFor('kontor86'));
+        }
+        $this->assertSame('3 أشهر', $tt->firstWhere('data_gb', 100)->durationLabel());
+
+        // In the Turkey eSIM tab, under their own network heading; inactive ones are not offered
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->call('selectRegion', 'local_esim')
+            ->assertSee(__('messages.sim_network_packages_count', ['count' => 4]))
+            ->assertSee('باقة Türk Telekom 5 جيجا - 30 يوم (eSIM)')
+            ->assertDontSee('باقة Türk Telekom 10 جيجا')
+            ->assertSee('باقة تركيا 5 جيجا - 30 يوم (eSIM)'); // Tele CARD eSIMs stay in the same tab, own heading
+
+        // An order goes to telekomtl with its key and the Turkish number
+        $five = $tt->firstWhere('supplier_code', 'TURKTELEKOM_ESIM_5gb_30gun');
+        $this->send['telekomtl'] = 'OK|1|Talebiniz İşleme Alınmıştır.|132.00|3828.0000';
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->call('selectPackage', $five->id)
+            ->set('phoneNumber', '0555 123 45 67')
+            ->call('placeOrder')
+            ->assertHasNoErrors();
+
+        [$supplier, $request] = $this->sends()->sole();
+        $this->assertSame('telekomtl', $supplier);
+        $this->assertSame(['Callback', 'eSIM', '115', '5551234567'], [$request['operator'], $request['tip'], $request['kontor'], $request['gsmno']]);
+        $order = SimOrder::sole();
+        $this->assertEquals(132, $order->api_cost);
+        $this->assertEquals(68, $order->profit());
+    }
 }

@@ -73,13 +73,27 @@
             <div class="mb-4 text-sm font-bold text-rose-600">{{ $message }}</div>
         @enderror
 
+        {{-- One block per network when a tab holds several (e.g. Tele CARD and Türk Telekom eSIMs) --}}
+        @php $networkGroups = $currentPackages->groupBy(fn ($p) => $p->network_name ?: '—'); @endphp
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            @forelse($currentPackages as $package)
-                @include('livewire.sim.partials.package-card', [
-                    'package' => $package,
-                    'isSelected' => $selectedPackageId === $package->id,
-                    'instant' => collect($autoSuppliers)->contains(fn (string $supplier) => $package->isApiReadyFor($supplier)),
-                ])
+            @forelse($networkGroups as $networkName => $networkPackages)
+                @if($networkGroups->count() > 1)
+                    <div class="col-span-full flex items-center gap-3 {{ $loop->first ? '' : 'mt-4' }}" wire:key="sim-network-{{ $loop->index }}">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-800 text-white text-xs font-black px-3 py-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
+                            <span dir="ltr">{{ $networkName }}</span>
+                        </span>
+                        <span class="text-xs font-bold text-slate-400">{{ __('messages.sim_network_packages_count', ['count' => $networkPackages->count()]) }}</span>
+                        <span class="h-px flex-1 bg-slate-100"></span>
+                    </div>
+                @endif
+                @foreach($networkPackages as $package)
+                    @include('livewire.sim.partials.package-card', [
+                        'package' => $package,
+                        'isSelected' => $selectedPackageId === $package->id,
+                        'instant' => collect($autoSuppliers)->contains(fn (string $supplier) => $package->isApiReadyFor($supplier)),
+                    ])
+                @endforeach
             @empty
                 <div class="col-span-full text-center text-slate-400 py-10 font-bold">{{ __('messages.sim_no_packages') }}</div>
             @endforelse

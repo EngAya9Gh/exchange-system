@@ -49,6 +49,7 @@ class SimPackage extends Model
         'telekomtl_operator',
         'telekomtl_tip',
         'telekomtl_code',
+        'preferred_supplier',
         'is_active',
         'sort_order',
         'badge',

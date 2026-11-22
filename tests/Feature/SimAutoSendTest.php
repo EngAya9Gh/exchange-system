@@ -269,7 +269,7 @@ class SimAutoSendTest extends TestCase
         $this->assertStringContainsString('⚙️ لم يقبل المورد التحميل التلقائي لهذه الباقة (Aktif Kontor CallbackeSIM45242)، والطلب بانتظار التحميل اليدوي', $this->groupMessage());
 
         // The package stops trying: the next order is manual straight away
-        $this->assertFalse($europe->fresh()->isApiReady());
+        $this->assertFalse($europe->fresh()->isApiReadyFor('kontor86')); // the refused kontor86 key
         $this->customer->update(['balance' => 1000]);
         app(SimOrderService::class)->placeOrder($this->customer, $europe->id, '5021684187');
         $this->assertCount(1, $this->sentTo('tl_servis.php'));
@@ -323,7 +323,7 @@ class SimAutoSendTest extends TestCase
 
         (require database_path('migrations/2026_11_17_000001_make_europe_packages_manual_until_api_tip_confirmed.php'))->up();
 
-        $this->assertFalse($five->fresh()->isApiReady());
+        $this->assertFalse($five->fresh()->isApiReadyFor('kontor86'));
         $this->assertSame('avrupa', $ten->fresh()->api_tip);
     }
 
@@ -726,7 +726,7 @@ class SimAutoSendTest extends TestCase
 
     public function test_turkey_esim_packages_are_on_sale_and_load_automatically(): void
     {
-        $esims = SimPackage::where('region', 'local')->where('sim_type', 'esim')->ordered()->get();
+        $esims = SimPackage::where('region', 'local')->where('sim_type', 'esim')->where('network_name', 'Tele CARD')->ordered()->get();
         // Price and API code exactly as in the panel's Callback list (2026-11-13)
         $this->assertSame([
             'E-SİM Turkiye_5gb_30gun' => [350, '35240'],
@@ -777,7 +777,7 @@ class SimAutoSendTest extends TestCase
 
         $this->assertEquals(333, $fiveGb->fresh()->price); // admin's price kept
         $this->assertSame(['callback', 'telecard', '35240'], [$fiveGb->fresh()->api_operator, $fiveGb->fresh()->api_tip, $fiveGb->fresh()->api_code]);
-        $this->assertSame(5, SimPackage::where('sim_type', 'esim')->where('region', 'local')->count());
+        $this->assertSame(5, SimPackage::where('sim_type', 'esim')->where('region', 'local')->where('network_name', 'Tele CARD')->count());
     }
 
     public function test_esim_packages_have_their_own_tab(): void

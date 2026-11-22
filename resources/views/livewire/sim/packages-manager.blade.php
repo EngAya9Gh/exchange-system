@@ -71,6 +71,9 @@
                                             @if($package->isApiReadyFor('telekomtl'))
                                                 <span class="inline-block mt-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-teal-100 text-teal-800" dir="ltr">🤖 telekomtl {{ $package->telekomtl_operator }}·{{ $package->telekomtl_tip }}·{{ $package->telekomtl_code }}</span>
                                             @endif
+                                            @if($package->preferred_supplier)
+                                                <span class="inline-block mt-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-50 text-amber-800" title="{{ __('messages.sim_preferred_supplier') }}">⭐ <span dir="ltr">{{ $package->preferred_supplier }}</span></span>
+                                            @endif
                                         @else
                                             <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500" title="{{ __('messages.sim_api_manual_hint') }}">
                                                 ✋ {{ __('messages.sim_api_manual') }}@if($package->api_code) <span dir="ltr">· {{ $package->api_code }}</span>@endif
@@ -274,6 +277,18 @@
                         @error('tkOperator') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
                         @error('tkTip') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
                         @error('tkCode') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
+
+                        <div class="mt-4">
+                            <label class="block text-[11px] font-black text-indigo-900 mb-1">{{ __('messages.sim_preferred_supplier') }}</label>
+                            <select wire:model="preferredSupplier" class="{{ $inputClass }}">
+                                <option value="">{{ __('messages.sim_preferred_supplier_default', ['supplier' => \App\Services\KontorApiService::primarySupplier()]) }}</option>
+                                @foreach(\App\Services\KontorApiService::SUPPLIERS as $supplierOption)
+                                    <option value="{{ $supplierOption }}">{{ $supplierOption }}</option>
+                                @endforeach
+                            </select>
+                            <p class="text-[11px] text-indigo-700/80 mt-1">{{ __('messages.sim_preferred_supplier_hint') }}</p>
+                            @error('preferredSupplier') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
+                        </div>
                     </div>
 
                     <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t border-slate-100">
