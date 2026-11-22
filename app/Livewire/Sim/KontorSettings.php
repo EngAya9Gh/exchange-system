@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Sim;
 
+use App\Livewire\Sim\Concerns\ControlsAutoSend;
 use App\Models\Setting;
 use App\Services\KontorApiService;
 use Illuminate\Support\Facades\Cache;
@@ -13,6 +14,8 @@ use Livewire\Component;
  */
 class KontorSettings extends Component
 {
+    use ControlsAutoSend;
+
     public string $dealerCode = '';
     public string $password = '';
 
@@ -87,6 +90,11 @@ class KontorSettings extends Component
 
     public function render()
     {
-        return view('livewire.sim.kontor-settings');
+        $api = app(KontorApiService::class);
+
+        return view('livewire.sim.kontor-settings', [
+            'autoSendConfigured' => $api->isConfigured(),
+            'autoSendPause' => $api->autoSendPauseInfo(),
+        ]);
     }
 }

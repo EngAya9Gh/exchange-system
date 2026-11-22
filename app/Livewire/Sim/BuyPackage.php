@@ -196,7 +196,7 @@ class BuyPackage extends Component
             'isExemptFromCharge' => app(SimOrderService::class)->isExemptFromCharge($user),
             'supplierBalance' => $this->supplierBalance(),
             // "⚡ instant loading" chip on packages sent automatically through kontor86
-            'apiConfigured' => app(\App\Services\KontorApiService::class)->isConfigured(),
+            'apiConfigured' => app(\App\Services\KontorApiService::class)->autoSendActive(),
         ]);
     }
 }

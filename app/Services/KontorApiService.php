@@ -27,6 +27,11 @@ class KontorApiService
     public const SETTING_PASSWORD = 'KONTOR_API_PASSWORD';
     public const BALANCE_CACHE_KEY = 'kontor86_balance';
 
+    /** Emergency switch: while paused, new orders are charged as usual but go to the WhatsApp group only. */
+    public const SETTING_AUTO_SEND_PAUSED = 'KONTOR_AUTO_SEND_PAUSED';
+    public const SETTING_AUTO_SEND_PAUSED_BY = 'KONTOR_AUTO_SEND_PAUSED_BY';
+    public const SETTING_AUTO_SEND_PAUSED_AT = 'KONTOR_AUTO_SEND_PAUSED_AT';
+
     public function dealerCode(): ?string
     {
         return Setting::where('key', self::SETTING_DEALER_CODE)->value('value') ?: config('services.kontor.dealer_code');
@@ -40,6 +45,39 @@ class KontorApiService
     public function isConfigured(): bool
     {
         return filled($this->dealerCode()) && filled($this->password());
+    }
+
+    public function isAutoSendPaused(): bool
+    {
+        return Setting::where('key', self::SETTING_AUTO_SEND_PAUSED)->value('value') === '1';
+    }
+
+    /** New orders are sent to kontor86 only when the account is set up and the switch is on. */
+    public function autoSendActive(): bool
+    {
+        return $this->isConfigured() && !$this->isAutoSendPaused();
+    }
+
+    /** @return array{by: ?string, at: ?\Illuminate\Support\Carbon}|null who paused it and when (null while running) */
+    public function autoSendPauseInfo(): ?array
+    {
+        if (!$this->isAutoSendPaused()) {
+            return null;
+        }
+
+        $at = Setting::where('key', self::SETTING_AUTO_SEND_PAUSED_AT)->value('value');
+
+        return [
+            'by' => Setting::where('key', self::SETTING_AUTO_SEND_PAUSED_BY)->value('value') ?: null,
+            'at' => $at ? \Illuminate\Support\Carbon::parse($at) : null,
+        ];
+    }
+
+    public function setAutoSendPaused(bool $paused, ?\App\Models\User $by = null): void
+    {
+        Setting::updateOrCreate(['key' => self::SETTING_AUTO_SEND_PAUSED], ['value' => $paused ? '1' : '0']);
+        Setting::updateOrCreate(['key' => self::SETTING_AUTO_SEND_PAUSED_BY], ['value' => $paused ? (string) $by?->name : '']);
+        Setting::updateOrCreate(['key' => self::SETTING_AUTO_SEND_PAUSED_AT], ['value' => $paused ? now()->toDateTimeString() : '']);
     }
 
     /**

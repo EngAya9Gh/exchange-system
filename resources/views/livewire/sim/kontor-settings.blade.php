@@ -1,6 +1,9 @@
 @php $inputClass = 'w-full bg-slate-50 border-none text-slate-800 font-bold rounded-xl focus:ring-2 focus:ring-primary-500 px-4 py-3.5 shadow-sm transition'; @endphp
 
 <div class="max-w-3xl space-y-6">
+    {{-- Emergency switch: automatic loading on / off --}}
+    @include('livewire.sim.partials.auto-send-switch', ['variant' => 'card'])
+
     {{-- Credentials --}}
     <div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-5 sm:p-8">
         <h3 class="text-xl font-black text-slate-800">{{ __('messages.kontor_title') }}</h3>

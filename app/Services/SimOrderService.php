@@ -104,14 +104,15 @@ class SimOrderService
 
     /**
      * Sends the order to kontor86 when its package has an API product key.
-     * Manual packages (or no API credentials) are left untouched.
+     * Manual packages, missing credentials, or automatic sending paused by an admin (emergency switch)
+     * leave the order untouched: it is charged as usual and loaded by hand from the WhatsApp group.
      */
     public function sendToSupplier(SimOrder $order): void
     {
         $package = $order->package;
         $api = app(KontorApiService::class);
 
-        if (!$package || !$package->isApiReady() || !$api->isConfigured()) {
+        if (!$package || !$package->isApiReady() || !$api->autoSendActive()) {
             return;
         }
 

@@ -48,6 +48,10 @@
         </div>
     </div>
 
+    @if($canManage && $autoSendConfigured)
+        @include('livewire.sim.partials.auto-send-switch', ['variant' => 'bar'])
+    @endif
+
     @include('livewire.sim.partials.order-stats')
 
     @if (session()->has('sim_success'))

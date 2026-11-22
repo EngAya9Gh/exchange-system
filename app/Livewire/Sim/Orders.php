@@ -3,6 +3,7 @@
 namespace App\Livewire\Sim;
 
 use App\Exceptions\SimOrderException;
+use App\Livewire\Sim\Concerns\ControlsAutoSend;
 use App\Livewire\Sim\Concerns\ShowsSupplierBalance;
 use App\Models\SimOrder;
 use App\Models\SimPackage;
@@ -20,7 +21,7 @@ use Livewire\WithPagination;
  */
 class Orders extends Component
 {
-    use WithPagination, ShowsSupplierBalance;
+    use WithPagination, ShowsSupplierBalance, ControlsAutoSend;
 
     public const PERIODS = ['all', 'today', 'yesterday', '7d', '30d', 'month', 'last_month', 'custom'];
 
@@ -307,6 +308,9 @@ class Orders extends Component
             'pendingCount' => $canManage ? SimOrder::where('status', SimOrder::STATUS_PENDING)->count() : 0,
             // Our balance at kontor86 (also shows at a glance whether the API connection works)
             'supplierBalance' => $this->supplierBalance(),
+            // Emergency switch (SIM managers only)
+            'autoSendConfigured' => $canManage && app(\App\Services\KontorApiService::class)->isConfigured(),
+            'autoSendPause' => $canManage ? app(\App\Services\KontorApiService::class)->autoSendPauseInfo() : null,
         ]);
     }
 }

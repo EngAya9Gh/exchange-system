@@ -811,4 +811,80 @@ class SimAutoSendTest extends TestCase
             ->assertSee(__('messages.sim_tab_local_esim'))
             ->assertSee(__('messages.sim_tab_hint_esim'));
     }
+
+    public function test_paused_auto_send_charges_and_sends_to_the_group_only(): void
+    {
+        Livewire::actingAs($this->admin)->test(\App\Livewire\Sim\KontorSettings::class)
+            ->call('pauseAutoSend')
+            ->assertSee(__('messages.sim_auto_send_paused_flash'))
+            ->assertSee(__('messages.sim_auto_send_resume'));
+
+        $this->assertTrue(app(\App\Services\KontorApiService::class)->isAutoSendPaused());
+        $this->assertStringContainsString('⏸️ *' . __('messages.sim_group_auto_send_paused') . '*', $this->groupMessage());
+        $this->assertStringContainsString('👤 Admin', $this->groupMessage());
+        $this->assertDatabaseHas('activity_logs', ['user_id' => $this->admin->id, 'action' => 'sim_auto_send_paused']);
+
+        // The buyer is charged as usual; the order goes to the group, never to the supplier
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->assertDontSee(__('messages.sim_instant_load'))
+            ->call('selectPackage', $this->fiveGb->id)
+            ->set('phoneNumber', '51234567')
+            ->call('placeOrder')
+            ->assertHasNoErrors();
+
+        $order = SimOrder::sole();
+        $this->assertSame(SimOrder::STATUS_COMPLETED, $order->status);
+        $this->assertNull($order->api_status);
+        $this->assertEquals(730, $this->customer->fresh()->balance);
+        $this->assertCount(0, $this->sentTo('tl_servis.php'));
+        $this->assertStringContainsString('⏸️ ' . __('messages.sim_group_api_paused'), $this->groupMessage());
+
+        // Managers see the state on the orders screen
+        Livewire::actingAs($this->admin)->test(Orders::class)
+            ->assertSee(__('messages.sim_auto_send_banner'))
+            ->assertSee(__('messages.sim_auto_send_paused_by', ['name' => 'Admin', 'at' => now()->format('Y-m-d H:i')]));
+    }
+
+    public function test_loads_sent_before_the_pause_are_still_followed_up(): void
+    {
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567');
+        $this->assertSame(SimOrder::API_PROCESSING, $order->api_status);
+
+        app(\App\Services\KontorApiService::class)->setAutoSendPaused(true, $this->admin);
+        $this->checkReply = '1:olumlu_islem:220.00';
+        Artisan::call('sims:check-api');
+
+        $this->assertSame(SimOrder::API_SUCCESS, $order->fresh()->api_status);
+    }
+
+    public function test_resuming_sends_new_orders_again(): void
+    {
+        app(\App\Services\KontorApiService::class)->setAutoSendPaused(true, $this->admin);
+
+        Livewire::actingAs($this->admin)->test(Orders::class)
+            ->call('resumeAutoSend')
+            ->assertSee(__('messages.sim_auto_send_resumed_flash'))
+            ->assertDontSee(__('messages.sim_auto_send_banner'));
+
+        $this->assertFalse(app(\App\Services\KontorApiService::class)->isAutoSendPaused());
+        $this->assertStringContainsString('▶️ *' . __('messages.sim_group_auto_send_resumed') . '*', $this->groupMessage());
+
+        app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567');
+        $this->assertCount(1, $this->sentTo('tl_servis.php'));
+    }
+
+    public function test_switch_is_for_sim_managers_only_and_a_double_click_posts_once(): void
+    {
+        Livewire::actingAs($this->customer)->test(Orders::class)
+            ->call('pauseAutoSend')
+            ->assertForbidden();
+        $this->assertFalse(app(\App\Services\KontorApiService::class)->isAutoSendPaused());
+
+        $before = $this->groupMessages()->count();
+        $component = Livewire::actingAs($this->admin)->test(Orders::class);
+        $component->call('pauseAutoSend');
+        $component->call('pauseAutoSend');
+        $this->assertSame($before + 1, $this->groupMessages()->count());
+        $this->assertSame(1, \App\Models\ActivityLog::where('action', 'sim_auto_send_paused')->count());
+    }
 }

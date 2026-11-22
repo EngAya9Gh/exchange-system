@@ -32,16 +32,27 @@ class SimOrderGroupNotifier
         return $message !== null && $this->post($message, $order);
     }
 
-    protected function post(string $message, SimOrder $order): bool
+    protected function post(string $message, SimOrder|string $context): bool
     {
         $groupId = (string) config('whatsapp.providers.wakeel.sim_group_id');
 
         if ($groupId === '' || empty(config('whatsapp.providers.wakeel.api_key'))) {
-            Log::warning('SIM WhatsApp group not configured; order ' . $order->order_number . ' was not posted.');
+            $what = $context instanceof SimOrder ? 'order ' . $context->order_number : $context;
+            Log::warning('SIM WhatsApp group not configured; ' . $what . ' was not posted.');
             return false;
         }
 
         return $this->whatsapp->provider('wakeel')->send($groupId, $message);
+    }
+
+    /** Tells the group that automatic loading was paused / resumed from the admin panel. */
+    public function sendAutoSendNotice(bool $paused, string $byName): bool
+    {
+        $message = ($paused ? '⏸️ *' : '▶️ *')
+            . __($paused ? 'messages.sim_group_auto_send_paused' : 'messages.sim_group_auto_send_resumed', [], 'ar') . '*'
+            . "\n👤 " . $byName;
+
+        return $this->post($message, 'auto-send notice');
     }
 
     /**
@@ -119,9 +130,12 @@ class SimOrderGroupNotifier
             SimOrder::API_PROCESSING, SimOrder::API_SUCCESS => '🤖 ' . $t('sim_group_api_sent'),
             SimOrder::API_UNKNOWN => '⏳ ' . $t('sim_group_api_unknown'),
             // The supplier refused our product key: the paid order waits for a manual load
-            null => SimOrder::isSupplierProductProblem($order->api_message)
-                ? '⚙️ ' . __('messages.sim_group_api_fallback_manual', ['details' => (string) $order->api_message], 'ar')
-                : null,
+            null => match (true) {
+                SimOrder::isSupplierProductProblem($order->api_message) => '⚙️ ' . __('messages.sim_group_api_fallback_manual', ['details' => (string) $order->api_message], 'ar'),
+                // Would have loaded automatically, but sending is paused by an admin
+                (bool) $order->package?->isApiReady() && app(\App\Services\KontorApiService::class)->isAutoSendPaused() => '⏸️ ' . $t('sim_group_api_paused'),
+                default => null,
+            },
             SimOrder::API_FAILED => match (true) {
                 SimOrder::isSupplierBalanceProblem($order->api_message) => '🚨 ' . __('messages.sim_group_api_no_balance', ['details' => (string) $order->api_message], 'ar'),
                 SimOrder::isSupplierProductProblem($order->api_message) => '⚙️ ' . __('messages.sim_group_api_bad_product', ['details' => (string) $order->api_message], 'ar'),
