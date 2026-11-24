@@ -839,7 +839,7 @@ class SimAutoSendTest extends TestCase
         $this->assertNull($order->api_status);
         $this->assertEquals(730, $this->customer->fresh()->balance);
         $this->assertCount(0, $this->sentTo('tl_servis.php'));
-        $this->assertStringContainsString('⏸️ ' . __('messages.sim_group_api_paused'), $this->groupMessage());
+        $this->assertStringContainsString('⏸️ ' . __('messages.sim_group_api_paused', ['suppliers' => 'kontor86']), $this->groupMessage());
 
         // Managers see the state on the orders screen
         Livewire::actingAs($this->admin)->test(Orders::class)

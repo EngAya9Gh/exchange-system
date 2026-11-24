@@ -223,7 +223,8 @@ class SimTwoSuppliersTest extends TestCase
             ->assertSee(__('messages.sim_auto_send_banner'));
         $manual = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234568');
         $this->assertNull($manual->api_status);
-        $this->assertStringContainsString('⏸️ ' . __('messages.sim_group_api_paused'), $this->groupMessage());
+        // The group is told which paused supplier(s) the package depends on
+        $this->assertStringContainsString('⏸️ ' . __('messages.sim_group_api_paused', ['suppliers' => 'kontor86، telekomtl']), $this->groupMessage());
         $this->assertCount(1, $this->sends());
 
         Livewire::actingAs($this->customer)->test(BuyPackage::class)->assertDontSee(__('messages.sim_instant_load'));
@@ -360,11 +361,11 @@ class SimTwoSuppliersTest extends TestCase
         $tt = SimPackage::where('network_name', 'Türk Telekom')->ordered()->get();
         $this->assertSame([
             'TURKTELEKOM_ESIM_5gb_30gun' => [200, '115', true],
-            'TURKTELEKOM_ESIM_10gb_30gun' => [300, '175', false],   // panel says "28 Gün"
-            'TURKTELEKOM_ESIM_20gb_30gun' => [450, '330', false],   // panel says "28 Gün, 30 Gb"
+            'TURKTELEKOM_ESIM_10gb_30gun' => [300, '175', true],    // on sale since 2026-11-24 (owner's decision)
+            'TURKTELEKOM_ESIM_20gb_30gun' => [450, '330', true],
             'TURKTELEKOM_ESIM_30gb_30gun' => [600, '480', true],
             'TURKTELEKOM_ESIM_50gb_30gun' => [750, '590', true],
-            'TURKTELEKOM_ESIM_50gb_180gun' => [900, '2000', false], // panel says "90 Gün, 20 Gb"
+            'TURKTELEKOM_ESIM_50gb_180gun' => [900, '2000', true],
             'TURKTELEKOM_ESIM_100gb_90gun' => [1900, '909090', true],
         ], $tt->mapWithKeys(fn ($p) => [$p->supplier_code => [(int) $p->price, $p->telekomtl_code, $p->is_active]])->all());
         foreach ($tt as $package) {
@@ -373,12 +374,12 @@ class SimTwoSuppliersTest extends TestCase
         }
         $this->assertSame('3 أشهر', $tt->firstWhere('data_gb', 100)->durationLabel());
 
-        // In the Turkey eSIM tab, under their own network heading; inactive ones are not offered
+        // In the Turkey eSIM tab, under their own network heading
         Livewire::actingAs($this->customer)->test(BuyPackage::class)
             ->call('selectRegion', 'local_esim')
-            ->assertSee(__('messages.sim_network_packages_count', ['count' => 4]))
+            ->assertSee(__('messages.sim_network_packages_count', ['count' => 7]))
             ->assertSee('باقة Türk Telekom 5 جيجا - 30 يوم (eSIM)')
-            ->assertDontSee('باقة Türk Telekom 10 جيجا')
+            ->assertSee('باقة Türk Telekom 10 جيجا - 30 يوم (eSIM)')
             ->assertSee('باقة تركيا 5 جيجا - 30 يوم (eSIM)'); // Tele CARD eSIMs stay in the same tab, own heading
 
         // An order goes to telekomtl with its key and the Turkish number
@@ -396,5 +397,44 @@ class SimTwoSuppliersTest extends TestCase
         $order = SimOrder::sole();
         $this->assertEquals(132, $order->api_cost);
         $this->assertEquals(68, $order->profit());
+    }
+
+    public function test_tele_card_order_while_kontor86_is_paused_explains_why_it_is_manual(): void
+    {
+        // Production state 2026-11-24: telekomtl primary and active, kontor86 paused, Tele CARD 5 GB only at kontor86
+        $this->fiveGb->update(['telekomtl_operator' => null, 'telekomtl_tip' => null, 'telekomtl_code' => null]);
+        KontorApiService::setPrimarySupplier('telekomtl');
+        KontorApiService::for('kontor86')->setAutoSendPaused(true, $this->admin);
+
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5026374700');
+
+        $this->assertNull($order->api_status); // manual: nothing sent anywhere
+        $this->assertCount(0, $this->sends());
+        $this->assertStringContainsString('⏸️ التحميل التلقائي عبر kontor86 متوقف حالياً، والطلب بانتظار التحميل اليدوي', $this->groupMessage());
+
+        // The suppliers screen says which packages depend on the paused supplier
+        $exclusive = KontorApiService::overview()['kontor86']['exclusive'];
+        $this->assertContains('باقة تركيا 5 جيجا - 30 يوم (فيزيائية)', $exclusive);
+        $this->assertNotContains('باقة Türk Telekom 5 جيجا - 30 يوم (eSIM)', $exclusive);
+
+        Livewire::actingAs($this->admin)->test(KontorSettings::class)
+            ->assertSee(__('messages.sim_supplier_exclusive_paused', ['count' => count($exclusive), 'supplier' => 'kontor86']))
+            ->assertSee('باقة تركيا 5 جيجا - 30 يوم (فيزيائية)');
+        Livewire::actingAs($this->admin)->test(\App\Livewire\Sim\Orders::class)
+            ->assertSee(__('messages.sim_supplier_manual_now', ['count' => count($exclusive)]));
+
+        // Resuming kontor86: the next Tele CARD order is sent automatically again
+        KontorApiService::for('kontor86')->setAutoSendPaused(false);
+        $next = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5026374701');
+        $this->assertSame('kontor86', $next->api_supplier);
+    }
+
+    public function test_connection_test_shows_the_selected_supplier_balance(): void
+    {
+        Livewire::actingAs($this->admin)->test(KontorSettings::class)
+            ->call('selectSupplier', 'telekomtl')
+            ->call('testConnection')
+            ->assertSee(__('messages.sim_supplier_balance_of', ['supplier' => 'telekomtl']) . ': <span', false)
+            ->assertSee('3,960.00 ₺');
     }
 }

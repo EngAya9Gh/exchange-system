@@ -149,7 +149,7 @@ class SimOrderGroupNotifier
             null => match (true) {
                 SimOrder::isSupplierProductProblem($order->api_message) => '⚙️ ' . __('messages.sim_group_api_fallback_manual', ['details' => (string) $order->api_message], 'ar'),
                 // Would have loaded automatically, but every supplier holding its key is paused by an admin
-                $this->pausedEverywhere($order) => '⏸️ ' . $t('sim_group_api_paused'),
+                $this->pausedSuppliersFor($order) !== [] => '⏸️ ' . __('messages.sim_group_api_paused', ['suppliers' => implode('، ', $this->pausedSuppliersFor($order))], 'ar'),
                 default => null,
             },
             SimOrder::API_FAILED => match (true) {
@@ -185,29 +185,34 @@ class SimOrderGroupNotifier
         return implode("\n", $lines);
     }
 
-    /** The package has a product key, but no supplier holding one is active and at least one of them is paused. */
-    protected function pausedEverywhere(SimOrder $order): bool
+    /**
+     * The package has a product key, but no supplier holding one is active: the paused ones among them
+     * (e.g. ["kontor86"] for a Tele CARD package while kontor86 is paused). Empty = not a pause case.
+     *
+     * @return string[]
+     */
+    protected function pausedSuppliersFor(SimOrder $order): array
     {
         $package = $order->package;
         if (!$package) {
-            return false;
+            return [];
         }
 
-        $keyed = array_filter(\App\Services\KontorApiService::SUPPLIERS, fn (string $s) => $package->isApiReadyFor($s));
-        if ($keyed === []) {
-            return false;
-        }
-
-        $anyPaused = false;
-        foreach ($keyed as $supplier) {
+        $paused = [];
+        foreach (\App\Services\KontorApiService::SUPPLIERS as $supplier) {
+            if (!$package->isApiReadyFor($supplier)) {
+                continue;
+            }
             $api = \App\Services\KontorApiService::for($supplier);
             if ($api->autoSendActive()) {
-                return false;
+                return [];
             }
-            $anyPaused = $anyPaused || $api->isAutoSendPaused();
+            if ($api->isAutoSendPaused()) {
+                $paused[] = $supplier;
+            }
         }
 
-        return $anyPaused;
+        return $paused;
     }
 
     /** "تركيا 10 جيجا - 30 يوم", "تركيا 50 جيجا - 6 أشهر", "أوروبا 5 جيجا - 30 يوم" */

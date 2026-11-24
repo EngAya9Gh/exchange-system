@@ -100,6 +100,10 @@ class KontorApiService
                 'primary' => $supplier === $primary,
                 'pause' => $api->autoSendPauseInfo(),
                 'packages' => $packages->filter(fn ($p) => $p->isApiReadyFor($supplier))->count(),
+                // Packages no other supplier carries: while this one is paused they are loaded by hand
+                'exclusive' => $packages->filter(fn ($p) => $p->isApiReadyFor($supplier)
+                    && collect(self::SUPPLIERS)->reject(fn ($s) => $s === $supplier)->every(fn ($s) => !$p->isApiReadyFor($s)))
+                    ->map(fn ($p) => $p->localized_name)->values()->all(),
             ];
         }
 

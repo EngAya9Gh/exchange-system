@@ -208,7 +208,8 @@ class PartnerApiTest extends TestCase
         $this->order(['package_id' => $esim->id, 'phone' => '0555 123 45 67'])->assertStatus(201)->assertJsonPath('order.phone', '5551234567');
         $this->order(['package_id' => $esim->id, 'phone' => '+4915112345678', 'reference' => 'R-2'])->assertStatus(422)->assertJsonPath('error.code', 'invalid_phone');
 
-        $inactive = SimPackage::where('is_active', false)->firstOrFail();
+        $inactive = SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_10gb_30gun')->firstOrFail();
+        $inactive->update(['is_active' => false]);
         $this->order(['package_id' => $inactive->id, 'reference' => 'R-3'])->assertStatus(422)->assertJsonPath('error.code', 'package_unavailable');
         $this->order(['package_id' => 999999, 'reference' => 'R-4'])->assertStatus(422)->assertJsonPath('error.code', 'package_unavailable');
 

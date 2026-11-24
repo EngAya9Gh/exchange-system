@@ -26,7 +26,12 @@
                                     <span class="text-[11px] font-black px-2 py-0.5 rounded-full bg-primary-600 text-white">⭐ {{ __('messages.sim_supplier_primary') }}</span>
                                 @endif
                             </div>
-                            <div class="text-[11px] font-bold text-slate-500 mt-1">{{ __('messages.sim_supplier_packages', ['count' => $state['packages']]) }}</div>
+                            <div class="text-[11px] font-bold text-slate-500 mt-1">
+                                {{ __('messages.sim_supplier_packages', ['count' => $state['packages']]) }}
+                                @if(count($state['exclusive']))
+                                    · {{ __('messages.sim_supplier_exclusive', ['count' => count($state['exclusive'])]) }}
+                                @endif
+                            </div>
                         </div>
                         @if(!$state['configured'])
                             <span class="shrink-0 text-xs font-black px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">{{ __('messages.sim_auto_send_not_set') }}</span>
@@ -52,6 +57,20 @@
                     @if($paused && ($state['pause']['by'] || $state['pause']['at']))
                         <div class="text-[11px] font-bold text-amber-800">{{ __('messages.sim_auto_send_paused_by', ['name' => $state['pause']['by'] ?: '-', 'at' => $state['pause']['at']?->format('Y-m-d H:i') ?? '-']) }}</div>
                     @endif
+                    {{-- Paused while some packages exist only here: their orders are loaded by hand --}}
+                    @if($paused && count($state['exclusive']))
+                        <div class="rounded-xl border border-amber-300 bg-white/70 p-3 text-xs text-amber-900">
+                            <div class="font-black">⚠️ {{ __('messages.sim_supplier_exclusive_paused', ['count' => count($state['exclusive']), 'supplier' => $state['supplier']]) }}</div>
+                            <div class="mt-1.5 flex flex-wrap gap-1">
+                                @foreach(array_slice($state['exclusive'], 0, 8) as $exclusiveName)
+                                    <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold">{{ $exclusiveName }}</span>
+                                @endforeach
+                                @if(count($state['exclusive']) > 8)
+                                    <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold">+{{ count($state['exclusive']) - 8 }}</span>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
 
                     <div class="mt-auto flex flex-wrap gap-2">
                         @if($state['configured'])
@@ -59,7 +78,8 @@
                                 <button type="button" wire:click="resumeAutoSend('{{ $state['supplier'] }}')" wire:confirm="{{ __('messages.sim_auto_send_resume_confirm') }}" wire:loading.attr="disabled"
                                     class="px-3 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white transition disabled:opacity-60">▶️ {{ __('messages.sim_auto_send_resume') }}</button>
                             @else
-                                <button type="button" wire:click="pauseAutoSend('{{ $state['supplier'] }}')" wire:confirm="{{ __('messages.sim_auto_send_pause_confirm') }}" wire:loading.attr="disabled"
+                                <button type="button" wire:click="pauseAutoSend('{{ $state['supplier'] }}')"
+                                    wire:confirm="{{ count($state['exclusive']) ? __('messages.sim_supplier_pause_confirm_exclusive', ['supplier' => $state['supplier'], 'count' => count($state['exclusive'])]) : __('messages.sim_auto_send_pause_confirm') }}" wire:loading.attr="disabled"
                                     class="px-3 py-2 rounded-xl text-xs font-black bg-rose-600 hover:bg-rose-700 text-white transition disabled:opacity-60">⏸️ {{ __('messages.sim_auto_send_pause') }}</button>
                             @endif
                         @endif
@@ -131,7 +151,7 @@
             @if($test['ok'])
                 <div class="text-lg font-black text-emerald-800">✅ {{ __('messages.kontor_connected') }}</div>
                 <div class="text-sm font-bold text-emerald-700 mt-2">
-                    {{ __('messages.sim_supplier_balance') }}: <span class="font-black text-xl" dir="ltr">{{ number_format($test['balance'], 2) }} ₺</span>
+                    {{ __('messages.sim_supplier_balance_of', ['supplier' => $supplier]) }}: <span class="font-black text-xl" dir="ltr">{{ number_format($test['balance'], 2) }} ₺</span>
                 </div>
             @else
                 <div class="text-lg font-black text-rose-800">❌ {{ __('messages.kontor_not_connected') }}</div>

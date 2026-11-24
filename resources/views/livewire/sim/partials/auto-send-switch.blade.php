@@ -29,6 +29,9 @@
                     @if($state['pause']['by'] || $state['pause']['at'])
                         <span class="text-[11px] font-bold text-amber-800">{{ __('messages.sim_auto_send_paused_by', ['name' => $state['pause']['by'] ?: '-', 'at' => $state['pause']['at']?->format('Y-m-d H:i') ?? '-']) }}</span>
                     @endif
+                    @if(count($state['exclusive']))
+                        <span class="text-[11px] font-black px-2 py-0.5 rounded-full bg-amber-100 text-amber-900" title="{{ implode(' · ', $state['exclusive']) }}">⚠️ {{ __('messages.sim_supplier_manual_now', ['count' => count($state['exclusive'])]) }}</span>
+                    @endif
                     <button type="button" wire:click="resumeAutoSend('{{ $state['supplier'] }}')" wire:confirm="{{ __('messages.sim_auto_send_resume_confirm') }}" wire:loading.attr="disabled"
                         class="px-3 py-1 rounded-lg font-black bg-emerald-600 hover:bg-emerald-700 text-white transition disabled:opacity-60">
                         ▶️ {{ __('messages.sim_auto_send_resume') }}
@@ -37,7 +40,8 @@
                     <span class="inline-flex items-center gap-1 font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>{{ __('messages.sim_auto_send_on') }}
                     </span>
-                    <button type="button" wire:click="pauseAutoSend('{{ $state['supplier'] }}')" wire:confirm="{{ __('messages.sim_auto_send_pause_confirm') }}" wire:loading.attr="disabled"
+                    <button type="button" wire:click="pauseAutoSend('{{ $state['supplier'] }}')"
+                        wire:confirm="{{ count($state['exclusive']) ? __('messages.sim_supplier_pause_confirm_exclusive', ['supplier' => $state['supplier'], 'count' => count($state['exclusive'])]) : __('messages.sim_auto_send_pause_confirm') }}" wire:loading.attr="disabled"
                         class="px-3 py-1 rounded-lg font-black bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 transition disabled:opacity-60">
                         ⏸️ {{ __('messages.sim_auto_send_pause') }}
                     </button>
