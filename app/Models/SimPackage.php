@@ -205,12 +205,48 @@ class SimPackage extends Model
             return [];
         }
 
+        // A physical Tele CARD line also takes the products marked tele_card_lines (Türk Telekom at telekomtl)
+        $teleCardLine = $this->region === self::REGION_LOCAL && $this->sim_type === self::TYPE_PHYSICAL && $network === 'Tele CARD';
+
         return array_values(array_filter(static::supplierProducts($supplier), fn (array $product) =>
             ($product['region'] ?? null) === $this->region
-            && ($product['sim'] ?? null) === $this->sim_type
-            && ($network === null || ($product['network'] ?? null) === $network)
+            && (
+                (($product['sim'] ?? null) === $this->sim_type && ($network === null || ($product['network'] ?? null) === $network))
+                || ($teleCardLine && !empty($product['tele_card_lines']))
+            )
             && ($product['days'] ?? null) !== null && (int) $product['days'] === (int) $this->validity_days
             && ($product['gb'] ?? null) !== null && (float) $product['gb'] === (float) $this->data_gb));
+    }
+
+    /**
+     * Adds the key of each given supplier this package has no key at yet, when exactly one product there has
+     * the same specs. Existing keys are never changed.
+     *
+     * @param  string[]  $suppliers
+     * @return array<string, array> what was added, supplier => product
+     */
+    public function linkMissingSuppliers(array $suppliers): array
+    {
+        $added = [];
+        foreach ($suppliers as $supplier) {
+            if (!isset(self::API_KEY_COLUMNS[$supplier]) || $this->isApiReadyFor($supplier)) {
+                continue;
+            }
+            $matches = $this->matchingProducts($supplier);
+            if (count($matches) !== 1) {
+                continue;
+            }
+            [$operatorColumn, $tipColumn, $codeColumn] = self::API_KEY_COLUMNS[$supplier];
+            $this->{$operatorColumn} = $matches[0]['operator'];
+            $this->{$tipColumn} = $matches[0]['tip'];
+            $this->{$codeColumn} = (string) $matches[0]['code'];
+            $added[$supplier] = $matches[0];
+        }
+        if ($added) {
+            $this->save();
+        }
+
+        return $added;
     }
 
     /**

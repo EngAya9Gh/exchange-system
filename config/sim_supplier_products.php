@@ -19,7 +19,7 @@ $p = function (string $code, string $tip, string $name, float $cost, string $gro
     return compact('code', 'tip', 'name', 'cost', 'group', 'region', 'sim', 'network', 'gb', 'days') + ['operator' => 'Callback'];
 };
 
-return [
+$list = [
     'kontor86' => [
         $p('26240', 'TeleCard', 'FİZİKSEL Turkiye 5 GB · 30 gün', 215, 'Tele CARD', 'local', 'physical', 'Tele CARD', 5, 30),
         $p('26241', 'TeleCard', 'FİZİKSEL Turkiye 10 GB · 30 gün', 230, 'Tele CARD', 'local', 'physical', 'Tele CARD', 10, 30),
@@ -93,3 +93,15 @@ return [
         $p('504', 'PttCell', 'PttCell SADE 30 GB', 199, 'PttCell', 'local', 'physical', 'PttCell', 30, null),
     ],
 ];
+
+/*
+ | Türk Telekom products at telekomtl also load on our Tele CARD lines (the "50" numbers): the team loads them
+ | from telekomtl's panel on 50… numbers and «Transfer Takip» shows them «Yüklendi» (2026-11-24).
+ | So a physical Turkey (Tele CARD) package is matched to them too, besides kontor86's Tele CARD products.
+ */
+$list['telekomtl'] = array_map(
+    fn (array $product) => $product + ['tele_card_lines' => $product['group'] === 'Türk Telekom eSIM'],
+    $list['telekomtl']
+);
+
+return $list;

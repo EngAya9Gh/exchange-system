@@ -389,7 +389,7 @@ class SimAutoSendTest extends TestCase
             ->set('apiOperator', '')->set('apiTip', '')->set('apiCode', '')
             ->call('save')
             ->assertHasNoErrors();
-        $this->assertFalse($twentyGb->fresh()->isApiReady());
+        $this->assertFalse($twentyGb->fresh()->isApiReadyFor('kontor86')); // its telekomtl key is a separate field
 
         Livewire::actingAs($this->admin)->test(PackagesManager::class)
             ->call('edit', $twentyGb->id)

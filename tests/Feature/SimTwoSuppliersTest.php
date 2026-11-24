@@ -532,7 +532,8 @@ class SimTwoSuppliersTest extends TestCase
 
         $this->assertSame(['Callback', 'TeleCard', '26240'], $five->fresh()->productKey('kontor86'));   // Tele CARD physical 5 GB · 30 days
         $this->assertSame(['Callback', 'TeleCard', '26257'], $thirty->fresh()->productKey('kontor86')); // Tele CARD physical 30 GB · 30 days
-        $this->assertNull($five->fresh()->productKey('telekomtl'));
+        $this->assertSame(['Callback', 'eSIM', '115'], $five->fresh()->productKey('telekomtl'));        // Türk Telekom 5 GB loads on Tele CARD lines
+        $this->assertSame('telekomtl', $five->fresh()->preferred_supplier);                            // cheaper: 132 < 215
         $this->assertFalse($hundred->fresh()->isApiReady()); // no 100 GB · 180 days product anywhere: stays manual
 
         // Packages that already had keys are untouched
@@ -541,9 +542,9 @@ class SimTwoSuppliersTest extends TestCase
             $this->assertSame([$kontor, $telekom], [$package->productKey('kontor86'), $package->productKey('telekomtl')]);
         }
 
-        // The 5 GB now loads automatically
+        // The 5 GB now loads automatically, at the cheaper supplier
         $order = app(SimOrderService::class)->placeOrder($this->customer, $five->id, '5026374700');
-        $this->assertSame('26240', $this->sends()->sole()[1]['kontor']);
+        $this->assertSame(['telekomtl', '115'], [$this->sends()->sole()[0], $this->sends()->sole()[1]['kontor']]);
         $this->assertSame(SimOrder::API_PROCESSING, $order->api_status);
 
         // The screen explains the one left
@@ -594,7 +595,7 @@ class SimTwoSuppliersTest extends TestCase
         Livewire::actingAs($this->admin)->test(PackagesManager::class)
             ->assertSee('kontor86: FİZİKSEL Turkiye 5 GB · 30 gün · 26240')
             ->call('linkSuggested', $five->id)
-            ->assertSee(__('messages.sim_package_linked', ['name' => 'الاستاذ', 'products' => 'kontor86: FİZİKSEL Turkiye 5 GB · 30 gün (26240)']))
+            ->assertSee(__('messages.sim_package_linked', ['name' => 'الاستاذ', 'products' => 'kontor86: FİZİKSEL Turkiye 5 GB · 30 gün (26240) · telekomtl: TURKTELEKOM 5 GB · 30 gün (115)']))
             ->call('linkSuggested', $hundred->id)
             ->assertSee(__('messages.sim_package_no_match', ['name' => 'الاستاذ']));
 
@@ -613,5 +614,49 @@ class SimTwoSuppliersTest extends TestCase
         $unlinked = SimPackage::active()->get()->reject(fn (SimPackage $p) => $p->isApiReady())->pluck('supplier_code')->all();
         $this->assertSame([], $unlinked);
         $this->assertSame(21, SimPackage::active()->count());
+    }
+
+    public function test_tele_card_lines_load_from_telekomtl_while_kontor86_is_paused(): void
+    {
+        // Production on 2026-11-24: telekomtl primary, kontor86 paused (more expensive);
+        // the teacher's 5 / 30 GB were linked to kontor86 only, his 100 GB "6 months" to nothing
+        KontorApiService::setPrimarySupplier('telekomtl');
+        KontorApiService::for('kontor86')->setAutoSendPaused(true, $this->admin);
+        $five = $this->teacherPackage(5, 30, 100, ['api_operator' => 'Callback', 'api_tip' => 'TeleCard', 'api_code' => '26240']);
+        $thirty = $this->teacherPackage(30, 30, 550, ['api_operator' => 'Callback', 'api_tip' => 'TeleCard', 'api_code' => '26257']);
+        $hundred = $this->teacherPackage(100, 180, 1700);
+        $this->fiveGb->update(['telekomtl_operator' => null, 'telekomtl_tip' => null, 'telekomtl_code' => null]);
+
+        (require database_path('migrations/2026_11_24_000003_link_tele_card_lines_to_telekomtl.php'))->up();
+
+        // Türk Telekom products at telekomtl, kontor86 keys kept as backup
+        $this->assertSame(['Callback', 'eSIM', '115'], $five->fresh()->productKey('telekomtl'));
+        $this->assertSame(['Callback', 'TeleCard', '26240'], $five->fresh()->productKey('kontor86'));
+        $this->assertSame(['Callback', 'eSIM', '480'], $thirty->fresh()->productKey('telekomtl'));
+        // The circled panel product: TURKTELEKOM 100 GB İnternet 90 gün → duration corrected, linked
+        $this->assertSame(90, $hundred->fresh()->validity_days);
+        $this->assertSame('3 أشهر', $hundred->fresh()->durationLabel());
+        $this->assertSame(['Callback', 'eSIM', '909090'], $hundred->fresh()->productKey('telekomtl'));
+        // Our own Tele CARD physical packages
+        $this->assertSame('115', $this->fiveGb->fresh()->telekomtl_code);
+        $this->assertSame([
+            'FİZİKSEL Turkiye_5gb_30gun' => '115', 'FİZİKSEL Turkiye_10gb_30gun' => '175', 'FİZİKSEL Turkiye_20gb_30gun' => '330',
+            'FİZİKSEL Turkiye_50gb_30gun' => '590', 'FİZİKSEL Turkiye_50gb_180gun' => '2000', 'FİZİKSEL Turkiye_100gb_30gun' => '1600',
+        ], SimPackage::where('sim_type', 'physical')->where('region', 'local')->whereNotNull('supplier_code')->ordered()->pluck('telekomtl_code', 'supplier_code')->all());
+        // Tele CARD eSIM packages have no telekomtl equivalent: untouched
+        $this->assertNull(SimPackage::where('supplier_code', 'E-SİM Turkiye_5gb_30gun')->value('telekomtl_code'));
+
+        // A Tele CARD order now goes to telekomtl automatically (it went to the group before)
+        $this->customer->update(['balance' => 5000]);
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5026374700');
+        [$supplier, $request] = $this->sends()->sole();
+        $this->assertSame(['telekomtl', 'Callback', 'eSIM', '115', '5026374700'], [$supplier, $request['operator'], $request['tip'], $request['kontor'], $request['gsmno']]);
+        $this->assertSame(SimOrder::API_PROCESSING, $order->api_status);
+        $this->assertStringContainsString('🤖 جاري التحميل · telekomtl', $this->groupMessage());
+
+        // Nothing is left unlinked; while kontor86 is paused only the Tele CARD eSIMs depend on it
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->assertDontSee(__('messages.sim_unlinked_title', ['count' => 1]));
+        $this->assertSame(5, count(KontorApiService::overview()['kontor86']['exclusive']));
     }
 }
