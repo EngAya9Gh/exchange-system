@@ -21,6 +21,24 @@
             <div class="mb-6 p-4 bg-green-50 text-green-700 rounded-xl border border-green-100 font-bold">{{ session('sim_package_success') }}</div>
         @endif
 
+        {{-- On sale but linked to no supplier: their orders are loaded by hand from the group --}}
+        @if($unlinked->isNotEmpty())
+            <div class="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <div class="text-sm font-black text-amber-900">⚠️ {{ __('messages.sim_unlinked_title', ['count' => $unlinked->count()]) }}</div>
+                <p class="text-xs text-amber-800 mt-1">{{ __('messages.sim_unlinked_desc') }}</p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    @foreach($unlinked as $unlinkedPackage)
+                        <button type="button" wire:click="edit({{ $unlinkedPackage->id }})" wire:key="unlinked-{{ $unlinkedPackage->id }}"
+                            class="inline-flex items-center gap-1.5 rounded-xl bg-white border border-amber-300 px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition">
+                            <span>{{ $unlinkedPackage->name_ar }}</span>
+                            <span class="text-amber-700" dir="ltr">{{ $unlinkedPackage->data_gb }} GB · {{ SimPackage::formatPrice($unlinkedPackage->price) }} ₺</span>
+                            <span class="font-black text-primary-600">{{ __('messages.sim_unlinked_link') }}</span>
+                        </button>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         @foreach($tabs as $regionKey)
             <div class="mb-8 last:mb-0">
                 <h4 class="text-sm font-black text-slate-600 mb-3 flex items-center gap-2">
@@ -241,7 +259,8 @@
                         <div class="text-sm font-black text-indigo-900">🤖 {{ __('messages.sim_api_section') }}</div>
                         <p class="text-[11px] text-indigo-700/80 mt-1 mb-3 leading-relaxed">{{ __('messages.sim_api_section_hint') }}</p>
                         <div class="text-[11px] font-black text-indigo-900 mb-1.5" dir="ltr">kontor86</div>
-                        <div class="grid grid-cols-3 gap-3" dir="ltr">
+                        @include('livewire.sim.partials.supplier-product-picker', ['supplier' => 'kontor86', 'pickModel' => 'pickKontor', 'groups' => $catalogue['kontor86'], 'tip' => $apiTip, 'code' => $apiCode, 'price' => $price])
+                        <div class="grid grid-cols-3 gap-3 mt-2" dir="ltr">
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_operator') }}</label>
                                 <input type="text" wire:model="apiOperator" maxlength="30" placeholder="operator" class="{{ $inputClass }} font-mono">
@@ -260,7 +279,8 @@
                         @error('apiCode') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
 
                         <div class="text-[11px] font-black text-teal-800 mt-4 mb-1.5" dir="ltr">telekomtl</div>
-                        <div class="grid grid-cols-3 gap-3" dir="ltr">
+                        @include('livewire.sim.partials.supplier-product-picker', ['supplier' => 'telekomtl', 'pickModel' => 'pickTk', 'groups' => $catalogue['telekomtl'], 'tip' => $tkTip, 'code' => $tkCode, 'price' => $price])
+                        <div class="grid grid-cols-3 gap-3 mt-2" dir="ltr">
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_operator') }}</label>
                                 <input type="text" wire:model="tkOperator" maxlength="30" placeholder="operator" class="{{ $inputClass }} font-mono">

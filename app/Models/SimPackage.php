@@ -153,6 +153,35 @@ class SimPackage extends Model
         return false;
     }
 
+    /**
+     * Products a supplier lists in its panel (config/sim_supplier_products.php), each
+     * ['code', 'operator', 'tip', 'name', 'cost', 'group'].
+     */
+    public static function supplierProducts(string $supplier): array
+    {
+        return config("sim_supplier_products.{$supplier}", []);
+    }
+
+    /** The listed product with this key at the supplier (code + tip, letters case-insensitive), or null. */
+    public static function findSupplierProduct(string $supplier, ?string $tip, ?string $code): ?array
+    {
+        foreach (static::supplierProducts($supplier) as $product) {
+            if ((string) $product['code'] === trim((string) $code) && strcasecmp($product['tip'], trim((string) $tip)) === 0) {
+                return $product;
+            }
+        }
+
+        return null;
+    }
+
+    /** The supplier's listed cost for this package's key there (null = no key, or not in the list). */
+    public function listedCost(string $supplier): ?float
+    {
+        $key = $this->productKey($supplier);
+
+        return $key ? (static::findSupplierProduct($supplier, $key[1], $key[2])['cost'] ?? null) : null;
+    }
+
     /** The supplier refused this key ("Aktif Kontor …"): stop trying it there until an admin re-enters it. */
     public function clearProductKey(string $supplier): void
     {

@@ -32,6 +32,10 @@ class PackagesManager extends Component
     public string $tkCode = '';
     // Supplier tried first for this package ('' = the primary supplier)
     public string $preferredSupplier = '';
+
+    // Product picked from each supplier's list ("tip|code"): fills the three key fields
+    public string $pickKontor = '';
+    public string $pickTk = '';
     public bool $isActive = true;
     public $sortOrder = 0;
     public string $badge = '';
@@ -62,10 +66,11 @@ class PackagesManager extends Component
             'supplierCode' => ['nullable', 'string', 'max:255'],
             'apiOperator' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
             'apiTip' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
-            'apiCode' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
+            // Codes may contain a dot (telekomtl: 100.01, 200.04)
+            'apiCode' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_.]+$/'],
             'tkOperator' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
             'tkTip' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
-            'tkCode' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_]+$/'],
+            'tkCode' => ['nullable', 'string', 'max:30', 'regex:/^[A-Za-z0-9_.]+$/'],
             'preferredSupplier' => ['nullable', 'in:' . implode(',', \App\Services\KontorApiService::SUPPLIERS)],
             'isActive' => ['boolean'],
             'sortOrder' => ['nullable', 'integer', 'min:0', 'max:100000'],
@@ -144,6 +149,8 @@ class PackagesManager extends Component
         $this->tkTip = (string) $package->telekomtl_tip;
         $this->tkCode = (string) $package->telekomtl_code;
         $this->preferredSupplier = (string) $package->preferred_supplier;
+        $this->pickKontor = $this->pickValue('kontor86', $this->apiTip, $this->apiCode);
+        $this->pickTk = $this->pickValue('telekomtl', $this->tkTip, $this->tkCode);
         $this->isActive = $package->is_active;
         $this->sortOrder = $package->sort_order;
         $this->badge = (string) $package->badge;
@@ -213,6 +220,34 @@ class PackagesManager extends Component
         session()->flash('sim_package_success', __('messages.sim_package_saved'));
     }
 
+    public function updatedPickKontor(string $value): void
+    {
+        [$this->apiOperator, $this->apiTip, $this->apiCode] = $this->keyFromPick('kontor86', $value);
+        $this->resetValidation(['apiOperator', 'apiTip', 'apiCode']);
+    }
+
+    public function updatedPickTk(string $value): void
+    {
+        [$this->tkOperator, $this->tkTip, $this->tkCode] = $this->keyFromPick('telekomtl', $value);
+        $this->resetValidation(['tkOperator', 'tkTip', 'tkCode']);
+    }
+
+    /** "TeleCard|26240" → ['Callback', 'TeleCard', '26240']; '' → empty key (not linked to this supplier) */
+    protected function keyFromPick(string $supplier, string $value): array
+    {
+        [$tip, $code] = array_pad(explode('|', $value, 2), 2, '');
+        $product = $value === '' ? null : SimPackage::findSupplierProduct($supplier, $tip, $code);
+
+        return $product ? [$product['operator'], $product['tip'], (string) $product['code']] : ['', '', ''];
+    }
+
+    protected function pickValue(string $supplier, string $tip, string $code): string
+    {
+        $product = SimPackage::findSupplierProduct($supplier, $tip, $code);
+
+        return $product ? $product['tip'] . '|' . $product['code'] : '';
+    }
+
     public function toggleActive(int $packageId): void
     {
         $this->authorizeManage();
@@ -239,7 +274,7 @@ class PackagesManager extends Component
         $this->resetValidation();
         $this->reset([
             'editingId', 'region', 'simType', 'networkName', 'dataGb', 'validityDays', 'price',
-            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'tkOperator', 'tkTip', 'tkCode', 'preferredSupplier', 'isActive', 'sortOrder', 'badge',
+            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'tkOperator', 'tkTip', 'tkCode', 'preferredSupplier', 'pickKontor', 'pickTk', 'isActive', 'sortOrder', 'badge',
         ]);
     }
 
@@ -248,6 +283,12 @@ class PackagesManager extends Component
         $packages = SimPackage::withCount('orders')->ordered()->get();
 
         return view('livewire.sim.packages-manager', [
+            // On sale but linked to no supplier: every order of these is loaded by hand
+            'unlinked' => $packages->filter(fn (SimPackage $p) => $p->is_active && !$p->isApiReady())->values(),
+            'catalogue' => [
+                'kontor86' => collect(SimPackage::supplierProducts('kontor86'))->groupBy('group'),
+                'telekomtl' => collect(SimPackage::supplierProducts('telekomtl'))->groupBy('group'),
+            ],
             'packagesByTab' => $packagesByTab = $packages->groupBy(fn (SimPackage $package) => $package->tabKey()),
             'tabs' => SimPackage::visibleTabs($packagesByTab),
             'knownNetworks' => SimPackage::withTrashed()->whereNotNull('network_name')->distinct()->orderBy('network_name')->pluck('network_name'),
