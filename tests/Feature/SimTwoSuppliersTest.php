@@ -511,4 +511,107 @@ class SimTwoSuppliersTest extends TestCase
         $this->assertEquals(215, SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_5gb_30gun')->first()->listedCost('kontor86'));
         $this->assertEquals(295, SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_10gb')->first()->listedCost('telekomtl'));
     }
+
+    protected function teacherPackage(int $gb, int $days, float $price, array $extra = []): SimPackage
+    {
+        return SimPackage::create($extra + [
+            'region' => 'local', 'sim_type' => 'physical', 'data_gb' => $gb, 'validity_days' => $days, 'price' => $price,
+            'name_ar' => 'الاستاذ', 'name_tr' => 'Hoca', 'description_ar' => 'قم بداخل اخر 8ارقام', 'is_active' => true, 'sort_order' => 90,
+        ]);
+    }
+
+    public function test_migration_links_the_teachers_packages_by_their_specs(): void
+    {
+        // Exactly what the teacher added on 2026-11-24 (no network, no key)
+        $five = $this->teacherPackage(5, 30, 100);
+        $thirty = $this->teacherPackage(30, 30, 550);
+        $hundred = $this->teacherPackage(100, 180, 1700);
+        $before = SimPackage::where('name_ar', '!=', 'الاستاذ')->get()->mapWithKeys(fn ($p) => [$p->id => [$p->productKey('kontor86'), $p->productKey('telekomtl')]]);
+
+        (require database_path('migrations/2026_11_24_000002_link_unlinked_packages_by_specs.php'))->up();
+
+        $this->assertSame(['Callback', 'TeleCard', '26240'], $five->fresh()->productKey('kontor86'));   // Tele CARD physical 5 GB · 30 days
+        $this->assertSame(['Callback', 'TeleCard', '26257'], $thirty->fresh()->productKey('kontor86')); // Tele CARD physical 30 GB · 30 days
+        $this->assertNull($five->fresh()->productKey('telekomtl'));
+        $this->assertFalse($hundred->fresh()->isApiReady()); // no 100 GB · 180 days product anywhere: stays manual
+
+        // Packages that already had keys are untouched
+        foreach ($before as $id => [$kontor, $telekom]) {
+            $package = SimPackage::find($id);
+            $this->assertSame([$kontor, $telekom], [$package->productKey('kontor86'), $package->productKey('telekomtl')]);
+        }
+
+        // The 5 GB now loads automatically
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $five->id, '5026374700');
+        $this->assertSame('26240', $this->sends()->sole()[1]['kontor']);
+        $this->assertSame(SimOrder::API_PROCESSING, $order->api_status);
+
+        // The screen explains the one left
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->assertSee(__('messages.sim_unlinked_title', ['count' => 1]))
+            ->assertSee(__('messages.sim_unlinked_no_match'));
+    }
+
+    public function test_new_package_added_in_the_screen_links_itself(): void
+    {
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('create')
+            ->set('region', 'local')->set('simType', 'physical')
+            ->set('dataGb', 20)->set('validityDays', 30)->set('price', 500)
+            ->assertSee(__('messages.sim_pick_suggested'))
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSee(__('messages.sim_package_saved_linked', ['products' => 'kontor86: FİZİKSEL Turkiye 20 GB · 30 gün (26250)']));
+
+        $new = SimPackage::latest('id')->first();
+        $this->assertSame(['Callback', 'TeleCard', '26250'], $new->productKey('kontor86'));
+
+        // Europe: both suppliers carry it → both linked, the cheaper one preferred
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('create')
+            ->set('region', 'europe')->set('simType', 'physical')
+            ->set('dataGb', 50)->set('validityDays', 30)->set('price', 1400)
+            ->call('save');
+        $europe = SimPackage::latest('id')->first();
+        $this->assertSame(['Callback', 'eSIM', '45244'], $europe->productKey('kontor86'));
+        $this->assertSame(['Callback', 'TeleCard', '12347'], $europe->productKey('telekomtl'));
+        $this->assertSame('telekomtl', $europe->preferred_supplier); // 975 < 995
+
+        // A network that names another listed product: OnlineKart 5 GB · 30 days at telekomtl
+        $online = $this->teacherPackage(5, 30, 175, ['network_name' => 'onlinekart']);
+        $this->assertSame(['telekomtl' => '777'], collect($online->suggestedLinks())->map(fn ($p) => $p['code'])->all());
+
+        // An eSIM with no known network is ambiguous: never linked on its own
+        $esim = $this->teacherPackage(10, 30, 300, ['sim_type' => 'esim']);
+        $this->assertSame([], $esim->suggestedLinks());
+    }
+
+    public function test_one_click_link_from_the_unlinked_box(): void
+    {
+        $five = $this->teacherPackage(5, 30, 100);
+        $hundred = $this->teacherPackage(100, 180, 1700);
+
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->assertSee('kontor86: FİZİKSEL Turkiye 5 GB · 30 gün · 26240')
+            ->call('linkSuggested', $five->id)
+            ->assertSee(__('messages.sim_package_linked', ['name' => 'الاستاذ', 'products' => 'kontor86: FİZİKSEL Turkiye 5 GB · 30 gün (26240)']))
+            ->call('linkSuggested', $hundred->id)
+            ->assertSee(__('messages.sim_package_no_match', ['name' => 'الاستاذ']));
+
+        $this->assertTrue($five->fresh()->isApiReady());
+
+        $thirty = $this->teacherPackage(30, 30, 550);
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('linkAllSuggested')
+            ->assertSee(__('messages.sim_packages_linked_count', ['count' => 1]));
+        $this->assertTrue($thirty->fresh()->isApiReady());
+        $this->assertFalse($hundred->fresh()->isApiReady());
+    }
+
+    public function test_every_package_we_added_before_is_linked_to_a_supplier(): void
+    {
+        $unlinked = SimPackage::active()->get()->reject(fn (SimPackage $p) => $p->isApiReady())->pluck('supplier_code')->all();
+        $this->assertSame([], $unlinked);
+        $this->assertSame(21, SimPackage::active()->count());
+    }
 }

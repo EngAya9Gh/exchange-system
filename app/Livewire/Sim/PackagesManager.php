@@ -209,15 +209,50 @@ class PackagesManager extends Component
             'badge' => $this->badge ?: null,
         ];
 
+        $linked = [];
         if ($this->editingId) {
             SimPackage::findOrFail($this->editingId)->update($data);
         } else {
-            SimPackage::create($data);
+            // A new package with no key is linked to the one supplier product with the same specs, if any
+            $linked = SimPackage::create($data)->applySuggestedLinks();
         }
 
         $this->showForm = false;
         $this->resetForm();
-        session()->flash('sim_package_success', __('messages.sim_package_saved'));
+        session()->flash('sim_package_success', $linked
+            ? __('messages.sim_package_saved_linked', ['products' => $this->describeLinks($linked)])
+            : __('messages.sim_package_saved'));
+    }
+
+    /** Links an unlinked package to its matching supplier product(s) in one click. */
+    public function linkSuggested(int $packageId): void
+    {
+        $this->authorizeManage();
+        $package = SimPackage::findOrFail($packageId);
+        $linked = $package->applySuggestedLinks();
+
+        session()->flash('sim_package_success', $linked
+            ? __('messages.sim_package_linked', ['name' => $package->name_ar, 'products' => $this->describeLinks($linked)])
+            : __('messages.sim_package_no_match', ['name' => $package->name_ar]));
+    }
+
+    public function linkAllSuggested(): void
+    {
+        $this->authorizeManage();
+        $count = 0;
+        foreach (SimPackage::all() as $package) {
+            if (!$package->isApiReady() && $package->applySuggestedLinks()) {
+                $count++;
+            }
+        }
+
+        session()->flash('sim_package_success', __('messages.sim_packages_linked_count', ['count' => $count]));
+    }
+
+    /** "kontor86: FİZİKSEL Turkiye 5 GB · 30 gün (26240)" */
+    protected function describeLinks(array $links): string
+    {
+        return collect($links)->map(fn (array $p, string $supplier) => "{$supplier}: {$p['name']} ({$p['code']})")->implode(' · ');
     }
 
     public function updatedPickKontor(string $value): void
@@ -285,6 +320,17 @@ class PackagesManager extends Component
         return view('livewire.sim.packages-manager', [
             // On sale but linked to no supplier: every order of these is loaded by hand
             'unlinked' => $packages->filter(fn (SimPackage $p) => $p->is_active && !$p->isApiReady())->values(),
+            // Products with the same specs as the package in the form (region, type, network, GB, days)
+            'suggestions' => $this->showForm && is_numeric($this->dataGb) && is_numeric($this->validityDays)
+                ? collect(array_keys(SimPackage::API_KEY_COLUMNS))->mapWithKeys(fn (string $supplier) => [$supplier => (function () use ($supplier) {
+                    $matches = (new SimPackage([
+                        'region' => $this->region, 'sim_type' => $this->simType, 'network_name' => $this->networkName,
+                        'data_gb' => (int) $this->dataGb, 'validity_days' => (int) $this->validityDays,
+                    ]))->matchingProducts($supplier);
+
+                    return count($matches) === 1 ? $matches[0] : null;
+                })()])->all()
+                : [],
             'catalogue' => [
                 'kontor86' => collect(SimPackage::supplierProducts('kontor86'))->groupBy('group'),
                 'telekomtl' => collect(SimPackage::supplierProducts('telekomtl'))->groupBy('group'),

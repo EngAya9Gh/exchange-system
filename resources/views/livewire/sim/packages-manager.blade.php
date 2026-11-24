@@ -24,16 +24,34 @@
         {{-- On sale but linked to no supplier: their orders are loaded by hand from the group --}}
         @if($unlinked->isNotEmpty())
             <div class="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                <div class="text-sm font-black text-amber-900">⚠️ {{ __('messages.sim_unlinked_title', ['count' => $unlinked->count()]) }}</div>
-                <p class="text-xs text-amber-800 mt-1">{{ __('messages.sim_unlinked_desc') }}</p>
-                <div class="mt-3 flex flex-wrap gap-2">
+                @php $anySuggestion = $unlinked->contains(fn ($p) => $p->suggestedLinks() !== []); @endphp
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <div class="text-sm font-black text-amber-900">⚠️ {{ __('messages.sim_unlinked_title', ['count' => $unlinked->count()]) }}</div>
+                        <p class="text-xs text-amber-800 mt-1">{{ __('messages.sim_unlinked_desc') }}</p>
+                    </div>
+                    @if($anySuggestion)
+                        <button type="button" wire:click="linkAllSuggested" wire:loading.attr="disabled"
+                            class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-black bg-primary-600 text-white hover:bg-primary-700 transition">{{ __('messages.sim_unlinked_link_all') }}</button>
+                    @endif
+                </div>
+                <div class="mt-3 space-y-2">
                     @foreach($unlinked as $unlinkedPackage)
-                        <button type="button" wire:click="edit({{ $unlinkedPackage->id }})" wire:key="unlinked-{{ $unlinkedPackage->id }}"
-                            class="inline-flex items-center gap-1.5 rounded-xl bg-white border border-amber-300 px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition">
-                            <span>{{ $unlinkedPackage->name_ar }}</span>
-                            <span class="text-amber-700" dir="ltr">{{ $unlinkedPackage->data_gb }} GB · {{ SimPackage::formatPrice($unlinkedPackage->price) }} ₺</span>
-                            <span class="font-black text-primary-600">{{ __('messages.sim_unlinked_link') }}</span>
-                        </button>
+                        @php $suggestion = $unlinkedPackage->suggestedLinks(); @endphp
+                        <div wire:key="unlinked-{{ $unlinkedPackage->id }}" class="flex flex-wrap items-center gap-2 rounded-xl bg-white border border-amber-200 px-3 py-2 text-xs">
+                            <span class="font-black text-slate-800">{{ $unlinkedPackage->name_ar }}</span>
+                            <span class="text-slate-500" dir="ltr">{{ $unlinkedPackage->data_gb }} GB · {{ $unlinkedPackage->durationLabel() }} · {{ SimPackage::formatPrice($unlinkedPackage->price) }} ₺</span>
+                            <span class="text-slate-300">→</span>
+                            @if($suggestion)
+                                @foreach($suggestion as $suggestedSupplier => $suggestedProduct)
+                                    <span class="rounded-full bg-emerald-50 text-emerald-800 px-2 py-0.5 font-bold" dir="ltr">{{ $suggestedSupplier }}: {{ $suggestedProduct['name'] }} · {{ $suggestedProduct['code'] }}</span>
+                                @endforeach
+                                <button type="button" wire:click="linkSuggested({{ $unlinkedPackage->id }})" class="ms-auto px-2.5 py-1 rounded-lg font-black bg-primary-600 text-white hover:bg-primary-700 transition">{{ __('messages.sim_unlinked_link') }}</button>
+                            @else
+                                <span class="text-amber-800 font-bold">{{ __('messages.sim_unlinked_no_match') }}</span>
+                                <button type="button" wire:click="edit({{ $unlinkedPackage->id }})" class="ms-auto px-2.5 py-1 rounded-lg font-black bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 transition">{{ __('messages.sim_unlinked_pick') }}</button>
+                            @endif
+                        </div>
                     @endforeach
                 </div>
             </div>
@@ -259,7 +277,7 @@
                         <div class="text-sm font-black text-indigo-900">🤖 {{ __('messages.sim_api_section') }}</div>
                         <p class="text-[11px] text-indigo-700/80 mt-1 mb-3 leading-relaxed">{{ __('messages.sim_api_section_hint') }}</p>
                         <div class="text-[11px] font-black text-indigo-900 mb-1.5" dir="ltr">kontor86</div>
-                        @include('livewire.sim.partials.supplier-product-picker', ['supplier' => 'kontor86', 'pickModel' => 'pickKontor', 'groups' => $catalogue['kontor86'], 'tip' => $apiTip, 'code' => $apiCode, 'price' => $price])
+                        @include('livewire.sim.partials.supplier-product-picker', ['supplier' => 'kontor86', 'pickModel' => 'pickKontor', 'groups' => $catalogue['kontor86'], 'tip' => $apiTip, 'code' => $apiCode, 'price' => $price, 'suggestion' => $suggestions['kontor86'] ?? null])
                         <div class="grid grid-cols-3 gap-3 mt-2" dir="ltr">
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_operator') }}</label>
@@ -279,7 +297,7 @@
                         @error('apiCode') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
 
                         <div class="text-[11px] font-black text-teal-800 mt-4 mb-1.5" dir="ltr">telekomtl</div>
-                        @include('livewire.sim.partials.supplier-product-picker', ['supplier' => 'telekomtl', 'pickModel' => 'pickTk', 'groups' => $catalogue['telekomtl'], 'tip' => $tkTip, 'code' => $tkCode, 'price' => $price])
+                        @include('livewire.sim.partials.supplier-product-picker', ['supplier' => 'telekomtl', 'pickModel' => 'pickTk', 'groups' => $catalogue['telekomtl'], 'tip' => $tkTip, 'code' => $tkCode, 'price' => $price, 'suggestion' => $suggestions['telekomtl'] ?? null])
                         <div class="grid grid-cols-3 gap-3 mt-2" dir="ltr">
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_operator') }}</label>

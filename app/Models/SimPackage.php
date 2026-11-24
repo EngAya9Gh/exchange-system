@@ -174,6 +174,94 @@ class SimPackage extends Model
         return null;
     }
 
+    /**
+     * The network this package is matched on. Europe: any. Physical Turkey: the listed physical network it names
+     * (OnlineKart, BimCell, PttCell…), otherwise Tele CARD (our physical flow is always a Tele CARD "50" line).
+     * eSIM Turkey: the listed eSIM network it names, otherwise none (ambiguous, no automatic link).
+     */
+    protected function matchNetwork(): ?string
+    {
+        if ($this->region === self::REGION_EUROPE) {
+            return null;
+        }
+
+        $named = mb_strtolower(trim((string) $this->network_name));
+        foreach (array_keys(self::API_KEY_COLUMNS) as $supplier) {
+            foreach (static::supplierProducts($supplier) as $product) {
+                if (($product['sim'] ?? null) === $this->sim_type && mb_strtolower($product['network'] ?? '') === $named) {
+                    return $product['network'];
+                }
+            }
+        }
+
+        return $this->sim_type === self::TYPE_PHYSICAL ? 'Tele CARD' : '';
+    }
+
+    /** Products at a supplier with exactly this package's specs (region, SIM type, network, GB, days). */
+    public function matchingProducts(string $supplier): array
+    {
+        $network = $this->matchNetwork();
+        if ($network === '') {
+            return [];
+        }
+
+        return array_values(array_filter(static::supplierProducts($supplier), fn (array $product) =>
+            ($product['region'] ?? null) === $this->region
+            && ($product['sim'] ?? null) === $this->sim_type
+            && ($network === null || ($product['network'] ?? null) === $network)
+            && ($product['days'] ?? null) !== null && (int) $product['days'] === (int) $this->validity_days
+            && ($product['gb'] ?? null) !== null && (float) $product['gb'] === (float) $this->data_gb));
+    }
+
+    /**
+     * For a package linked to no supplier: the single product with the same specs at each supplier that has one.
+     *
+     * @return array<string, array> supplier => product
+     */
+    public function suggestedLinks(): array
+    {
+        if ($this->isApiReady()) {
+            return [];
+        }
+
+        $links = [];
+        foreach (array_keys(self::API_KEY_COLUMNS) as $supplier) {
+            $matches = $this->matchingProducts($supplier);
+            if (count($matches) === 1) {
+                $links[$supplier] = $matches[0];
+            }
+        }
+
+        return $links;
+    }
+
+    /**
+     * Links an unlinked package to its matching products (suggestedLinks). With several suppliers the cheaper
+     * one becomes the preferred supplier (unless one is already set).
+     *
+     * @return array<string, array> what was linked, supplier => product
+     */
+    public function applySuggestedLinks(): array
+    {
+        $links = $this->suggestedLinks();
+        if ($links === []) {
+            return [];
+        }
+
+        foreach ($links as $supplier => $product) {
+            [$operatorColumn, $tipColumn, $codeColumn] = self::API_KEY_COLUMNS[$supplier];
+            $this->{$operatorColumn} = $product['operator'];
+            $this->{$tipColumn} = $product['tip'];
+            $this->{$codeColumn} = (string) $product['code'];
+        }
+        if (count($links) > 1 && blank($this->preferred_supplier)) {
+            $this->preferred_supplier = collect($links)->sortBy('cost')->keys()->first();
+        }
+        $this->save();
+
+        return $links;
+    }
+
     /** The supplier's listed cost for this package's key there (null = no key, or not in the list). */
     public function listedCost(string $supplier): ?float
     {

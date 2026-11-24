@@ -17,6 +17,12 @@
         </optgroup>
     @endforeach
 </select>
+@if(!filled($code) && !empty($suggestion))
+    <p class="text-[11px] font-bold text-emerald-800 mb-1.5">
+        {{ __('messages.sim_pick_suggested') }}: <span dir="ltr">{{ $suggestion['name'] }} · {{ $suggestion['code'] }}</span>
+        <button type="button" wire:click="$set('{{ $pickModel }}', '{{ $suggestion['tip'] }}|{{ $suggestion['code'] }}')" class="ms-1 underline text-primary-600">{{ __('messages.sim_pick_use') }}</button>
+    </p>
+@endif
 @if($picked && $margin !== null)
     <p class="text-[11px] font-bold mt-1.5 {{ $margin < 0 ? 'text-rose-700' : 'text-emerald-700' }}">
         {{ __('messages.sim_api_cost') }}: <span dir="ltr">{{ \App\Models\SimPackage::formatPrice($picked['cost']) }} ₺</span> ·
