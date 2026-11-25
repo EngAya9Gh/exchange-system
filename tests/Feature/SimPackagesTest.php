@@ -276,6 +276,95 @@ class SimPackagesTest extends TestCase
         $this->assertEquals(380, $this->customer->fresh()->balance); // 1000 - 350 - 270
     }
 
+    public function test_order_opens_a_confirmation_window_with_its_details(): void
+    {
+        $package = $this->package(350);
+
+        $component = Livewire::actingAs($this->customer)
+            ->test(BuyPackage::class)
+            ->call('selectPackage', $package->id)
+            ->set('phoneNumber', '51234567')
+            ->call('placeOrder')
+            ->assertHasNoErrors();
+
+        $order = SimOrder::sole();
+        $component->assertSet('lastOrderId', $order->id)
+            ->assertSee(__('messages.sim_receipt_title_sent'))
+            ->assertSee(__('messages.sim_receipt_desc_queued')) // no supplier connected here → the team loads it
+            ->assertSee(__('messages.sim_status_completed'))
+            ->assertDontSee(__('messages.sim_receipt_title_loaded'))
+            ->assertSee($order->order_number)
+            ->assertSee('5051234567')
+            ->assertSee($package->name_ar)
+            ->assertSee(__('messages.sim_receipt_charged'))
+            ->assertSee(__('messages.sim_receipt_balance'))
+            ->assertSee('650 ₺')                                   // 1000 - 350
+            ->assertDontSee(__('messages.sim_receipt_supplier'));  // shops never see suppliers
+    }
+
+    public function test_confirmation_window_follows_the_order_status(): void
+    {
+        $component = Livewire::actingAs($this->customer)
+            ->test(BuyPackage::class)
+            ->call('selectPackage', $this->package(350)->id)
+            ->set('phoneNumber', '51234567')
+            ->call('placeOrder');
+        $order = SimOrder::sole();
+
+        // Sent to a supplier: loading, and the window keeps re-reading the order
+        $order->update(['api_status' => SimOrder::API_PROCESSING, 'api_supplier' => 'telekomtl']);
+        $component->call('$refresh')
+            ->assertSee(__('messages.sim_receipt_desc_loading'))
+            ->assertSee(__('messages.sim_status_loading'))
+            ->assertSee(__('messages.sim_receipt_live_hint'))
+            ->assertDontSee('telekomtl'); // shops never see suppliers
+
+        // The supplier confirmed (cron / «تحقق الآن»)
+        $order->update(['api_status' => SimOrder::API_SUCCESS]);
+        $component->call('$refresh')
+            ->assertSee(__('messages.sim_receipt_title_loaded'))
+            ->assertSee(__('messages.sim_status_loaded'))
+            ->assertDontSee(__('messages.sim_receipt_live_hint')); // settled: no more polling
+
+        // A refused order says the money came back
+        $component->call('closeReceipt')
+            ->assertSet('lastOrderId', null)
+            ->call('selectPackage', $this->package(270)->id)
+            ->set('phoneNumber', '51234568')
+            ->call('placeOrder');
+        $second = SimOrder::latest('id')->first();
+        $this->service->reject($second, $this->admin, 'رقم غير صحيح');
+        $component->call('$refresh')
+            ->assertSet('lastOrderId', $second->id)
+            ->assertSee(__('messages.sim_receipt_title_failed'))
+            ->assertSee(__('messages.sim_receipt_desc_failed', ['amount' => '270']))
+            ->assertSee(__('messages.sim_receipt_refunded'));
+    }
+
+    public function test_confirmation_window_closes_or_opens_the_order_history(): void
+    {
+        $component = Livewire::actingAs($this->customer)
+            ->test(BuyPackage::class)
+            ->call('selectPackage', $this->package(350)->id)
+            ->set('phoneNumber', '51234567')
+            ->call('placeOrder');
+
+        $component->call('showOrders')
+            ->assertDispatched('sim-show-orders')
+            ->assertSet('lastOrderId', null)
+            ->assertDontSee(__('messages.sim_receipt_title_received'));
+    }
+
+    public function test_confirmation_window_never_shows_someone_elses_order(): void
+    {
+        $other = $this->service->placeOrder($this->admin, $this->package(350)->id, '5059999999');
+
+        $this->expectException(\Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException::class);
+        Livewire::actingAs($this->customer)
+            ->test(BuyPackage::class)
+            ->set('lastOrderId', $other->id);
+    }
+
     public function test_buy_screen_validates_phone_and_shows_balance_error(): void
     {
         $component = Livewire::actingAs($this->customer)->test(BuyPackage::class);

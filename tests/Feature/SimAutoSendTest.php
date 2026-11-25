@@ -126,7 +126,10 @@ class SimAutoSendTest extends TestCase
             ->assertHasNoErrors();
 
         $order = SimOrder::sole();
-        $component->assertSee(__('messages.sim_order_sent_api', ['number' => $order->order_number]));
+        $component->assertSet('lastOrderId', $order->id)
+            ->assertSee(__('messages.sim_receipt_title_sent'))
+            ->assertSee(__('messages.sim_receipt_desc_loading'))
+            ->assertSee($order->order_number);
         $send = $this->sentTo('tl_servis.php')->sole();
         $this->assertSame('5392065499', $send['bayi_kodu']);
         $this->assertSame('callback', $send['operator']);
@@ -262,7 +265,10 @@ class SimAutoSendTest extends TestCase
             ->assertDontSee('Aktif Kontor');
 
         $order = SimOrder::sole();
-        $component->assertSee(__('messages.sim_order_created', ['number' => $order->order_number]));
+        $component->assertSet('lastOrderId', $order->id)
+            ->assertSee(__('messages.sim_receipt_title_sent'))
+            ->assertSee(__('messages.sim_receipt_desc_queued')) // the team loads it; no supplier wording for the buyer
+            ->assertSee($order->order_number);
         $this->assertSame(SimOrder::STATUS_COMPLETED, $order->status); // paid, not refunded
         $this->assertNull($order->api_status);                       // → manual
         $this->assertEquals(0, $this->customer->fresh()->balance);

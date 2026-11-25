@@ -9,6 +9,7 @@ use App\Models\SimPackage;
 use App\Services\KontorApiService;
 use App\Services\SimOrderService;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class BuyPackage extends Component
@@ -31,6 +32,10 @@ class BuyPackage extends Component
 
     /** SIM managers only: send this order to one supplier ('' = automatic routing from the settings). */
     public string $supplierChoice = '';
+
+    /** The order just placed, shown in the confirmation window until it is closed (always the buyer's own). */
+    #[Locked]
+    public ?int $lastOrderId = null;
 
     protected function canChooseSupplier(): bool
     {
@@ -60,6 +65,35 @@ class BuyPackage extends Component
             $this->region = $package->tabKey(); // keep the selected card in view
         }
         $this->resetValidation();
+    }
+
+    public function closeReceipt(): void
+    {
+        $this->lastOrderId = null;
+    }
+
+    /** "View order history" in the confirmation window: the host dashboard switches to the orders tab. */
+    public function showOrders(): void
+    {
+        $this->lastOrderId = null;
+        $this->dispatch('sim-show-orders');
+    }
+
+    /**
+     * What the confirmation window says about the order:
+     * loading (sent, loading automatically) · checking (outcome being checked) · loaded (the supplier confirmed)
+     * · manual (activated, the team loads it from the group) · queued (legacy pending order) · failed (refunded).
+     */
+    public static function receiptState(SimOrder $order): string
+    {
+        return match (true) {
+            $order->status === SimOrder::STATUS_REJECTED => 'failed',
+            $order->api_status === SimOrder::API_SUCCESS => 'loaded',
+            $order->api_status === SimOrder::API_UNKNOWN => 'checking',
+            $order->api_status === SimOrder::API_PROCESSING => 'loading',
+            $order->status === SimOrder::STATUS_COMPLETED => 'manual',
+            default => 'queued',
+        };
     }
 
     public function clearSelection(): void
@@ -188,13 +222,7 @@ class BuyPackage extends Component
         }
 
         $this->reset(['selectedPackageId', 'phoneNumber', 'customerName', 'notes', 'supplierChoice']);
-
-        $message = match ($order->api_status) {
-            SimOrder::API_PROCESSING, SimOrder::API_SUCCESS => 'sim_order_sent_api',
-            SimOrder::API_UNKNOWN => 'sim_order_checking_api',
-            default => 'sim_order_created',
-        };
-        session()->flash('sim_order_success', __("messages.{$message}", ['number' => $order->order_number]));
+        $this->lastOrderId = $order->id; // opens the confirmation window
     }
 
     public function render()
@@ -203,6 +231,10 @@ class BuyPackage extends Component
         $user = auth()->user();
 
         $packagesByTab = $packages->groupBy(fn (SimPackage $package) => $package->tabKey());
+
+        $lastOrder = $this->lastOrderId
+            ? SimOrder::with('package')->where('user_id', $user->id)->find($this->lastOrderId)
+            : null;
 
         return view('livewire.sim.buy-package', [
             'packagesByTab' => $packagesByTab,
@@ -214,6 +246,9 @@ class BuyPackage extends Component
             // Suppliers sending orders right now (a package with a key at one of them loads automatically)
             'autoSuppliers' => array_keys(array_filter(\App\Services\KontorApiService::overview(), fn (array $s) => $s['active'])),
             'supplierOptions' => $this->supplierOptions($packages->firstWhere('id', $this->selectedPackageId)),
+            'lastOrder' => $lastOrder,
+            'receiptState' => $lastOrder ? static::receiptState($lastOrder) : null,
+            'showReceiptSupplier' => $this->canChooseSupplier(),
         ]);
     }
 

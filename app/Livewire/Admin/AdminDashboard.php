@@ -539,6 +539,13 @@ class AdminDashboard extends Component
         }
     }
 
+    /** «عرض سجل الطلبات» in the SIM order confirmation window */
+    #[On('sim-show-orders')]
+    public function showSimOrders(): void
+    {
+        $this->activeTab = 'sim_orders';
+    }
+
     #[On('open-transfer-receipt')]
     public function handleOpenTransferReceipt($id)
     {

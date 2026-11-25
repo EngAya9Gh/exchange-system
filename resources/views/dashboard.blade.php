@@ -69,7 +69,8 @@
     </div>
 
     <div class="py-12" dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6" x-data="{ activeTab: '{{ match($systemContext) { 'invoices' => 'bill_payments', 'sims' => 'sim_buy', default => 'transfer' } }}' }">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6" x-data="{ activeTab: '{{ match($systemContext) { 'invoices' => 'bill_payments', 'sims' => 'sim_buy', default => 'transfer' } }}' }"
+            @sim-show-orders.window="activeTab = 'sim_history'">
             <!-- User Welcome Info -->
             <div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-6 sm:p-8 relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 sm:gap-0 transition-transform hover:-translate-y-1">
                 <div class="relative z-10">
