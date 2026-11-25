@@ -6,6 +6,7 @@ use App\Exceptions\SimOrderException;
 use App\Livewire\Sim\Concerns\ShowsSupplierBalance;
 use App\Models\SimOrder;
 use App\Models\SimPackage;
+use App\Services\KontorApiService;
 use App\Services\SimOrderService;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -28,6 +29,14 @@ class BuyPackage extends Component
     public string $customerName = '';
     public string $notes = '';
 
+    /** SIM managers only: send this order to one supplier ('' = automatic routing from the settings). */
+    public string $supplierChoice = '';
+
+    protected function canChooseSupplier(): bool
+    {
+        return (bool) auth()->user()?->can('manage_sims');
+    }
+
     /** $region holds the open tab: "local", "local_esim" (Turkey eSIM), "europe", "europe_esim". */
     public function selectRegion(string $region): void
     {
@@ -37,6 +46,7 @@ class BuyPackage extends Component
 
         $this->region = $region;
         $this->selectedPackageId = null;
+        $this->supplierChoice = '';
         $this->resetValidation();
     }
 
@@ -45,6 +55,7 @@ class BuyPackage extends Component
         $package = SimPackage::active()->find($packageId);
 
         $this->selectedPackageId = $package?->id;
+        $this->supplierChoice = '';
         if ($package) {
             $this->region = $package->tabKey(); // keep the selected card in view
         }
@@ -54,6 +65,7 @@ class BuyPackage extends Component
     public function clearSelection(): void
     {
         $this->selectedPackageId = null;
+        $this->supplierChoice = '';
         $this->resetValidation();
     }
 
@@ -79,6 +91,7 @@ class BuyPackage extends Component
         }
 
         return [
+            'supplierChoice' => ['nullable', 'in:' . implode(',', KontorApiService::SUPPLIERS)],
             'selectedPackageId' => ['required', 'integer'],
             'phoneNumber' => $phoneRules,
             'customerName' => ['nullable', 'string', 'max:100'],
@@ -151,7 +164,9 @@ class BuyPackage extends Component
                 (int) $this->selectedPackageId,
                 $phone,
                 trim($this->customerName),
-                trim($this->notes)
+                trim($this->notes),
+                null,
+                $this->canChooseSupplier() && $this->supplierChoice !== '' ? $this->supplierChoice : null
             );
         } catch (SimOrderException $e) {
             $this->addError('order', $e->getMessage());
@@ -172,7 +187,7 @@ class BuyPackage extends Component
             return;
         }
 
-        $this->reset(['selectedPackageId', 'phoneNumber', 'customerName', 'notes']);
+        $this->reset(['selectedPackageId', 'phoneNumber', 'customerName', 'notes', 'supplierChoice']);
 
         $message = match ($order->api_status) {
             SimOrder::API_PROCESSING, SimOrder::API_SUCCESS => 'sim_order_sent_api',
@@ -198,6 +213,39 @@ class BuyPackage extends Component
             // "⚡ instant loading" chip on packages sent automatically through kontor86
             // Suppliers sending orders right now (a package with a key at one of them loads automatically)
             'autoSuppliers' => array_keys(array_filter(\App\Services\KontorApiService::overview(), fn (array $s) => $s['active'])),
+            'supplierOptions' => $this->supplierOptions($packages->firstWhere('id', $this->selectedPackageId)),
         ]);
+    }
+
+    /**
+     * The supplier picker for SIM managers: where the order goes automatically, and each supplier with
+     * its listed cost, state and whether it carries this package. Null for everyone else.
+     */
+    protected function supplierOptions(?SimPackage $package): ?array
+    {
+        if (!$package || !$this->canChooseSupplier()) {
+            return null;
+        }
+
+        $auto = null;
+        foreach (KontorApiService::inPriorityOrder($package->preferred_supplier) as $supplier => $api) {
+            if ($package->isApiReadyFor($supplier) && $api->autoSendActive()) {
+                $auto = $supplier;
+                break;
+            }
+        }
+
+        $suppliers = [];
+        foreach (KontorApiService::SUPPLIERS as $supplier) {
+            $api = KontorApiService::for($supplier);
+            $suppliers[$supplier] = [
+                'linked' => $package->isApiReadyFor($supplier),
+                'configured' => $api->isConfigured(),
+                'paused' => $api->isAutoSendPaused(),
+                'cost' => $package->listedCost($supplier),
+            ];
+        }
+
+        return ['auto' => $auto, 'suppliers' => $suppliers];
     }
 }

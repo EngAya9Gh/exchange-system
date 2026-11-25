@@ -163,6 +163,9 @@ class SimOrderGroupNotifier
             $lines[] = '';
             $lines[] = $apiLine;
         }
+        if ($order->api_supplier_forced && $order->api_supplier) {
+            $lines[] = '🎯 ' . __('messages.sim_group_supplier_chosen', ['supplier' => $order->api_supplier], 'ar');
+        }
 
         // Suppliers that refused first (their own problem): the team sees why, and gets 🚨 for an empty balance
         foreach ($order->apiRefusals() as $supplier => $reason) {

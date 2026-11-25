@@ -170,6 +170,34 @@
                             class="block w-full rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm">
                         @error('notes') <span class="text-rose-500 text-xs font-bold mt-1 block">{{ $message }}</span> @enderror
                     </div>
+
+                    {{-- SIM managers: send this order to one supplier, whatever the settings say --}}
+                    @if($supplierOptions)
+                        <div class="md:col-span-2 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+                            <label for="sim-supplier" class="block text-sm font-bold text-gray-700 mb-2">🔌 {{ __('messages.sim_supplier_choice_label') }}</label>
+                            <select id="sim-supplier" wire:model.live="supplierChoice"
+                                class="block w-full rounded-xl border-gray-300 focus:border-primary-500 focus:ring-primary-500 shadow-sm font-bold">
+                                <option value="">
+                                    {{ $supplierOptions['auto'] ? __('messages.sim_supplier_choice_auto', ['supplier' => $supplierOptions['auto']]) : __('messages.sim_supplier_choice_auto_manual') }}
+                                </option>
+                                @foreach($supplierOptions['suppliers'] as $supplierName => $option)
+                                    @php
+                                        $selectable = $option['linked'] && $option['configured'];
+                                        $optionLabel = implode(' · ', array_filter([
+                                            $supplierName,
+                                            !$option['linked'] ? __('messages.sim_supplier_choice_not_linked') : null,
+                                            $option['linked'] && !$option['configured'] ? __('messages.sim_supplier_choice_not_connected') : null,
+                                            $selectable && $option['cost'] !== null ? __('messages.sim_supplier_choice_cost', ['cost' => SimPackage::formatPrice($option['cost'])]) : null,
+                                            $selectable && $option['paused'] ? __('messages.sim_supplier_choice_paused') : null,
+                                        ]));
+                                    @endphp
+                                    <option value="{{ $supplierName }}" @disabled(!$selectable)>{{ $optionLabel }}</option>
+                                @endforeach
+                            </select>
+                            <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">{{ __('messages.sim_supplier_choice_hint') }}</p>
+                            @error('supplierChoice') <span class="text-rose-500 text-xs font-bold mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
                 </div>
 
                 {{-- Summary --}}

@@ -205,14 +205,17 @@ class SimPackage extends Model
             return [];
         }
 
-        // A physical Tele CARD line also takes the products marked tele_card_lines (Türk Telekom at telekomtl)
+        // A physical Tele CARD line also takes the products marked tele_card_lines (Türk Telekom at telekomtl),
+        // a Tele CARD eSIM the ones marked tele_card_esim (OnlineKart eSIM at telekomtl)
         $teleCardLine = $this->region === self::REGION_LOCAL && $this->sim_type === self::TYPE_PHYSICAL && $network === 'Tele CARD';
+        $teleCardEsim = $this->region === self::REGION_LOCAL && $this->sim_type === self::TYPE_ESIM && $network === 'Tele CARD';
 
         return array_values(array_filter(static::supplierProducts($supplier), fn (array $product) =>
             ($product['region'] ?? null) === $this->region
             && (
                 (($product['sim'] ?? null) === $this->sim_type && ($network === null || ($product['network'] ?? null) === $network))
                 || ($teleCardLine && !empty($product['tele_card_lines']))
+                || ($teleCardEsim && !empty($product['tele_card_esim']))
             )
             && ($product['days'] ?? null) !== null && (int) $product['days'] === (int) $this->validity_days
             && ($product['gb'] ?? null) !== null && (float) $product['gb'] === (float) $this->data_gb));

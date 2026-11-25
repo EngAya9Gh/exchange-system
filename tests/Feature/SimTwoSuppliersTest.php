@@ -578,8 +578,8 @@ class SimTwoSuppliersTest extends TestCase
         $this->assertSame(['Callback', 'TeleCard', '12347'], $europe->productKey('telekomtl'));
         $this->assertSame('telekomtl', $europe->preferred_supplier); // 975 < 995
 
-        // A network that names another listed product: OnlineKart 5 GB · 30 days at telekomtl
-        $online = $this->teacherPackage(5, 30, 175, ['network_name' => 'onlinekart']);
+        // A network that names another listed product: OnlineKart eSIM 5 GB · 30 days at telekomtl
+        $online = $this->teacherPackage(5, 30, 175, ['network_name' => 'onlinekart', 'sim_type' => 'esim']);
         $this->assertSame(['telekomtl' => '777'], collect($online->suggestedLinks())->map(fn ($p) => $p['code'])->all());
 
         // An eSIM with no known network is ambiguous: never linked on its own
@@ -643,8 +643,8 @@ class SimTwoSuppliersTest extends TestCase
             'FİZİKSEL Turkiye_5gb_30gun' => '115', 'FİZİKSEL Turkiye_10gb_30gun' => '175', 'FİZİKSEL Turkiye_20gb_30gun' => '330',
             'FİZİKSEL Turkiye_50gb_30gun' => '590', 'FİZİKSEL Turkiye_50gb_180gun' => '2000', 'FİZİKSEL Turkiye_100gb_30gun' => '1600',
         ], SimPackage::where('sim_type', 'physical')->where('region', 'local')->whereNotNull('supplier_code')->ordered()->pluck('telekomtl_code', 'supplier_code')->all());
-        // Tele CARD eSIM packages have no telekomtl equivalent: untouched
-        $this->assertNull(SimPackage::where('supplier_code', 'E-SİM Turkiye_5gb_30gun')->value('telekomtl_code'));
+        // Tele CARD eSIM packages load from OnlineKart eSIM at telekomtl (2026-11-25)
+        $this->assertSame('777', SimPackage::where('supplier_code', 'E-SİM Turkiye_5gb_30gun')->value('telekomtl_code'));
 
         // A Tele CARD order now goes to telekomtl automatically (it went to the group before)
         $this->customer->update(['balance' => 5000]);
@@ -654,9 +654,127 @@ class SimTwoSuppliersTest extends TestCase
         $this->assertSame(SimOrder::API_PROCESSING, $order->api_status);
         $this->assertStringContainsString('🤖 جاري التحميل · telekomtl', $this->groupMessage());
 
-        // Nothing is left unlinked; while kontor86 is paused only the Tele CARD eSIMs depend on it
+        // Nothing is left unlinked
         Livewire::actingAs($this->admin)->test(PackagesManager::class)
             ->assertDontSee(__('messages.sim_unlinked_title', ['count' => 1]));
-        $this->assertSame(5, count(KontorApiService::overview()['kontor86']['exclusive']));
+        $this->assertSame([], KontorApiService::overview()['kontor86']['exclusive']); // nothing depends on kontor86 any more
+    }
+
+    public function test_tele_card_esim_loads_from_onlinekart_at_telekomtl(): void
+    {
+        // Production: telekomtl primary, kontor86 paused (more expensive)
+        KontorApiService::setPrimarySupplier('telekomtl');
+        KontorApiService::for('kontor86')->setAutoSendPaused(true, $this->admin);
+
+        $esims = SimPackage::where('sim_type', 'esim')->where('network_name', 'Tele CARD')->ordered()->get();
+        $this->assertSame([
+            'E-SİM Turkiye_5gb_30gun' => ['OnlineKart', '777'],
+            'E-SİM Turkiye_10gb_30gun' => ['OnlineKart', '1111'],
+            'E-SİM Turkiye_20gb_30gun' => ['OnlineKart', '2222'],
+            'E-SİM Turkiye_50gb_30gun' => ['OnlineKart', '5555'],
+            'E-SİM Turkiye_50gb_180gun' => ['OnlineKart', '180180'], // now 49 GB · 180 days
+        ], $esims->mapWithKeys(fn ($p) => [$p->supplier_code => [$p->telekomtl_tip, $p->telekomtl_code]])->all());
+
+        $tenGb = $esims->firstWhere('supplier_code', 'E-SİM Turkiye_10gb_30gun');
+        $this->customer->update(['balance' => 1000]);
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->call('selectPackage', $tenGb->id)
+            ->set('phoneNumber', '0555 123 45 67')
+            ->call('placeOrder')
+            ->assertHasNoErrors();
+
+        [$supplier, $request] = $this->sends()->sole();
+        $this->assertSame(['telekomtl', 'Callback', 'OnlineKart', '1111', '5551234567'],
+            [$supplier, $request['operator'], $request['tip'], $request['kontor'], $request['gsmno']]); // customer's mobile, as the team does
+        $this->assertSame(SimOrder::API_PROCESSING, SimOrder::sole()->api_status);
+    }
+
+    public function test_manager_picks_the_supplier_for_one_order(): void
+    {
+        // telekomtl primary; kontor86 paused because it is more expensive
+        KontorApiService::setPrimarySupplier('telekomtl');
+        KontorApiService::for('kontor86')->setAutoSendPaused(true, $this->admin);
+        $this->admin->update(['balance' => 1000]);
+
+        $component = Livewire::actingAs($this->admin)->test(BuyPackage::class)
+            ->call('selectPackage', $this->fiveGb->id)
+            ->assertSee(__('messages.sim_supplier_choice_label'))
+            ->assertSee(__('messages.sim_supplier_choice_auto', ['supplier' => 'telekomtl']))
+            ->assertSee(__('messages.sim_supplier_choice_paused'));
+
+        // kontor86 chosen even though it is paused: sent there only
+        $component->set('supplierChoice', 'kontor86')
+            ->set('phoneNumber', '51234567')
+            ->call('placeOrder')
+            ->assertHasNoErrors()
+            ->assertSet('supplierChoice', '');
+
+        $order = SimOrder::sole();
+        [$supplier, $request] = $this->sends()->sole();
+        $this->assertSame(['kontor86', '26240'], [$supplier, $request['kontor']]);
+        $this->assertSame('kontor86', $order->api_supplier);
+        $this->assertTrue($order->api_supplier_forced);
+        $this->assertStringContainsString('🎯 ' . __('messages.sim_group_supplier_chosen', ['supplier' => 'kontor86']), $this->groupMessage());
+        Livewire::actingAs($this->admin)->test(\App\Livewire\Sim\Orders::class)->assertSee(__('messages.sim_supplier_chosen_badge'));
+
+        // Without a choice the next order follows the settings (telekomtl)
+        Livewire::actingAs($this->admin)->test(BuyPackage::class)
+            ->call('selectPackage', $this->fiveGb->id)
+            ->set('phoneNumber', '51234568')
+            ->call('placeOrder');
+        $this->assertSame('telekomtl', $this->sends()->last()[0]);
+        $this->assertFalse(SimOrder::latest('id')->first()->api_supplier_forced);
+    }
+
+    public function test_chosen_supplier_refusal_is_not_moved_to_the_other_one(): void
+    {
+        $this->send['kontor86'] = 'OK|3|Bu İşlem İçin Bakiyeniz Yeterli Değildir. - BAK=35.0000 AL=215.00|215.00|';
+
+        $order = app(SimOrderService::class)->placeOrder($this->customer, $this->fiveGb->id, '5051234567', null, null, null, 'kontor86');
+
+        $this->assertSame(['kontor86'], $this->sends()->map(fn ($s) => $s[0])->all()); // telekomtl never tried
+        $this->assertSame(SimOrder::STATUS_REJECTED, $order->fresh()->status);         // refunded
+        $this->assertEquals(1000, $this->customer->fresh()->balance);
+    }
+
+    public function test_a_supplier_that_does_not_carry_the_package_cannot_be_chosen(): void
+    {
+        $turkTelekom = SimPackage::where('supplier_code', 'TURKTELEKOM_ESIM_5gb_30gun')->firstOrFail(); // telekomtl only
+
+        try {
+            app(SimOrderService::class)->placeOrder($this->customer, $turkTelekom->id, '5551234567', null, null, null, 'kontor86');
+            $this->fail('A supplier without this package must be refused');
+        } catch (\App\Exceptions\SimOrderException $e) {
+            $this->assertSame('supplier_unavailable', $e->errorCode);
+        }
+        $this->assertSame(0, SimOrder::count());
+        $this->assertEquals(1000, $this->customer->fresh()->balance);
+
+        // In the form it is listed but not selectable
+        $this->admin->update(['balance' => 1000]);
+        Livewire::actingAs($this->admin)->test(BuyPackage::class)
+            ->call('selectPackage', $turkTelekom->id)
+            ->assertSee(__('messages.sim_supplier_choice_not_linked'))
+            ->set('supplierChoice', 'kontor86')
+            ->set('phoneNumber', '5551234567')
+            ->call('placeOrder')
+            ->assertHasErrors('order');
+        $this->assertSame(0, SimOrder::count());
+    }
+
+    public function test_customers_cannot_choose_a_supplier(): void
+    {
+        KontorApiService::setPrimarySupplier('telekomtl');
+
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->call('selectPackage', $this->fiveGb->id)
+            ->assertDontSee(__('messages.sim_supplier_choice_label'))
+            ->set('supplierChoice', 'kontor86') // forged request
+            ->set('phoneNumber', '51234567')
+            ->call('placeOrder')
+            ->assertHasNoErrors();
+
+        $this->assertSame('telekomtl', $this->sends()->sole()[0]);
+        $this->assertFalse(SimOrder::sole()->api_supplier_forced);
     }
 }

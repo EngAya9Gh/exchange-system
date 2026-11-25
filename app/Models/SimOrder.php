@@ -42,6 +42,7 @@ class SimOrder extends Model
         'processed_at',
         'api_status',
         'api_supplier',
+        'api_supplier_forced',
         'api_unique_id',
         'api_cost',
         'api_message',
@@ -56,6 +57,7 @@ class SimOrder extends Model
         'processed_at' => 'datetime',
         'api_cost' => 'decimal:2',
         'api_checked_at' => 'datetime',
+        'api_supplier_forced' => 'boolean',
     ];
 
     protected static function booted(): void

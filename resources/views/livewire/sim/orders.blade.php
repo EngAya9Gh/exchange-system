@@ -184,6 +184,9 @@
                                     @if($order->api_supplier)
                                         <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-800 text-white" dir="ltr">{{ $order->api_supplier }}</span>
                                     @endif
+                                    @if($order->api_supplier_forced)
+                                        <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800" title="{{ __('messages.sim_supplier_chosen_badge') }}">🎯 {{ __('messages.sim_supplier_chosen_badge') }}</span>
+                                    @endif
                                     @if(in_array($order->api_status, SimOrder::API_OPEN_STATES, true))
                                         <button type="button" wire:click="checkSupplier({{ $order->id }})" wire:loading.attr="disabled" wire:target="checkSupplier({{ $order->id }})"
                                             class="text-[10px] font-black px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition disabled:opacity-50">

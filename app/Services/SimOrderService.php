@@ -36,12 +36,22 @@ class SimOrderService
         string $phoneNumber,
         ?string $customerName = null,
         ?string $notes = null,
-        ?string $clientReference = null
+        ?string $clientReference = null,
+        ?string $supplier = null
     ): SimOrder {
-        $order = DB::transaction(function () use ($user, $packageId, $phoneNumber, $customerName, $notes, $clientReference) {
+        $order = DB::transaction(function () use ($user, $packageId, $phoneNumber, $customerName, $notes, $clientReference, $supplier) {
             $package = SimPackage::active()->find($packageId);
             if (!$package) {
                 throw new SimOrderException(__('messages.sim_package_unavailable'), 'package_unavailable');
+            }
+
+            // A supplier picked at purchase time must carry this package and be connected (checked before charging)
+            if ($supplier !== null && (
+                !in_array($supplier, KontorApiService::SUPPLIERS, true)
+                || !$package->isApiReadyFor($supplier)
+                || !KontorApiService::for($supplier)->isConfigured()
+            )) {
+                throw new SimOrderException(__('messages.sim_supplier_choice_unavailable'), 'supplier_unavailable');
             }
 
             // Lock the user row so two simultaneous orders can't both pass the balance check
@@ -96,7 +106,7 @@ class SimOrderService
             return $order;
         });
 
-        $this->sendToSupplier($order);
+        $this->sendToSupplier($order, $supplier);
         $order->refresh();
 
         $this->notifyManagers($order);
@@ -118,11 +128,19 @@ class SimOrderService
      * otherwise (balance / credentials everywhere) → refund, as with a single supplier.
      * No supplier available at all → the order stays manual (WhatsApp group), charged as usual.
      */
-    public function sendToSupplier(SimOrder $order): void
+    public function sendToSupplier(SimOrder $order, ?string $forcedSupplier = null): void
     {
         $package = $order->package;
         if (!$package) {
             return;
+        }
+
+        // Supplier picked at purchase time: that supplier only (even while paused), no fallback to another one
+        $suppliers = $forcedSupplier !== null
+            ? [$forcedSupplier => KontorApiService::for($forcedSupplier)]
+            : KontorApiService::inPriorityOrder($package->preferred_supplier);
+        if ($forcedSupplier !== null) {
+            $order->update(['api_supplier_forced' => true]);
         }
 
         // tekilnumara must be digits only; the order number is unique ("SIM2611101234" → "2611101234")
@@ -132,9 +150,10 @@ class SimOrderService
         $productRefusal = null;      // [supplier, reason] of the last "Aktif Kontor" refusal
 
         // The package's preferred supplier first (e.g. the cheaper one for it), then the primary one
-        foreach (KontorApiService::inPriorityOrder($package->preferred_supplier) as $supplier => $api) {
+        foreach ($suppliers as $supplier => $api) {
             $key = $package->productKey($supplier);
-            if ($key === null || !$api->autoSendActive()) {
+            $usable = $forcedSupplier !== null ? $api->isConfigured() : $api->autoSendActive();
+            if ($key === null || !$usable) {
                 continue;
             }
 

@@ -743,7 +743,8 @@ class SimAutoSendTest extends TestCase
             $this->assertSame(1, SimPackage::withTrashed()->where('supplier_code', $package->supplier_code)->count()); // restored, not duplicated
         }
         $sixMonths = $esims->firstWhere('supplier_code', 'E-SİM Turkiye_50gb_180gun');
-        $this->assertSame('باقة تركيا 50 جيجا - 6 أشهر (eSIM)', $sixMonths->name_ar);
+        $this->assertSame('باقة تركيا 49 جيجا - 6 أشهر (eSIM)', $sixMonths->name_ar); // OnlineKart sells 49 GB · 180 days (2026-11-25)
+        $this->assertSame(49, $sixMonths->data_gb);
         $this->assertSame('6 أشهر', $sixMonths->durationLabel());
 
         // Ordered from the buy screen: sent at once with the Turkish number that receives the link by SMS

@@ -73,16 +73,16 @@ $list = [
         $p('1670', 'eSIM', 'Turkcell 50 GB · 30 gün', 1710, 'Turkcell eSIM', 'local', 'esim', 'Turkcell', 50, 30),
         $p('200.01', 'eSIM', 'Vodafone 10 GB · 30 gün', 235, 'Vodafone eSIM', 'local', 'esim', 'Vodafone', 10, 30),
         $p('200.04', 'eSIM', 'Vodafone 20 GB · 30 gün', 399, 'Vodafone eSIM', 'local', 'esim', 'Vodafone', 20, 30),
-        $p('1', 'OnlineKart', 'OnlineKart TT 500 MB · 7 gün', 35, 'OnlineKart (Türk Telekom)', 'local', 'physical', 'OnlineKart', 0.5, 7),
-        $p('2', 'OnlineKart', 'OnlineKart TT 1 GB · 1 gün', 35, 'OnlineKart (Türk Telekom)', 'local', 'physical', 'OnlineKart', 1, 1),
-        $p('777', 'OnlineKart', 'OnlineKart TT 5 GB · 30 gün', 140, 'OnlineKart (Türk Telekom)', 'local', 'physical', 'OnlineKart', 5, 30),
-        $p('778', 'OnlineKart', 'OnlineKart TT 7 GB · 30 gün', 160, 'OnlineKart (Türk Telekom)', 'local', 'physical', 'OnlineKart', 7, 30),
-        $p('1111', 'OnlineKart', 'OnlineKart TT 10 GB · 30 gün', 175, 'OnlineKart (Türk Telekom)', 'local', 'physical', 'OnlineKart', 10, 30),
-        $p('2222', 'OnlineKart', 'OnlineKart TT 20 GB · 30 gün', 355, 'OnlineKart (Türk Telekom)', 'local', 'physical', 'OnlineKart', 20, 30),
-        $p('2555', 'OnlineKart', 'OnlineKart TT 25 GB · 30 gün', 420, 'OnlineKart (Türk Telekom)', 'local', 'physical', 'OnlineKart', 25, 30),
-        $p('5555', 'OnlineKart', 'OnlineKart TT 50 GB · 30 gün', 620, 'OnlineKart (Türk Telekom)', 'local', 'physical', 'OnlineKart', 50, 30),
-        $p('100100', 'OnlineKart', 'OnlineKart TT 100 GB · 30 gün', 1320, 'OnlineKart (Türk Telekom)', 'local', 'physical', 'OnlineKart', 100, 30),
-        $p('180180', 'OnlineKart', 'OnlineKart TT 49 GB · 180 gün', 900, 'OnlineKart (Türk Telekom)', 'local', 'physical', 'OnlineKart', 49, 180),
+        $p('1', 'OnlineKart', 'OnlineKart eSIM TT 500 MB · 7 gün', 35, 'OnlineKart eSIM (Türk Telekom)', 'local', 'esim', 'OnlineKart', 0.5, 7),
+        $p('2', 'OnlineKart', 'OnlineKart eSIM TT 1 GB · 1 gün', 35, 'OnlineKart eSIM (Türk Telekom)', 'local', 'esim', 'OnlineKart', 1, 1),
+        $p('777', 'OnlineKart', 'OnlineKart eSIM TT 5 GB · 30 gün', 140, 'OnlineKart eSIM (Türk Telekom)', 'local', 'esim', 'OnlineKart', 5, 30),
+        $p('778', 'OnlineKart', 'OnlineKart eSIM TT 7 GB · 30 gün', 160, 'OnlineKart eSIM (Türk Telekom)', 'local', 'esim', 'OnlineKart', 7, 30),
+        $p('1111', 'OnlineKart', 'OnlineKart eSIM TT 10 GB · 30 gün', 175, 'OnlineKart eSIM (Türk Telekom)', 'local', 'esim', 'OnlineKart', 10, 30),
+        $p('2222', 'OnlineKart', 'OnlineKart eSIM TT 20 GB · 30 gün', 355, 'OnlineKart eSIM (Türk Telekom)', 'local', 'esim', 'OnlineKart', 20, 30),
+        $p('2555', 'OnlineKart', 'OnlineKart eSIM TT 25 GB · 30 gün', 420, 'OnlineKart eSIM (Türk Telekom)', 'local', 'esim', 'OnlineKart', 25, 30),
+        $p('5555', 'OnlineKart', 'OnlineKart eSIM TT 50 GB · 30 gün', 620, 'OnlineKart eSIM (Türk Telekom)', 'local', 'esim', 'OnlineKart', 50, 30),
+        $p('100100', 'OnlineKart', 'OnlineKart eSIM TT 100 GB · 30 gün', 1320, 'OnlineKart eSIM (Türk Telekom)', 'local', 'esim', 'OnlineKart', 100, 30),
+        $p('180180', 'OnlineKart', 'OnlineKart eSIM TT 49 GB · 180 gün', 900, 'OnlineKart eSIM (Türk Telekom)', 'local', 'esim', 'OnlineKart', 49, 180),
         $p('3', 'BimCell', 'BimCell Dost Küçük 3 GB + 750 DK', 290, 'BimCell', 'local', 'physical', 'BimCell', 3, null),
         $p('9', 'BimCell', 'BimCell Dost Büyük 9 GB + 750 DK', 340, 'BimCell', 'local', 'physical', 'BimCell', 9, null),
         $p('12', 'BimCell', 'BimCell Dost Knsn 12 GB + 1500 DK', 425, 'BimCell', 'local', 'physical', 'BimCell', 12, null),
@@ -100,7 +100,12 @@ $list = [
  | So a physical Turkey (Tele CARD) package is matched to them too, besides kontor86's Tele CARD products.
  */
 $list['telekomtl'] = array_map(
-    fn (array $product) => $product + ['tele_card_lines' => $product['group'] === 'Türk Telekom eSIM'],
+    fn (array $product) => $product + [
+        'tele_card_lines' => $product['group'] === 'Türk Telekom eSIM',
+        // OnlineKart (panel tile «BARKOUD ESIM») is the eSIM the team loads for our «eSIM تركيا» (Tele CARD) orders,
+        // on the customer's Turkish mobile number — owner's answer 2026-11-25.
+        'tele_card_esim' => $product['group'] === 'OnlineKart eSIM (Türk Telekom)',
+    ],
     $list['telekomtl']
 );
 
