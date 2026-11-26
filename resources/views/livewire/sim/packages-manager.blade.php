@@ -247,13 +247,23 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1.5">{{ __('messages.sim_supplier_code') }}</label>
-                            <input type="text" dir="ltr" wire:model="supplierCode" maxlength="255" placeholder="Turkiye_5gb_30gun" class="{{ $inputClass }} font-mono">
+                            <input type="text" dir="ltr" wire:model.live.debounce.500ms="supplierCode" maxlength="255" placeholder="FİZİKSEL Turkiye_5gb_30gun" class="{{ $inputClass }} font-mono">
+                            <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">{{ __('messages.sim_supplier_code_hint') }}</p>
                             @error('supplierCode') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
                         </div>
                         <label class="flex items-center gap-3 cursor-pointer select-none py-2">
                             <input type="checkbox" wire:model="isActive" class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 w-5 h-5">
                             <span class="text-sm font-bold text-slate-700">{{ __('messages.sim_active_for_sale') }}</span>
                         </label>
+                        {{-- An API code typed in the note field above: it is never sent, so offer to move it --}}
+                        @if($supplierCodeProduct)
+                            <div class="sm:col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-bold text-amber-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <span>⚠️ {{ __('messages.sim_supplier_code_is_api', ['code' => $supplierCodeProduct['code'], 'product' => $supplierCodeProduct['name'], 'supplier' => $supplierCodeProduct['supplier']]) }}</span>
+                                <button type="button" wire:click="useSupplierCodeAsKey" class="shrink-0 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-black transition">
+                                    {{ __('messages.sim_supplier_code_move') }}
+                                </button>
+                            </div>
+                        @endif
                     </div>
 
                     {{-- «⚡ سريع · Hızlı»: own card colors, linked only to kontor86 HIZLI FİZİKSEL products --}}

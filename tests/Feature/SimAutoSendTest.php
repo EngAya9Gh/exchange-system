@@ -185,7 +185,7 @@ class SimAutoSendTest extends TestCase
         $this->assertStringContainsString('BAK=35', $order->api_message); // raw reason kept for the team
 
         // Never visible to the buyer: not on screen, not in the order notes, not in their orders list
-        foreach (['BAK=', 'AL=', '220', 'Bakiyeniz'] as $secret) {
+        foreach (['BAK=', 'AL=', '220.00', 'Bakiyeniz'] as $secret) { // (a plain "220" is the price of the 10 GB fast package)
             $component->assertDontSee($secret);
             $this->assertStringNotContainsString($secret, (string) $order->admin_notes);
         }

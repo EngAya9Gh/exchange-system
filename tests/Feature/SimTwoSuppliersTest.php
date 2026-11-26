@@ -512,14 +512,15 @@ class SimTwoSuppliersTest extends TestCase
         $this->assertEquals(295, SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_10gb')->first()->listedCost('telekomtl'));
     }
 
-    public function test_hizli_packages_are_added_hidden_and_linked_to_kontor86_only(): void
+    public function test_hizli_packages_are_on_sale_and_linked_to_kontor86_only(): void
     {
         $fast = SimPackage::where('is_fast', true)->orderBy('data_gb')->get();
         $this->assertSame([5, 10, 20, 50, 100], $fast->pluck('data_gb')->all());
         // «Kontor Fiyat Ayarları» → Callback, API column (2026-11-25)
         $this->assertSame(['7036449', '6987918', '2652690', '2285493', '2205285'], $fast->pluck('api_code')->all());
+        $this->assertSame([150, 220, 310, 570, 1070], $fast->pluck('price')->map(fn ($p) => (int) $p)->all()); // owner's prices
         foreach ($fast as $package) {
-            $this->assertFalse($package->is_active);                    // hidden until the teacher prices them
+            $this->assertTrue($package->is_active);
             $this->assertSame(['Callback', 'TeleCard'], [$package->api_operator, $package->api_tip]);
             $this->assertNull($package->productKey('telekomtl'));       // telekomtl has no HIZLI product
             $this->assertSame('Tele CARD', $package->network_name);
@@ -527,7 +528,6 @@ class SimTwoSuppliersTest extends TestCase
         }
         $this->assertSame('باقة تركيا سريعة 10 جيجا - 30 يوم (فيزيائية)', $fast[1]->name_ar);
         $this->assertSame('Türkiye Hızlı 10 GB - 30 Gün (Fiziksel)', $fast[1]->name_tr);
-        $this->assertEquals(350, $fast[1]->price); // starts at the ordinary 10 GB price
         $this->assertEquals(190, $fast[1]->listedCost('kontor86'));
 
         // Specs never mix: ordinary packages keep their ordinary product, fast ones only take HIZLI
@@ -594,16 +594,64 @@ class SimTwoSuppliersTest extends TestCase
         $this->assertStringContainsString('⏸️', $this->groupMessage());
     }
 
+    public function test_a_deleted_fast_package_comes_back_at_the_owners_price(): void
+    {
+        // The teacher's converted 50 GB card, deleted by him afterwards
+        SimPackage::where('is_fast', true)->where('data_gb', 50)->first()->delete();
+        SimPackage::where('is_fast', true)->where('data_gb', 10)->update(['price' => 999, 'is_active' => false]);
+
+        (require database_path('migrations/2026_11_26_000002_price_and_open_hizli_packages.php'))->up();
+        (require database_path('migrations/2026_11_26_000002_price_and_open_hizli_packages.php'))->up(); // idempotent
+
+        $fifty = SimPackage::where('is_fast', true)->where('data_gb', 50)->sole();
+        $this->assertSame(['Callback', 'TeleCard', '2285493'], $fifty->productKey('kontor86'));
+        $this->assertEquals(570, $fifty->price);
+        $this->assertTrue($fifty->is_active);
+        $ten = SimPackage::where('is_fast', true)->where('data_gb', 10)->sole();
+        $this->assertEquals(220, $ten->price);
+        $this->assertTrue($ten->is_active);
+    }
+
+    public function test_an_api_code_typed_in_the_package_name_field_is_moved_to_its_place(): void
+    {
+        // What the teacher did: 2285493 in «اسم الباقة عند المورد», the key fields left empty
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('create')
+            ->set('region', 'local')->set('simType', 'physical')->set('networkName', 'Tele CARD')
+            ->set('dataGb', 50)->set('validityDays', 30)->set('price', 570)
+            ->set('pickTk', 'eSIM|590')                      // TURKTELEKOM 50 GB, an ordinary product
+            ->set('supplierCode', '2285493')
+            ->assertSee(__('messages.sim_supplier_code_is_api', ['code' => '2285493', 'product' => 'HIZLI FİZİKSEL 50 GB · 30 gün', 'supplier' => 'kontor86']))
+            ->call('useSupplierCodeAsKey')
+            ->assertSet('apiOperator', 'Callback')->assertSet('apiTip', 'TeleCard')->assertSet('apiCode', '2285493')
+            ->assertSet('isFast', true)
+            ->assertSet('tkCode', '')                         // fast packages never load an ordinary product
+            ->assertSet('supplierCode', 'HIZLI FİZİKSEL 50 GB · 30 gün')
+            ->assertDontSee(__('messages.sim_supplier_code_move'))
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $package = SimPackage::latest('id')->first();
+        $this->assertTrue($package->is_fast);
+        $this->assertSame(['Callback', 'TeleCard', '2285493'], $package->productKey('kontor86'));
+        $this->assertNull($package->productKey('telekomtl'));
+
+        // A package name in that field raises nothing
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('create')
+            ->set('supplierCode', 'FİZİKSEL Turkiye_5gb_30gun')
+            ->assertDontSee(__('messages.sim_supplier_code_move'));
+    }
+
     public function test_fast_cards_stand_out_on_the_buy_screen(): void
     {
         $fast = SimPackage::where('is_fast', true)->where('data_gb', 10)->firstOrFail();
-        $fast->update(['is_active' => true]);
 
         Livewire::actingAs($this->customer)->test(BuyPackage::class)
             ->assertSee($fast->name_ar)
             ->assertSee(__('messages.sim_fast_ribbon'))
             ->assertSeeHtml('from-amber-400 via-orange-500 to-orange-700')
-            ->assertDontSee('باقة تركيا سريعة 5 جيجا'); // still hidden
+            ->assertSee('باقة تركيا سريعة 5 جيجا');
     }
 
     protected function teacherPackage(int $gb, int $days, float $price, array $extra = []): SimPackage
@@ -707,7 +755,7 @@ class SimTwoSuppliersTest extends TestCase
     {
         $unlinked = SimPackage::active()->get()->reject(fn (SimPackage $p) => $p->isApiReady())->pluck('supplier_code')->all();
         $this->assertSame([], $unlinked);
-        $this->assertSame(21, SimPackage::active()->count());
+        $this->assertSame(26, SimPackage::active()->count()); // incl. the 5 HIZLI packages (2026-11-26)
     }
 
     public function test_tele_card_lines_load_from_telekomtl_while_kontor86_is_paused(): void
@@ -751,7 +799,12 @@ class SimTwoSuppliersTest extends TestCase
         // Nothing is left unlinked
         Livewire::actingAs($this->admin)->test(PackagesManager::class)
             ->assertDontSee(__('messages.sim_unlinked_title', ['count' => 1]));
-        $this->assertSame([], KontorApiService::overview()['kontor86']['exclusive']); // nothing depends on kontor86 any more
+        // Only the HIZLI packages depend on kontor86 (telekomtl has no fast product)
+        $this->assertSame(
+            SimPackage::active()->where('is_fast', true)->get()->map(fn ($p) => $p->localized_name)->sort()->values()->all(),
+            collect(KontorApiService::overview()['kontor86']['exclusive'])->sort()->values()->all()
+        );
+        $this->assertCount(5, KontorApiService::overview()['kontor86']['exclusive']);
     }
 
     public function test_tele_card_esim_loads_from_onlinekart_at_telekomtl(): void

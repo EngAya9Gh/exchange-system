@@ -288,6 +288,59 @@ class PackagesManager extends Component
         return $product ? $product['tip'] . '|' . $product['code'] : '';
     }
 
+    /**
+     * The supplier's API code typed into «اسم الباقة عند المورد» (a note field never sent to anyone): the product it
+     * belongs to, while that supplier's key fields do not hold it yet. Null otherwise.
+     * (2026-11-26: the teacher typed 2285493 there, so his package was linked to the ordinary products instead.)
+     */
+    protected function supplierCodeProduct(): ?array
+    {
+        $code = trim($this->supplierCode);
+        if ($code === '') {
+            return null;
+        }
+
+        foreach (array_keys(SimPackage::API_KEY_COLUMNS) as $supplier) {
+            foreach (SimPackage::supplierProducts($supplier) as $product) {
+                if ((string) $product['code'] !== $code) {
+                    continue;
+                }
+                [$tip, $keyCode] = $supplier === 'kontor86' ? [$this->apiTip, $this->apiCode] : [$this->tkTip, $this->tkCode];
+
+                return $tip === $product['tip'] && $keyCode === (string) $product['code'] ? null : $product + ['supplier' => $supplier];
+            }
+        }
+
+        return null;
+    }
+
+    /** Moves that code to the automatic-loading fields; a HIZLI product also makes the package «⚡ سريع». */
+    public function useSupplierCodeAsKey(): void
+    {
+        $this->authorizeManage();
+        $product = $this->supplierCodeProduct();
+        if (!$product) {
+            return;
+        }
+
+        $pick = $product['tip'] . '|' . $product['code'];
+        if ($product['supplier'] === 'kontor86') {
+            $this->pickKontor = $pick;
+            $this->updatedPickKontor($pick);
+        } else {
+            $this->pickTk = $pick;
+            $this->updatedPickTk($pick);
+        }
+
+        if (!empty($product['fast'])) {
+            // Fast packages take only HIZLI products: an ordinary product at the other supplier would load the wrong one
+            $this->isFast = true;
+            $this->pickTk = '';
+            $this->updatedPickTk('');
+        }
+        $this->supplierCode = $product['name'];
+    }
+
     public function toggleActive(int $packageId): void
     {
         $this->authorizeManage();
@@ -336,6 +389,7 @@ class PackagesManager extends Component
                     return count($matches) === 1 ? $matches[0] : null;
                 })()])->all()
                 : [],
+            'supplierCodeProduct' => $this->showForm ? $this->supplierCodeProduct() : null,
             'catalogue' => [
                 'kontor86' => collect(SimPackage::supplierProducts('kontor86'))->groupBy('group'),
                 'telekomtl' => collect(SimPackage::supplierProducts('telekomtl'))->groupBy('group'),

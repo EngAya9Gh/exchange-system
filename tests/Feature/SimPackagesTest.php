@@ -78,7 +78,7 @@ class SimPackagesTest extends TestCase
     public function test_initial_price_list_is_seeded_in_arabic_and_turkish(): void
     {
         $this->assertSame(26, SimPackage::count());
-        $this->assertSame(5, SimPackage::where('is_fast', true)->where('is_active', false)->count()); // HIZLI, hidden until priced (2026-11-26)
+        $this->assertSame(5, SimPackage::where('is_fast', true)->where('is_active', true)->count()); // HIZLI, on sale at the owner's prices (2026-11-26)
         $this->assertSame(12, SimPackage::where('sim_type', 'esim')->count()); // Turkey E-SİM: 5 Tele CARD (2026-11-13) + 7 Türk Telekom (2026-11-22)
         $this->assertSame(0, SimPackage::where('sim_type', 'esim')->where('region', 'europe')->count());
         $this->assertSame(23, SimPackage::where('region', 'local')->count());
