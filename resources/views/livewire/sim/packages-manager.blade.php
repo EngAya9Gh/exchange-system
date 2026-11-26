@@ -57,12 +57,17 @@
             </div>
         @endif
 
-        @foreach($tabs as $regionKey)
-            <div class="mb-8 last:mb-0">
+        {{-- Categories as cards: the open one's packages are listed below --}}
+        <div class="mb-6">
+            @include('livewire.sim.partials.category-cards', ['current' => $currentCategory, 'action' => 'selectCategory', 'mode' => 'admin'])
+        </div>
+
+        @foreach([$currentCategory] as $regionKey)
+            <div class="mb-8 last:mb-0" wire:key="sim-manage-category-{{ $regionKey }}">
                 <h4 class="text-sm font-black text-slate-600 mb-3 flex items-center gap-2">
                     <span>{{ SimPackage::tabFlag($regionKey) }}</span>
                     <span>{{ __('messages.sim_tab_' . $regionKey) }}</span>
-                    <span class="text-[11px] font-semibold {{ str_ends_with($regionKey, '_esim') ? 'text-indigo-600' : 'text-slate-400' }}">· {{ str_ends_with($regionKey, '_esim') ? __('messages.sim_tab_hint_esim') : __('messages.sim_tab_hint_physical') }}</span>
+                    <span class="text-[11px] font-semibold {{ str_ends_with($regionKey, '_esim') ? 'text-indigo-600' : ($regionKey === 'local_fast' ? 'text-orange-600' : 'text-slate-400') }}">· {{ match (true) { $regionKey === 'local_fast' => __('messages.sim_tab_hint_fast'), str_ends_with($regionKey, '_esim') => __('messages.sim_tab_hint_esim'), default => __('messages.sim_tab_hint_physical') } }}</span>
                 </h4>
                 <div class="overflow-x-auto -mx-5 sm:mx-0">
                     <table class="w-full text-sm text-start text-slate-600">

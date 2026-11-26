@@ -648,10 +648,37 @@ class SimTwoSuppliersTest extends TestCase
         $fast = SimPackage::where('is_fast', true)->where('data_gb', 10)->firstOrFail();
 
         Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            // Their own category card, next to Turkey / eSIM / Europe (2026-11-26)
+            ->assertSee(__('messages.sim_tab_local_fast'))
+            ->assertSee(__('messages.sim_category_from', ['price' => '150']))
+            ->assertDontSee($fast->name_ar)                       // not mixed into «باقات تركيا»
+            ->call('selectRegion', 'local_fast')
             ->assertSee($fast->name_ar)
             ->assertSee(__('messages.sim_fast_ribbon'))
             ->assertSeeHtml('from-amber-400 via-orange-500 to-orange-700')
-            ->assertSee('باقة تركيا سريعة 5 جيجا');
+            ->assertSee('باقة تركيا سريعة 5 جيجا')
+            ->assertDontSee($this->fiveGb->name_ar)
+            ->call('selectPackage', $this->fiveGb->id)
+            ->assertSet('region', 'local');                       // picking a package opens its category
+
+        // Each kind of package has its own colors
+        $this->assertSame('local', $this->fiveGb->cardTheme());
+        $this->assertSame('fast', $fast->cardTheme());
+        $this->assertSame('local_esim', SimPackage::where('supplier_code', 'E-SİM Turkiye_5gb_30gun')->first()->cardTheme());
+        $this->assertSame('tt_esim', SimPackage::where('network_name', 'Türk Telekom')->first()->cardTheme());
+        $this->assertSame('europe', SimPackage::where('region', 'europe')->first()->cardTheme());
+        $this->assertSame('local_fast', $fast->tabKey());
+
+        // Admin: the same cards, the open one lists its packages
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->assertSee(__('messages.sim_tab_local_fast'))
+            ->assertDontSee($fast->name_ar)
+            ->call('selectCategory', 'local_fast')
+            ->assertSee($fast->name_ar)
+            ->call('edit', $fast->id)
+            ->set('price', 230)
+            ->call('save')
+            ->assertSet('category', 'local_fast');
     }
 
     protected function teacherPackage(int $gb, int $days, float $price, array $extra = []): SimPackage

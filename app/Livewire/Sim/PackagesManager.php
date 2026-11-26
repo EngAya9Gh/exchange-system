@@ -9,6 +9,8 @@ use Livewire\Component;
 class PackagesManager extends Component
 {
     public bool $showForm = false;
+    // Category card open in the list (SimPackage::TABS)
+    public string $category = 'local';
     public ?int $editingId = null;
 
     public string $region = SimPackage::REGION_LOCAL;
@@ -119,6 +121,13 @@ class PackagesManager extends Component
         ];
     }
 
+    public function selectCategory(string $category): void
+    {
+        if (in_array($category, SimPackage::TABS, true)) {
+            $this->category = $category;
+        }
+    }
+
     public function create(): void
     {
         $this->authorizeManage();
@@ -216,11 +225,14 @@ class PackagesManager extends Component
 
         $linked = [];
         if ($this->editingId) {
-            SimPackage::findOrFail($this->editingId)->update($data);
+            $saved = SimPackage::findOrFail($this->editingId);
+            $saved->update($data);
         } else {
             // A new package with no key is linked to the one supplier product with the same specs, if any
-            $linked = SimPackage::create($data)->applySuggestedLinks();
+            $saved = SimPackage::create($data);
+            $linked = $saved->applySuggestedLinks();
         }
+        $this->category = $saved->tabKey(); // show the saved package in its category
 
         $this->showForm = false;
         $this->resetForm();
@@ -395,7 +407,8 @@ class PackagesManager extends Component
                 'telekomtl' => collect(SimPackage::supplierProducts('telekomtl'))->groupBy('group'),
             ],
             'packagesByTab' => $packagesByTab = $packages->groupBy(fn (SimPackage $package) => $package->tabKey()),
-            'tabs' => SimPackage::visibleTabs($packagesByTab),
+            'tabs' => $tabs = SimPackage::visibleTabs($packagesByTab),
+            'currentCategory' => in_array($this->category, $tabs, true) ? $this->category : $tabs[0],
             'knownNetworks' => SimPackage::withTrashed()->whereNotNull('network_name')->distinct()->orderBy('network_name')->pluck('network_name'),
         ]);
     }

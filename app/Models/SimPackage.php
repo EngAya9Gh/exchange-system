@@ -23,7 +23,10 @@ class SimPackage extends Model
      * Tabs on «اختر الباقة» and «إدارة الباقات»: one per region, and eSIM packages in their own tab
      * so they are never mixed with physical SIMs. Region tabs always show; an eSIM tab only when it has packages.
      */
-    public const TABS = ['local', 'local_esim', 'europe', 'europe_esim'];
+    public const TABS = ['local', 'local_fast', 'local_esim', 'europe', 'europe_esim'];
+
+    /** Categories shown even with no package in them; the others appear once they have packages. */
+    public const BASE_TABS = ['local', 'europe'];
 
     /** Colored labels an admin can put on a package card (texts: messages.sim_badge_*, colors: partials/package-badge) */
     public const BADGES = ['best_seller', 'best_value', 'new', 'offer', 'limited'];
@@ -96,10 +99,39 @@ class SimPackage extends Model
         return $this->sim_type === self::TYPE_ESIM;
     }
 
-    /** "local", "local_esim", "europe", "europe_esim" */
+    /** "local", "local_fast" (⚡ HIZLI physical, own category), "local_esim", "europe", "europe_esim" */
     public function tabKey(): string
     {
+        if ($this->is_fast && !$this->isEsim() && $this->region === self::REGION_LOCAL) {
+            return 'local_fast';
+        }
+
         return $this->region . ($this->isEsim() ? '_esim' : '');
+    }
+
+    /**
+     * Colors of the package card and of the SIM drawn on it (partials/package-card), so packages that look alike
+     * stay apart: local (Tele CARD line, red) · fast (orange) · local_esim (Tele CARD eSIM, violet)
+     * · tt_esim (Türk Telekom eSIM, cyan) · esim_other (any other Turkish eSIM network, green)
+     * · europe (blue) · europe_esim (indigo).
+     */
+    public function cardTheme(): string
+    {
+        if ($this->is_fast && !$this->isEsim()) {
+            return 'fast';
+        }
+        if ($this->region === self::REGION_EUROPE) {
+            return $this->isEsim() ? 'europe_esim' : 'europe';
+        }
+        if (!$this->isEsim()) {
+            return 'local';
+        }
+
+        return match (mb_strtolower(trim((string) $this->network_name))) {
+            '', 'tele card' => 'local_esim',
+            'türk telekom', 'turk telekom', 'turktelekom' => 'tt_esim',
+            default => 'esim_other',
+        };
     }
 
     /**
@@ -110,7 +142,7 @@ class SimPackage extends Model
     {
         return array_values(array_filter(
             self::TABS,
-            fn (string $tab) => !str_ends_with($tab, '_esim') || $packagesByTab->has($tab)
+            fn (string $tab) => in_array($tab, self::BASE_TABS, true) || $packagesByTab->has($tab)
         ));
     }
 

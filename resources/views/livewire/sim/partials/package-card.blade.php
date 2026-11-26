@@ -5,24 +5,55 @@
 --}}
 @php
     $isEurope = $package->region === \App\Models\SimPackage::REGION_EUROPE;
-    $isFast = (bool) $package->is_fast; // «⚡ سريع · Hızlı» (kontor86 HIZLI FİZİKSEL): own colors
+    $isFast = (bool) $package->is_fast; // «⚡ سريع · Hızlı» (kontor86 HIZLI FİZİKSEL)
 
-    $theme = $isFast ? [
-        'header' => 'from-amber-400 via-orange-500 to-orange-700',
-        'selected' => 'border-orange-500 ring-4 ring-orange-100 shadow-soft-xl -translate-y-1',
-        'cta' => 'bg-orange-50 text-orange-700 group-hover:bg-orange-500 group-hover:text-white',
-        'ctaOn' => 'bg-orange-500 text-white shadow-md shadow-orange-500/30',
-    ] : ($isEurope ? [
-        'header' => 'from-blue-600 via-indigo-700 to-blue-950',
-        'selected' => 'border-blue-500 ring-4 ring-blue-100 shadow-soft-xl -translate-y-1',
-        'cta' => 'bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white',
-        'ctaOn' => 'bg-blue-600 text-white shadow-md shadow-blue-600/30',
-    ] : [
-        'header' => 'from-red-500 via-red-600 to-rose-800',
-        'selected' => 'border-primary-500 ring-4 ring-primary-100 shadow-soft-xl -translate-y-1',
-        'cta' => 'bg-primary-50 text-primary-700 group-hover:bg-primary-600 group-hover:text-white',
-        'ctaOn' => 'bg-primary-600 text-white shadow-md shadow-primary-600/30',
-    ]);
+    // One color family per kind of package (SimPackage::cardTheme), for the card AND the SIM drawn on it,
+    // so packages that look alike are told apart at a glance.
+    $themes = [
+        'local' => [ // Tele CARD line: red, white SIM with a gold chip
+            'header' => 'from-red-500 via-red-600 to-rose-800', 'glow' => 'bg-orange-300/25',
+            'selected' => 'border-red-500 ring-4 ring-red-100', 'idle' => 'border-slate-100 hover:border-red-200',
+            'cta' => 'bg-red-50 text-red-700 group-hover:bg-red-600 group-hover:text-white', 'ctaOn' => 'bg-red-600 text-white shadow-md shadow-red-600/30',
+            'simBody' => '#ffffff', 'simBar' => '#e2e8f0', 'simMark' => '#fcd34d', 'simLine' => '#b45309',
+        ],
+        'fast' => [ // ⚡ HIZLI: orange, black SIM with a gold chip
+            'header' => 'from-amber-400 via-orange-500 to-orange-700', 'glow' => 'bg-yellow-200/30',
+            'selected' => 'border-orange-500 ring-4 ring-orange-100', 'idle' => 'border-amber-200 shadow-orange-100 hover:border-orange-300',
+            'cta' => 'bg-orange-50 text-orange-700 group-hover:bg-orange-500 group-hover:text-white', 'ctaOn' => 'bg-orange-500 text-white shadow-md shadow-orange-500/30',
+            'simBody' => '#0f172a', 'simBar' => '#334155', 'simMark' => '#fbbf24', 'simLine' => '#78350f',
+        ],
+        'local_esim' => [ // Tele CARD eSIM: violet, violet QR
+            'header' => 'from-violet-500 via-purple-600 to-fuchsia-800', 'glow' => 'bg-pink-300/25',
+            'selected' => 'border-violet-500 ring-4 ring-violet-100', 'idle' => 'border-slate-100 hover:border-violet-200',
+            'cta' => 'bg-violet-50 text-violet-700 group-hover:bg-violet-600 group-hover:text-white', 'ctaOn' => 'bg-violet-600 text-white shadow-md shadow-violet-600/30',
+            'simBody' => '#f5f3ff', 'simBar' => '#ddd6fe', 'simMark' => '#6d28d9', 'simLine' => '#6d28d9',
+        ],
+        'tt_esim' => [ // Türk Telekom eSIM: cyan, blue QR
+            'header' => 'from-cyan-500 via-sky-600 to-blue-800', 'glow' => 'bg-cyan-200/30',
+            'selected' => 'border-sky-500 ring-4 ring-sky-100', 'idle' => 'border-slate-100 hover:border-sky-200',
+            'cta' => 'bg-sky-50 text-sky-700 group-hover:bg-sky-600 group-hover:text-white', 'ctaOn' => 'bg-sky-600 text-white shadow-md shadow-sky-600/30',
+            'simBody' => '#ecfeff', 'simBar' => '#a5f3fc', 'simMark' => '#0369a1', 'simLine' => '#0369a1',
+        ],
+        'esim_other' => [ // any other Turkish eSIM network: green, green QR
+            'header' => 'from-emerald-500 via-teal-600 to-cyan-800', 'glow' => 'bg-lime-200/25',
+            'selected' => 'border-emerald-500 ring-4 ring-emerald-100', 'idle' => 'border-slate-100 hover:border-emerald-200',
+            'cta' => 'bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white', 'ctaOn' => 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30',
+            'simBody' => '#ecfdf5', 'simBar' => '#a7f3d0', 'simMark' => '#047857', 'simLine' => '#047857',
+        ],
+        'europe' => [ // Europe: blue, light-blue SIM with a yellow chip
+            'header' => 'from-blue-600 via-indigo-700 to-blue-950', 'glow' => 'bg-amber-300/20',
+            'selected' => 'border-blue-500 ring-4 ring-blue-100', 'idle' => 'border-slate-100 hover:border-blue-200',
+            'cta' => 'bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white', 'ctaOn' => 'bg-blue-600 text-white shadow-md shadow-blue-600/30',
+            'simBody' => '#eff6ff', 'simBar' => '#bfdbfe', 'simMark' => '#facc15', 'simLine' => '#1d4ed8',
+        ],
+        'europe_esim' => [ // Europe eSIM: indigo, indigo QR
+            'header' => 'from-indigo-500 via-violet-700 to-indigo-950', 'glow' => 'bg-amber-300/20',
+            'selected' => 'border-indigo-500 ring-4 ring-indigo-100', 'idle' => 'border-slate-100 hover:border-indigo-200',
+            'cta' => 'bg-indigo-50 text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white', 'ctaOn' => 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30',
+            'simBody' => '#eef2ff', 'simBar' => '#c7d2fe', 'simMark' => '#4338ca', 'simLine' => '#4338ca',
+        ],
+    ];
+    $theme = $themes[$package->cardTheme()] ?? $themes['local'];
 
     // 5-point star polygon (point up by default)
     $starPoints = function (float $cx, float $cy, float $r, float $rotation = -90): string {
@@ -41,12 +72,12 @@
 
 <button type="button" wire:key="sim-pkg-{{ $package->id }}" wire:click="selectPackage({{ $package->id }})"
     aria-pressed="{{ $isSelected ? 'true' : 'false' }}"
-    class="group relative text-start rounded-3xl bg-white border-2 overflow-hidden flex flex-col transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 {{ $isSelected ? $theme['selected'] : ($isFast ? 'border-amber-200 shadow-soft shadow-orange-100 hover:-translate-y-1 hover:shadow-soft-xl hover:border-orange-300' : 'border-slate-100 shadow-soft hover:-translate-y-1 hover:shadow-soft-xl hover:border-slate-200') }}">
+    class="group relative text-start rounded-3xl bg-white border-2 overflow-hidden flex flex-col transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 {{ $isSelected ? $theme['selected'] . ' shadow-soft-xl -translate-y-1' : $theme['idle'] . ' shadow-soft hover:-translate-y-1 hover:shadow-soft-xl' }}">
 
     {{-- Artwork header --}}
     <div class="relative h-40 w-full bg-gradient-to-br {{ $theme['header'] }} overflow-hidden">
         <div class="absolute -top-12 -start-10 w-40 h-40 rounded-full bg-white/10 blur-2xl"></div>
-        <div class="absolute -bottom-20 end-0 w-48 h-48 rounded-full {{ $isFast ? 'bg-yellow-200/30' : ($isEurope ? 'bg-amber-300/20' : 'bg-orange-300/25') }} blur-3xl"></div>
+        <div class="absolute -bottom-20 end-0 w-48 h-48 rounded-full {{ $theme['glow'] }} blur-3xl"></div>
 
         {{-- Flag motif (fast packages: a lightning bolt with speed lines) --}}
         @if($isFast)
@@ -69,21 +100,24 @@
             </svg>
         @endif
 
-        {{-- SIM card --}}
+        {{-- SIM card, colored like its kind of package --}}
         <div class="absolute end-5 bottom-4 -rotate-12 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105">
             <svg class="w-14 h-[72px] drop-shadow-[0_10px_14px_rgba(0,0,0,0.35)]" viewBox="0 0 60 78" aria-hidden="true">
-                <path d="M8 1H40L59 20V69A8 8 0 0 1 51 77H8A8 8 0 0 1 0 69V9A8 8 0 0 1 8 1Z" fill="#ffffff" />
-                <rect x="9" y="9" width="18" height="3" rx="1.5" fill="#e2e8f0" />
+                <path d="M8 1H40L59 20V69A8 8 0 0 1 51 77H8A8 8 0 0 1 0 69V9A8 8 0 0 1 8 1Z" fill="{{ $theme['simBody'] }}" />
+                <rect x="9" y="9" width="18" height="3" rx="1.5" fill="{{ $theme['simBar'] }}" />
                 @if($package->isEsim())
                     {{-- eSIM: QR-style mark instead of a chip --}}
-                    <g fill="#1e293b">
+                    <g fill="{{ $theme['simMark'] }}">
                         <rect x="12" y="28" width="11" height="11" rx="2" /><rect x="36" y="28" width="11" height="11" rx="2" /><rect x="12" y="51" width="11" height="11" rx="2" />
                         <rect x="27" y="30" width="5" height="5" rx="1" /><rect x="27" y="42" width="5" height="5" rx="1" /><rect x="36" y="45" width="5" height="5" rx="1" />
                         <rect x="42" y="53" width="5" height="5" rx="1" /><rect x="27" y="55" width="5" height="5" rx="1" />
                     </g>
                 @else
-                    <rect x="12" y="28" width="35" height="30" rx="5" fill="#fcd34d" />
-                    <path d="M12 38H23M36 38H47M12 48H23M36 48H47M23 28V58M36 28V58" stroke="#b45309" stroke-opacity=".55" stroke-width="1.6" fill="none" />
+                    <rect x="12" y="28" width="35" height="30" rx="5" fill="{{ $theme['simMark'] }}" />
+                    <path d="M12 38H23M36 38H47M12 48H23M36 48H47M23 28V58M36 28V58" stroke="{{ $theme['simLine'] }}" stroke-opacity=".55" stroke-width="1.6" fill="none" />
+                    @if($isFast)
+                        <path d="M33 62L27 70h4l-2 6 7-9h-4l2-5z" fill="#fbbf24" />
+                    @endif
                 @endif
             </svg>
         </div>

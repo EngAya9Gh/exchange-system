@@ -35,7 +35,7 @@
 
     {{-- Package picker --}}
     <div class="bg-white rounded-[24px] shadow-soft border border-slate-50 p-5 sm:p-8">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
                 <svg class="w-6 h-6 text-primary-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 3h6l4 4v12a2 2 0 01-2 2H8a2 2 0 01-2-2V5a2 2 0 012-2z"></path>
@@ -44,23 +44,11 @@
                 {{ __('messages.sim_choose_package') }}
                 @include('livewire.sim.partials.supplier-balance')
             </h3>
+        </div>
 
-            {{-- One tab per region, eSIM packages in their own tab (never mixed with physical SIMs) --}}
-            <div class="flex bg-slate-100 rounded-2xl p-1 w-full lg:w-auto gap-1">
-                @foreach($tabs as $tab)
-                    @php $isEsimTab = str_ends_with($tab, '_esim'); @endphp
-                    <button type="button" wire:click="selectRegion('{{ $tab }}')" wire:key="sim-tab-{{ $tab }}"
-                        class="flex-1 lg:flex-none min-w-0 px-2.5 sm:px-4 py-2 rounded-xl text-sm font-bold transition flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 {{ $region === $tab ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700' }}">
-                        <span class="flex items-center gap-1.5 whitespace-nowrap">
-                            <span class="text-base leading-none">{{ SimPackage::tabFlag($tab) }}</span>
-                            {{ __('messages.sim_tab_' . $tab) }}
-                        </span>
-                        <span class="text-[10px] sm:text-[11px] font-semibold whitespace-nowrap {{ $region === $tab ? 'opacity-80' : 'opacity-60' }} {{ $isEsimTab ? 'text-indigo-600' : '' }}">
-                            {{ $isEsimTab ? __('messages.sim_tab_hint_esim') : __('messages.sim_tab_hint_physical') }}
-                        </span>
-                    </button>
-                @endforeach
-            </div>
+        {{-- One card per category (Turkey, fast, eSIM, Europe…), never mixing physical SIMs and eSIMs --}}
+        <div class="mb-6">
+            @include('livewire.sim.partials.category-cards', ['current' => $region, 'action' => 'selectRegion', 'mode' => 'buy'])
         </div>
 
         @error('selectedPackageId')
