@@ -13,9 +13,10 @@ return [
     'where_3' => 'The «Automatic loading» section at the bottom has a list per supplier. Picking the package there fills the three fields and shows the cost and profit.',
 
     'panel_title' => '2. A package missing from the list: values from the supplier panel',
-    'panel_1' => 'Supplier panel → Kontor → ⚙️ «Kontor Fiyat Ayarları» → «Callback» button.',
+    'panel_1' => 'Supplier panel (bayi.kontor86.com or bayi.telekomtl.com, the same page on both) → Kontor → ⚙️ «Kontor Fiyat Ayarları» → «Callback» button.',
     'panel_2' => 'The TARİFE column reads e.g. «Callback (TeleCard) HIZLI FİZİKSEL 50GB»: the first word is the operator (Callback), the word in brackets is the tip (TeleCard).',
     'panel_3' => 'The API column is the code; the ALIŞ column is what the package costs us.',
+    'panel_5' => 'At telekomtl: the TURKTELEKOM products are typed eSIM, and they are the ones loaded on Tele CARD physical lines; the tip is written eSIM as on the panel.',
     'panel_4' => 'The number on the tiles of the loading page (like 250₺ or 2000₺) is a display price, not the code.',
 
     'examples_title' => '3. Examples from the supplier lists',

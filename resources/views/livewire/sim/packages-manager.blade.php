@@ -302,11 +302,14 @@
                     {{-- How to fill in the supplier fields (open for a new package) --}}
                     @include('livewire.sim.partials.package-link-guide', ['open' => !$editingId])
 
-                    {{-- kontor86 automatic loading --}}
+                    {{-- Automatic loading: one key (operator / tip / code) per supplier --}}
                     <div class="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
                         <div class="text-sm font-black text-indigo-900">🤖 {{ __('messages.sim_api_section') }}</div>
                         <p class="text-[11px] text-indigo-700/80 mt-1 mb-3 leading-relaxed">{{ __('messages.sim_api_section_hint') }}</p>
-                        <div class="text-[11px] font-black text-indigo-900 mb-1.5" dir="ltr">kontor86</div>
+                        <div class="flex flex-wrap items-baseline gap-x-2 mb-1.5">
+                            <span class="text-[11px] font-black text-indigo-900" dir="ltr">kontor86</span>
+                            <span class="text-[10px] text-indigo-700/80">{{ __('messages.sim_api_kontor_hint') }}</span>
+                        </div>
                         @include('livewire.sim.partials.supplier-product-picker', ['supplier' => 'kontor86', 'pickModel' => 'pickKontor', 'groups' => $catalogue['kontor86'], 'tip' => $apiTip, 'code' => $apiCode, 'price' => $price, 'suggestion' => $suggestions['kontor86'] ?? null])
                         <div class="grid grid-cols-3 gap-3 mt-2" dir="ltr">
                             <div>
@@ -319,14 +322,17 @@
                             </div>
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_code') }}</label>
-                                <input type="text" wire:model="apiCode" maxlength="30" placeholder="26240" class="{{ $inputClass }} font-mono">
+                                <input type="text" wire:model="apiCode" maxlength="30" placeholder="API" class="{{ $inputClass }} font-mono">
                             </div>
                         </div>
                         @error('apiOperator') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
                         @error('apiTip') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
                         @error('apiCode') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
 
-                        <div class="text-[11px] font-black text-teal-800 mt-4 mb-1.5" dir="ltr">telekomtl</div>
+                        <div class="flex flex-wrap items-baseline gap-x-2 mt-4 mb-1.5">
+                            <span class="text-[11px] font-black text-teal-800" dir="ltr">telekomtl</span>
+                            <span class="text-[10px] text-teal-700/80">{{ __('messages.sim_api_telekomtl_hint') }}</span>
+                        </div>
                         @include('livewire.sim.partials.supplier-product-picker', ['supplier' => 'telekomtl', 'pickModel' => 'pickTk', 'groups' => $catalogue['telekomtl'], 'tip' => $tkTip, 'code' => $tkCode, 'price' => $price, 'suggestion' => $suggestions['telekomtl'] ?? null])
                         <div class="grid grid-cols-3 gap-3 mt-2" dir="ltr">
                             <div>
@@ -339,7 +345,7 @@
                             </div>
                             <div>
                                 <label class="block text-[11px] font-bold text-gray-700 mb-1">{{ __('messages.sim_api_code') }}</label>
-                                <input type="text" wire:model="tkCode" maxlength="30" placeholder="26240" class="{{ $inputClass }} font-mono">
+                                <input type="text" wire:model="tkCode" maxlength="30" placeholder="API" class="{{ $inputClass }} font-mono">
                             </div>
                         </div>
                         @error('tkOperator') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror

@@ -41,6 +41,7 @@
                 <li>{{ __('sim_guide.panel_1') }}</li>
                 <li>{{ __('sim_guide.panel_2') }}</li>
                 <li>{{ __('sim_guide.panel_3') }}</li>
+                <li>{{ __('sim_guide.panel_5') }}</li>
                 <li class="font-bold text-amber-800">{{ __('sim_guide.panel_4') }}</li>
             </ul>
         </div>

@@ -984,6 +984,10 @@ class SimTwoSuppliersTest extends TestCase
             ->assertSee(__('sim_guide.title'))
             ->assertSee(__('sim_guide.mistake_1'))
             ->assertSee(__('sim_guide.panel_4'))
+            ->assertSee(__('sim_guide.panel_5'))                     // telekomtl: TURKTELEKOM is typed eSIM
+            ->assertSee(__('messages.sim_api_section'))              // both suppliers, not «(kontor86)» only
+            ->assertSee(__('messages.sim_api_kontor_hint'))
+            ->assertSee(__('messages.sim_api_telekomtl_hint'))
             ->assertSee('HIZLI FİZİKSEL 50 GB · 30 gün')   // examples come from the supplier lists
             ->assertSee('2285493')
             ->assertSee('OnlineKart eSIM TT 10 GB · 30 gün')

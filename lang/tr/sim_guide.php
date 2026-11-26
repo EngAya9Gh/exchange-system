@@ -13,9 +13,10 @@ return [
     'where_3' => 'Formun altındaki «Otomatik Yükleme» bölümünde her tedarikçi için bir liste vardır. Listeden paket seçilince üç alan kendiliğinden dolar; maliyet ve kâr görünür.',
 
     'panel_title' => '2. Listede olmayan paket: değerler tedarikçi panelinden',
-    'panel_1' => 'Tedarikçi paneli ← Kontor ← ⚙️ «Kontor Fiyat Ayarları» ← «Callback» düğmesi.',
+    'panel_1' => 'Tedarikçi paneli (bayi.kontor86.com veya bayi.telekomtl.com, ikisinde de aynı sayfa) ← Kontor ← ⚙️ «Kontor Fiyat Ayarları» ← «Callback» düğmesi.',
     'panel_2' => 'TARİFE sütununda örneğin «Callback (TeleCard) HIZLI FİZİKSEL 50GB» yazar: ilk kelime operatördür (Callback), parantez içindeki kelime tiptir (TeleCard).',
     'panel_3' => 'API sütunu koddur; ALIŞ sütunu paketin bize maliyetidir.',
+    'panel_5' => 'telekomtl\'de: TURKTELEKOM ürünlerinin tipi eSIM yazar ve Tele CARD fiziksel hatlarına yüklenenler bunlardır; tip paneldeki gibi eSIM yazılır.',
     'panel_4' => 'Yükleme sayfasındaki kutucuklarda görünen rakam (250₺ veya 2000₺ gibi) bir gösterim fiyatıdır, kod değildir.',
 
     'examples_title' => '3. Tedarikçi listelerinden örnekler',
