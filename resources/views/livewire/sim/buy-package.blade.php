@@ -204,8 +204,9 @@
                                     @endphp
                                     <option value="{{ $supplierName }}" @disabled(!$selectable)>{{ $optionLabel }}</option>
                                 @endforeach
+                                <option value="{{ \App\Services\SimOrderService::MANUAL_LOAD }}">✋ {{ __('messages.sim_supplier_choice_manual') }}</option>
                             </select>
-                            <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">{{ __('messages.sim_supplier_choice_hint') }}</p>
+                            <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">{{ $supplierChoice === \App\Services\SimOrderService::MANUAL_LOAD ? __('messages.sim_supplier_choice_manual_hint') : __('messages.sim_supplier_choice_hint') }}</p>
                             @error('supplierChoice') <span class="text-rose-500 text-xs font-bold mt-1 block">{{ $message }}</span> @enderror
                         </div>
                     @endif
@@ -360,10 +361,14 @@
                             <dd class="font-black text-slate-800" dir="ltr">{{ SimPackage::formatPrice(auth()->user()->balance) }} ₺</dd>
                         </div>
                     @endif
-                    @if($showReceiptSupplier && $lastOrder->api_supplier)
+                    @if($showReceiptSupplier && ($lastOrder->api_supplier || $lastOrder->api_supplier_forced))
                         <div class="flex items-center justify-between gap-3 px-4 py-3">
                             <dt class="text-slate-500 font-semibold">{{ __('messages.sim_receipt_supplier') }}</dt>
-                            <dd class="font-black text-slate-800" dir="ltr">{{ $lastOrder->api_supplier_forced ? '🎯 ' : '' }}{{ $lastOrder->api_supplier }}</dd>
+                            @if($lastOrder->api_supplier)
+                                <dd class="font-black text-slate-800" dir="ltr">{{ $lastOrder->api_supplier_forced ? '🎯 ' : '' }}{{ $lastOrder->api_supplier }}</dd>
+                            @else
+                                <dd class="font-black text-slate-800">✋ {{ __('messages.sim_supplier_choice_manual') }}</dd>
+                            @endif
                         </div>
                     @endif
                 </dl>

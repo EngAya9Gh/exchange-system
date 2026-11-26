@@ -147,6 +147,8 @@ class SimOrderGroupNotifier
             SimOrder::API_UNKNOWN => '⏳ ' . $t('sim_group_api_unknown') . $via,
             // The supplier refused our product key: the paid order waits for a manual load
             null => match (true) {
+                // A manager chose a manual load for this order at purchase time
+                (bool) $order->api_supplier_forced => '✋ ' . $t('sim_group_manual_chosen'),
                 SimOrder::isSupplierProductProblem($order->api_message) => '⚙️ ' . __('messages.sim_group_api_fallback_manual', ['details' => (string) $order->api_message], 'ar'),
                 // Would have loaded automatically, but every supplier holding its key is paused by an admin
                 $this->pausedSuppliersFor($order) !== [] => '⏸️ ' . __('messages.sim_group_api_paused', ['suppliers' => implode('، ', $this->pausedSuppliersFor($order))], 'ar'),

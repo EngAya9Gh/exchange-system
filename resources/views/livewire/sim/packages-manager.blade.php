@@ -294,6 +294,9 @@
                         @error('badge') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
                     </div>
 
+                    {{-- How to fill in the supplier fields (open for a new package) --}}
+                    @include('livewire.sim.partials.package-link-guide', ['open' => !$editingId])
+
                     {{-- kontor86 automatic loading --}}
                     <div class="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
                         <div class="text-sm font-black text-indigo-900">🤖 {{ __('messages.sim_api_section') }}</div>

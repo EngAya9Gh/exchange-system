@@ -125,7 +125,7 @@ class BuyPackage extends Component
         }
 
         return [
-            'supplierChoice' => ['nullable', 'in:' . implode(',', KontorApiService::SUPPLIERS)],
+            'supplierChoice' => ['nullable', 'in:' . implode(',', [...KontorApiService::SUPPLIERS, SimOrderService::MANUAL_LOAD])],
             'selectedPackageId' => ['required', 'integer'],
             'phoneNumber' => $phoneRules,
             'customerName' => ['nullable', 'string', 'max:100'],

@@ -27,6 +27,9 @@ use Illuminate\Support\Facades\Log;
  */
 class SimOrderService
 {
+    /** Supplier choice "manual" (SIM managers, at purchase time): no automatic load at all, the team loads it from the group */
+    public const MANUAL_LOAD = 'manual';
+
     /**
      * @throws SimOrderException when the package is unavailable or the balance is insufficient
      */
@@ -46,7 +49,7 @@ class SimOrderService
             }
 
             // A supplier picked at purchase time must carry this package and be connected (checked before charging)
-            if ($supplier !== null && (
+            if ($supplier !== null && $supplier !== self::MANUAL_LOAD && (
                 !in_array($supplier, KontorApiService::SUPPLIERS, true)
                 || !$package->isApiReadyFor($supplier)
                 || !KontorApiService::for($supplier)->isConfigured()
@@ -106,7 +109,11 @@ class SimOrderService
             return $order;
         });
 
-        $this->sendToSupplier($order, $supplier);
+        if ($supplier === self::MANUAL_LOAD) {
+            $order->update(['api_supplier_forced' => true]); // chosen manual load: no supplier is called
+        } else {
+            $this->sendToSupplier($order, $supplier);
+        }
         $order->refresh();
 
         $this->notifyManagers($order);

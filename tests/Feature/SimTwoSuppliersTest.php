@@ -909,6 +909,65 @@ class SimTwoSuppliersTest extends TestCase
         $this->assertSame(0, SimOrder::count());
     }
 
+    public function test_manager_can_choose_a_manual_load_for_one_order(): void
+    {
+        KontorApiService::setPrimarySupplier('telekomtl');
+        $this->admin->update(['balance' => 1000]);
+
+        Livewire::actingAs($this->admin)->test(BuyPackage::class)
+            ->call('selectPackage', $this->fiveGb->id)
+            ->assertSee(__('messages.sim_supplier_choice_manual'))
+            ->set('supplierChoice', 'manual')
+            ->assertSee(__('messages.sim_supplier_choice_manual_hint'))
+            ->set('phoneNumber', '51234567')
+            ->call('placeOrder')
+            ->assertHasNoErrors()
+            ->assertSee(__('messages.sim_supplier_choice_manual')); // receipt: «المورد: ✋ تحويل يدوي»
+
+        $order = SimOrder::sole();
+        $this->assertCount(0, $this->sends());                 // no supplier was called
+        $this->assertNull($order->api_status);
+        $this->assertNull($order->api_supplier);
+        $this->assertTrue($order->api_supplier_forced);
+        $this->assertSame(SimOrder::STATUS_COMPLETED, $order->status); // paid, loaded by hand like any manual order
+        $message = $this->groupMessage();
+        $this->assertStringContainsString('✋ ' . __('messages.sim_group_manual_chosen', [], 'ar'), $message);
+        $this->assertStringNotContainsString('🤖', $message);
+        $this->assertStringNotContainsString('🎯', $message);
+        Livewire::actingAs($this->admin)->test(\App\Livewire\Sim\Orders::class)
+            ->assertSee(__('messages.sim_manual_chosen_badge'))
+            ->assertDontSee(__('messages.sim_supplier_chosen_badge'));
+
+        // A customer sending "manual" is ignored: the order loads automatically as usual
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->call('selectPackage', $this->fiveGb->id)
+            ->assertDontSee(__('messages.sim_supplier_choice_manual'))
+            ->set('supplierChoice', 'manual')
+            ->set('phoneNumber', '51234568')
+            ->call('placeOrder')
+            ->assertHasNoErrors();
+        $this->assertSame('telekomtl', $this->sends()->sole()[0]);
+        $this->assertFalse(SimOrder::latest('id')->first()->api_supplier_forced);
+    }
+
+    public function test_the_package_form_explains_how_to_fill_in_each_supplier(): void
+    {
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('create')
+            ->assertSee(__('sim_guide.title'))
+            ->assertSee(__('sim_guide.mistake_1'))
+            ->assertSee(__('sim_guide.panel_4'))
+            ->assertSee('HIZLI FİZİKSEL 50 GB · 30 gün')   // examples come from the supplier lists
+            ->assertSee('2285493')
+            ->assertSee('OnlineKart eSIM TT 10 GB · 30 gün')
+            ->assertSeeHtml('<details class="group rounded-2xl border border-sky-200 bg-sky-50/60"  open >'); // open for a new package
+        app()->setLocale('tr');
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('create')
+            ->assertSee(__('sim_guide.title'))
+            ->assertSee('Paketi tedarikçilere bağlama rehberi');
+    }
+
     public function test_customers_cannot_choose_a_supplier(): void
     {
         KontorApiService::setPrimarySupplier('telekomtl');
