@@ -53,6 +53,7 @@ class SimPackage extends Model
         'is_active',
         'sort_order',
         'badge',
+        'is_fast',
     ];
 
     protected $casts = [
@@ -60,6 +61,7 @@ class SimPackage extends Model
         'data_gb' => 'integer',
         'validity_days' => 'integer',
         'is_active' => 'boolean',
+        'is_fast' => 'boolean',
         'sort_order' => 'integer',
     ];
 
@@ -217,6 +219,8 @@ class SimPackage extends Model
                 || ($teleCardLine && !empty($product['tele_card_lines']))
                 || ($teleCardEsim && !empty($product['tele_card_esim']))
             )
+            // «⚡ سريع · Hızlı» packages take only HIZLI products, and the others never do
+            && !empty($product['fast']) === (bool) $this->is_fast
             && ($product['days'] ?? null) !== null && (int) $product['days'] === (int) $this->validity_days
             && ($product['gb'] ?? null) !== null && (float) $product['gb'] === (float) $this->data_gb));
     }
@@ -348,22 +352,24 @@ class SimPackage extends Model
      *
      * @return array{name_ar: string, name_tr: string}
      */
-    public static function generateNames(string $region, string $simType, int $dataGb, int $validityDays): array
+    public static function generateNames(string $region, string $simType, int $dataGb, int $validityDays, bool $fast = false): array
     {
         $isEurope = $region === self::REGION_EUROPE;
         $isEsim = $simType === self::TYPE_ESIM;
 
         return [
             'name_ar' => sprintf(
-                'باقة %s %d جيجا - %d يوم (%s)',
+                'باقة %s%s %d جيجا - %d يوم (%s)',
                 $isEurope ? 'أوروبا' : 'تركيا',
+                $fast ? ' سريعة' : '',
                 $dataGb,
                 $validityDays,
                 $isEsim ? 'eSIM' : 'فيزيائية'
             ),
             'name_tr' => sprintf(
-                '%s %d GB - %d Gün (%s)',
+                '%s%s %d GB - %d Gün (%s)',
                 $isEurope ? 'Avrupa' : 'Türkiye',
+                $fast ? ' Hızlı' : '',
                 $dataGb,
                 $validityDays,
                 $isEsim ? 'E-SIM' : 'Fiziksel'

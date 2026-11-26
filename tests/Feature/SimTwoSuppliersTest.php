@@ -451,11 +451,11 @@ class SimTwoSuppliersTest extends TestCase
             ->assertSee('الاستاذ')
             ->call('edit', $manual->id)
             ->assertSet('pickKontor', '')
-            ->set('pickKontor', 'TeleCard|26257') // FİZİKSEL Turkiye 30 GB · 30 gün, cost 580
+            ->set('pickKontor', 'TeleCard|26257') // FİZİKSEL Turkiye 30 GB · 30 gün, cost 555 (list of 2026-11-25)
             ->assertSet('apiOperator', 'Callback')
             ->assertSet('apiTip', 'TeleCard')
             ->assertSet('apiCode', '26257')
-            ->assertSee(__('messages.sim_pick_loss', ['amount' => '30'])) // 550 < 580
+            ->assertSee(__('messages.sim_pick_loss', ['amount' => '5'])) // 550 < 555
             ->set('price', 650)
             ->assertSee(__('messages.sim_api_profit'))
             ->call('save')
@@ -464,7 +464,7 @@ class SimTwoSuppliersTest extends TestCase
 
         $manual->refresh();
         $this->assertSame(['Callback', 'TeleCard', '26257'], $manual->productKey('kontor86'));
-        $this->assertEquals(580, $manual->listedCost('kontor86'));
+        $this->assertEquals(555, $manual->listedCost('kontor86'));
 
         // Its orders now load automatically
         $this->customer->update(['balance' => 1000]);
@@ -508,8 +508,102 @@ class SimTwoSuppliersTest extends TestCase
             $this->assertNotEmpty($keys);
         }
         // The keys already used by the seeded packages are in the lists
-        $this->assertEquals(215, SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_5gb_30gun')->first()->listedCost('kontor86'));
+        $this->assertEquals(171, SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_5gb_30gun')->first()->listedCost('kontor86'));
         $this->assertEquals(295, SimPackage::where('supplier_code', 'AVRUPA_FİZİKSEL_30gun_10gb')->first()->listedCost('telekomtl'));
+    }
+
+    public function test_hizli_packages_are_added_hidden_and_linked_to_kontor86_only(): void
+    {
+        $fast = SimPackage::where('is_fast', true)->orderBy('data_gb')->get();
+        $this->assertSame([5, 10, 20, 50, 100], $fast->pluck('data_gb')->all());
+        // «Kontor Fiyat Ayarları» → Callback, API column (2026-11-25)
+        $this->assertSame(['7036449', '6987918', '2652690', '2285493', '2205285'], $fast->pluck('api_code')->all());
+        foreach ($fast as $package) {
+            $this->assertFalse($package->is_active);                    // hidden until the teacher prices them
+            $this->assertSame(['Callback', 'TeleCard'], [$package->api_operator, $package->api_tip]);
+            $this->assertNull($package->productKey('telekomtl'));       // telekomtl has no HIZLI product
+            $this->assertSame('Tele CARD', $package->network_name);
+            $this->assertSame(30, $package->validity_days);
+        }
+        $this->assertSame('باقة تركيا سريعة 10 جيجا - 30 يوم (فيزيائية)', $fast[1]->name_ar);
+        $this->assertSame('Türkiye Hızlı 10 GB - 30 Gün (Fiziksel)', $fast[1]->name_tr);
+        $this->assertEquals(350, $fast[1]->price); // starts at the ordinary 10 GB price
+        $this->assertEquals(190, $fast[1]->listedCost('kontor86'));
+
+        // Specs never mix: ordinary packages keep their ordinary product, fast ones only take HIZLI
+        $this->assertSame(['26240'], array_column($this->fiveGb->matchingProducts('kontor86'), 'code'));
+        $this->assertSame(['7036449'], array_column($fast[0]->matchingProducts('kontor86'), 'code'));
+        $this->assertSame([], $fast[0]->matchingProducts('telekomtl'));
+    }
+
+    public function test_a_fast_package_added_in_the_screen_links_itself_to_hizli(): void
+    {
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('create')
+            ->set('region', 'local')->set('simType', 'physical')->set('networkName', 'Tele CARD')
+            ->set('dataGb', 20)->set('validityDays', 30)
+            ->assertSee('26250')                 // ordinary package → ordinary product
+            ->set('isFast', true)
+            ->assertSee(__('messages.sim_fast_package'))
+            ->assertSee('2652690')               // fast → HIZLI FİZİKSEL 20 GB
+            ->set('price', 400)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $package = SimPackage::where('is_fast', true)->latest('id')->first();
+        $this->assertSame(['Callback', 'TeleCard', '2652690'], $package->productKey('kontor86'));
+        $this->assertNull($package->productKey('telekomtl'));
+        $this->assertSame('باقة تركيا سريعة 20 جيجا - 30 يوم (فيزيائية)', $package->name_ar);
+        $this->assertTrue($package->is_active);
+    }
+
+    public function test_the_teachers_fast_card_becomes_the_hizli_50gb(): void
+    {
+        // Production on 2026-11-26: the teacher's own 50 GB card, linked on save to the ordinary products
+        // (kontor86 665 / telekomtl 615), both above its 575 ₺ price
+        SimPackage::where('is_fast', true)->where('data_gb', 50)->forceDelete();
+        $card = $this->teacherPackage(50, 30, 575, [
+            'name_ar' => 'باقة سريعة', 'name_tr' => 'Hızlı paket', 'description_ar' => 'هذا الباقة سريعة جدا', 'network_name' => 'Türk Telekom',
+            'api_operator' => 'Callback', 'api_tip' => 'TeleCard', 'api_code' => '26260',
+            'telekomtl_operator' => 'Callback', 'telekomtl_tip' => 'eSIM', 'telekomtl_code' => '590',
+        ]);
+
+        (require database_path('migrations/2026_11_26_000001_add_fast_hizli_packages.php'))->up();
+
+        $card->refresh();
+        $this->assertTrue($card->is_fast);
+        $this->assertSame('Tele CARD', $card->network_name);
+        $this->assertSame(['Callback', 'TeleCard', '2285493'], $card->productKey('kontor86'));
+        $this->assertNull($card->productKey('telekomtl'));
+        $this->assertSame(['باقة سريعة', 575.0, true], [$card->name_ar, (float) $card->price, $card->is_active]); // his texts, price, on sale
+        $this->assertSame(1, SimPackage::where('is_fast', true)->where('data_gb', 50)->count()); // not added twice
+
+        // Its orders go to kontor86's HIZLI tile, and the group sees which tile it is
+        KontorApiService::setPrimarySupplier('telekomtl');
+        $this->customer->update(['balance' => 5000]);
+        app(SimOrderService::class)->placeOrder($this->customer, $card->id, '5051234567');
+        [$supplier, $request] = $this->sends()->sole();
+        $this->assertSame(['kontor86', '2285493'], [$supplier, $request['kontor']]);
+        $this->assertStringContainsString('تركيا 50 جيجا - 30 يوم ⚡ سريعة (HIZLI)', $this->groupMessage());
+
+        // kontor86 paused: it waits for a manual load, never goes to telekomtl at a loss
+        KontorApiService::for('kontor86')->setAutoSendPaused(true, $this->admin);
+        $second = app(SimOrderService::class)->placeOrder($this->customer, $card->id, '5051234568');
+        $this->assertNull($second->api_status);
+        $this->assertCount(1, $this->sends());
+        $this->assertStringContainsString('⏸️', $this->groupMessage());
+    }
+
+    public function test_fast_cards_stand_out_on_the_buy_screen(): void
+    {
+        $fast = SimPackage::where('is_fast', true)->where('data_gb', 10)->firstOrFail();
+        $fast->update(['is_active' => true]);
+
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->assertSee($fast->name_ar)
+            ->assertSee(__('messages.sim_fast_ribbon'))
+            ->assertSeeHtml('from-amber-400 via-orange-500 to-orange-700')
+            ->assertDontSee('باقة تركيا سريعة 5 جيجا'); // still hidden
     }
 
     protected function teacherPackage(int $gb, int $days, float $price, array $extra = []): SimPackage
@@ -642,7 +736,7 @@ class SimTwoSuppliersTest extends TestCase
         $this->assertSame([
             'FİZİKSEL Turkiye_5gb_30gun' => '115', 'FİZİKSEL Turkiye_10gb_30gun' => '175', 'FİZİKSEL Turkiye_20gb_30gun' => '330',
             'FİZİKSEL Turkiye_50gb_30gun' => '590', 'FİZİKSEL Turkiye_50gb_180gun' => '2000', 'FİZİKSEL Turkiye_100gb_30gun' => '1600',
-        ], SimPackage::where('sim_type', 'physical')->where('region', 'local')->whereNotNull('supplier_code')->ordered()->pluck('telekomtl_code', 'supplier_code')->all());
+        ], SimPackage::where('sim_type', 'physical')->where('region', 'local')->where('is_fast', false)->whereNotNull('supplier_code')->ordered()->pluck('telekomtl_code', 'supplier_code')->all());
         // Tele CARD eSIM packages load from OnlineKart eSIM at telekomtl (2026-11-25)
         $this->assertSame('777', SimPackage::where('supplier_code', 'E-SİM Turkiye_5gb_30gun')->value('telekomtl_code'));
 

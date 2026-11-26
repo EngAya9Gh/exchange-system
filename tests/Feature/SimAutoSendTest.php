@@ -92,7 +92,7 @@ class SimAutoSendTest extends TestCase
 
     public function test_api_codes_from_the_panel_are_filled_for_the_physical_turkey_packages(): void
     {
-        $codes = SimPackage::where('region', 'local')->where('sim_type', 'physical')->ordered()->pluck('api_code', 'supplier_code')->all();
+        $codes = SimPackage::where('region', 'local')->where('sim_type', 'physical')->where('is_fast', false)->ordered()->pluck('api_code', 'supplier_code')->all();
         $this->assertSame([
             'FİZİKSEL Turkiye_5gb_30gun' => '26240',
             'FİZİKSEL Turkiye_10gb_30gun' => '26241',
@@ -104,7 +104,7 @@ class SimAutoSendTest extends TestCase
         $this->assertEquals(1400, SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_100gb_30gun')->value('price'));
 
         // Verified live: operator=callback, tip=telecard → all 5 Turkey packages send automatically
-        foreach (SimPackage::where('region', 'local')->where('sim_type', 'physical')->get() as $package) {
+        foreach (SimPackage::where('region', 'local')->where('sim_type', 'physical')->where('is_fast', false)->get() as $package) {
             $this->assertSame(['callback', 'telecard'], [$package->api_operator, $package->api_tip]);
             $this->assertTrue($package->isApiReady());
         }

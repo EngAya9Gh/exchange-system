@@ -72,15 +72,16 @@ class SimPackagesTest extends TestCase
     protected function package(int $price): SimPackage
     {
         // Physical packages (the eSIM ones share some prices: 350, 550, 900)
-        return SimPackage::where('price', $price)->where('sim_type', 'physical')->firstOrFail();
+        return SimPackage::where('price', $price)->where('sim_type', 'physical')->where('is_fast', false)->firstOrFail();
     }
 
     public function test_initial_price_list_is_seeded_in_arabic_and_turkish(): void
     {
-        $this->assertSame(21, SimPackage::count());
+        $this->assertSame(26, SimPackage::count());
+        $this->assertSame(5, SimPackage::where('is_fast', true)->where('is_active', false)->count()); // HIZLI, hidden until priced (2026-11-26)
         $this->assertSame(12, SimPackage::where('sim_type', 'esim')->count()); // Turkey E-SİM: 5 Tele CARD (2026-11-13) + 7 Türk Telekom (2026-11-22)
         $this->assertSame(0, SimPackage::where('sim_type', 'esim')->where('region', 'europe')->count());
-        $this->assertSame(18, SimPackage::where('region', 'local')->count());
+        $this->assertSame(23, SimPackage::where('region', 'local')->count());
         $this->assertSame(3, SimPackage::where('region', 'europe')->count());
 
         // 350 ₺ is the physical 10 GB package (FİZİKSEL Turkiye_10gb_30gun)
@@ -94,9 +95,9 @@ class SimPackagesTest extends TestCase
         $this->assertSame(180, $this->package(1100)->validity_days);
 
         // Network names as on the supplier panel
-        $this->assertSame(11, SimPackage::where('region', 'local')->where('network_name', 'Tele CARD')->count());
+        $this->assertSame(16, SimPackage::where('region', 'local')->where('network_name', 'Tele CARD')->count()); // incl. the 5 HIZLI
         $this->assertSame(3, SimPackage::where('region', 'europe')->where('network_name', 'eSIM')->count());
-        $this->assertSame([270, 350, 550, 900, 1100, 1400], SimPackage::where('region', 'local')->where('sim_type', 'physical')->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
+        $this->assertSame([270, 350, 550, 900, 1100, 1400], SimPackage::where('region', 'local')->where('sim_type', 'physical')->where('is_fast', false)->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
         $this->assertSame([350, 400, 550, 900, 1200], SimPackage::where('region', 'local')->where('sim_type', 'esim')->where('network_name', 'Tele CARD')->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
         $this->assertSame([500, 750, 1000], SimPackage::where('region', 'europe')->ordered()->pluck('price')->map(fn ($p) => (int) $p)->all());
     }

@@ -7,13 +7,14 @@
  | Cost = the supplier's price to us (ALIŞ) when the list was read; the real cost of every load comes
  | from the supplier's reply. The suppliers have no product-list API: update this file from a new
  | screenshot when they add, remove or reprice products.
- |   kontor86: list of 2026-11-18 · telekomtl: list of 2026-11-21 (TL credit and minute products left out).
+ |   kontor86: list of 2026-11-25 · telekomtl: list of 2026-11-21 (TL credit and minute products left out).
  */
 
 /*
  | Matching specs (used to link a package to the one product with the same specs, never by price):
  |   region local|europe · sim physical|esim · network as on our cards · gb · days (null = not stated in the list).
  | In our system a physical Turkey SIM always means a Tele CARD line (fixed "50" prefix).
+ | fast = kontor86 «HIZLI FİZİKSEL» products: linked only to packages marked «⚡ سريع · Hızlı», never to the others.
  */
 $p = function (string $code, string $tip, string $name, float $cost, string $group, string $region, string $sim, string $network, ?float $gb, ?int $days) {
     return compact('code', 'tip', 'name', 'cost', 'group', 'region', 'sim', 'network', 'gb', 'days') + ['operator' => 'Callback'];
@@ -21,22 +22,27 @@ $p = function (string $code, string $tip, string $name, float $cost, string $gro
 
 $list = [
     'kontor86' => [
-        $p('26240', 'TeleCard', 'FİZİKSEL Turkiye 5 GB · 30 gün', 215, 'Tele CARD', 'local', 'physical', 'Tele CARD', 5, 30),
-        $p('26241', 'TeleCard', 'FİZİKSEL Turkiye 10 GB · 30 gün', 230, 'Tele CARD', 'local', 'physical', 'Tele CARD', 10, 30),
-        $p('26250', 'TeleCard', 'FİZİKSEL Turkiye 20 GB · 30 gün', 350, 'Tele CARD', 'local', 'physical', 'Tele CARD', 20, 30),
-        $p('26255', 'TeleCard', 'FİZİKSEL Turkiye 25 GB · 30 gün', 540, 'Tele CARD', 'local', 'physical', 'Tele CARD', 25, 30),
-        $p('26257', 'TeleCard', 'FİZİKSEL Turkiye 30 GB · 30 gün', 580, 'Tele CARD', 'local', 'physical', 'Tele CARD', 30, 30),
-        $p('26260', 'TeleCard', 'FİZİKSEL Turkiye 50 GB · 30 gün', 690, 'Tele CARD', 'local', 'physical', 'Tele CARD', 50, 30),
-        $p('26265', 'TeleCard', 'FİZİKSEL Turkiye 100 GB · 30 gün', 1350, 'Tele CARD', 'local', 'physical', 'Tele CARD', 100, 30),
-        $p('26270', 'TeleCard', 'FİZİKSEL Turkiye 50 GB · 180 gün', 870, 'Tele CARD', 'local', 'physical', 'Tele CARD', 50, 180),
-        $p('35230', 'TeleCard', 'E-SİM Turkiye 3 GB · 30 gün', 165, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 3, 30),
-        $p('35240', 'TeleCard', 'E-SİM Turkiye 5 GB · 30 gün', 215, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 5, 30),
-        $p('35250', 'TeleCard', 'E-SİM Turkiye 10 GB · 30 gün', 255, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 10, 30),
-        $p('35270', 'TeleCard', 'E-SİM Turkiye 20 GB · 30 gün', 375, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 20, 30),
-        $p('35280', 'TeleCard', 'E-SİM Turkiye 30 GB · 30 gün', 580, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 30, 30),
-        $p('35290', 'TeleCard', 'E-SİM Turkiye 50 GB · 30 gün', 715, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 50, 30),
-        $p('35300', 'TeleCard', 'E-SİM Turkiye 100 GB · 30 gün', 1350, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 100, 30),
-        $p('35310', 'TeleCard', 'E-SİM Turkiye 50 GB · 180 gün', 975, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 50, 180),
+        $p('26240', 'TeleCard', 'FİZİKSEL Turkiye 5 GB · 30 gün', 171, 'Tele CARD', 'local', 'physical', 'Tele CARD', 5, 30),
+        $p('26241', 'TeleCard', 'FİZİKSEL Turkiye 10 GB · 30 gün', 205, 'Tele CARD', 'local', 'physical', 'Tele CARD', 10, 30),
+        $p('26250', 'TeleCard', 'FİZİKSEL Turkiye 20 GB · 30 gün', 325, 'Tele CARD', 'local', 'physical', 'Tele CARD', 20, 30),
+        $p('26255', 'TeleCard', 'FİZİKSEL Turkiye 25 GB · 30 gün', 515, 'Tele CARD', 'local', 'physical', 'Tele CARD', 25, 30),
+        $p('26257', 'TeleCard', 'FİZİKSEL Turkiye 30 GB · 30 gün', 555, 'Tele CARD', 'local', 'physical', 'Tele CARD', 30, 30),
+        $p('26260', 'TeleCard', 'FİZİKSEL Turkiye 50 GB · 30 gün', 665, 'Tele CARD', 'local', 'physical', 'Tele CARD', 50, 30),
+        $p('26265', 'TeleCard', 'FİZİKSEL Turkiye 100 GB · 30 gün', 1325, 'Tele CARD', 'local', 'physical', 'Tele CARD', 100, 30),
+        $p('26270', 'TeleCard', 'FİZİKSEL Turkiye 50 GB · 180 gün', 845, 'Tele CARD', 'local', 'physical', 'Tele CARD', 50, 180),
+        $p('35230', 'TeleCard', 'E-SİM Turkiye 3 GB · 30 gün', 140, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 3, 30),
+        $p('35240', 'TeleCard', 'E-SİM Turkiye 5 GB · 30 gün', 150, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 5, 30),
+        $p('35250', 'TeleCard', 'E-SİM Turkiye 10 GB · 30 gün', 205, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 10, 30),
+        $p('35270', 'TeleCard', 'E-SİM Turkiye 20 GB · 30 gün', 325, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 20, 30),
+        $p('35280', 'TeleCard', 'E-SİM Turkiye 30 GB · 30 gün', 555, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 30, 30),
+        $p('35290', 'TeleCard', 'E-SİM Turkiye 50 GB · 30 gün', 665, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 50, 30),
+        $p('35300', 'TeleCard', 'E-SİM Turkiye 100 GB · 30 gün', 1325, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 100, 30),
+        $p('35310', 'TeleCard', 'E-SİM Turkiye 50 GB · 180 gün', 950, 'Tele CARD eSIM', 'local', 'esim', 'Tele CARD', 50, 180),
+        $p('7036449', 'TeleCard', 'HIZLI FİZİKSEL 5 GB · 30 gün', 140, 'Tele CARD HIZLI (سريع)', 'local', 'physical', 'Tele CARD', 5, 30) + ['fast' => true],
+        $p('6987918', 'TeleCard', 'HIZLI FİZİKSEL 10 GB · 30 gün', 190, 'Tele CARD HIZLI (سريع)', 'local', 'physical', 'Tele CARD', 10, 30) + ['fast' => true],
+        $p('2652690', 'TeleCard', 'HIZLI FİZİKSEL 20 GB · 30 gün', 290, 'Tele CARD HIZLI (سريع)', 'local', 'physical', 'Tele CARD', 20, 30) + ['fast' => true],
+        $p('2285493', 'TeleCard', 'HIZLI FİZİKSEL 50 GB · 30 gün', 555, 'Tele CARD HIZLI (سريع)', 'local', 'physical', 'Tele CARD', 50, 30) + ['fast' => true],
+        $p('2205285', 'TeleCard', 'HIZLI FİZİKSEL 100 GB · 30 gün', 1030, 'Tele CARD HIZLI (سريع)', 'local', 'physical', 'Tele CARD', 100, 30) + ['fast' => true],
         $p('45240', 'eSIM', 'AVRUPA FİZİKSEL 5 GB · 30 gün', 260, 'Avrupa', 'europe', 'physical', 'Avrupa', 5, 30),
         $p('45241', 'eSIM', 'AVRUPA FİZİKSEL 10 GB · 30 gün', 350, 'Avrupa', 'europe', 'physical', 'Avrupa', 10, 30),
         $p('45242', 'eSIM', 'AVRUPA FİZİKSEL 20 GB · 30 gün', 470, 'Avrupa', 'europe', 'physical', 'Avrupa', 20, 30),

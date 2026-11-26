@@ -39,6 +39,8 @@ class PackagesManager extends Component
     public bool $isActive = true;
     public $sortOrder = 0;
     public string $badge = '';
+    // «⚡ سريع · Hızlı»: own card colors, linked only to kontor86 HIZLI FİZİKSEL products
+    public bool $isFast = false;
 
     public function mount(): void
     {
@@ -75,6 +77,7 @@ class PackagesManager extends Component
             'isActive' => ['boolean'],
             'sortOrder' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'badge' => ['nullable', 'in:' . implode(',', SimPackage::BADGES)],
+            'isFast' => ['boolean'],
         ];
     }
 
@@ -154,6 +157,7 @@ class PackagesManager extends Component
         $this->isActive = $package->is_active;
         $this->sortOrder = $package->sort_order;
         $this->badge = (string) $package->badge;
+        $this->isFast = (bool) $package->is_fast;
         $this->showForm = true;
     }
 
@@ -182,7 +186,7 @@ class PackagesManager extends Component
             }
         }
 
-        $generated = SimPackage::generateNames($this->region, $this->simType, (int) $this->dataGb, (int) $this->validityDays);
+        $generated = SimPackage::generateNames($this->region, $this->simType, (int) $this->dataGb, (int) $this->validityDays, $this->isFast);
 
         $data = [
             'region' => $this->region,
@@ -207,6 +211,7 @@ class PackagesManager extends Component
             'is_active' => $this->isActive,
             'sort_order' => (int) ($this->sortOrder ?: 0),
             'badge' => $this->badge ?: null,
+            'is_fast' => $this->isFast,
         ];
 
         $linked = [];
@@ -309,7 +314,7 @@ class PackagesManager extends Component
         $this->resetValidation();
         $this->reset([
             'editingId', 'region', 'simType', 'networkName', 'dataGb', 'validityDays', 'price',
-            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'tkOperator', 'tkTip', 'tkCode', 'preferredSupplier', 'pickKontor', 'pickTk', 'isActive', 'sortOrder', 'badge',
+            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'tkOperator', 'tkTip', 'tkCode', 'preferredSupplier', 'pickKontor', 'pickTk', 'isActive', 'sortOrder', 'badge', 'isFast',
         ]);
     }
 
@@ -325,7 +330,7 @@ class PackagesManager extends Component
                 ? collect(array_keys(SimPackage::API_KEY_COLUMNS))->mapWithKeys(fn (string $supplier) => [$supplier => (function () use ($supplier) {
                     $matches = (new SimPackage([
                         'region' => $this->region, 'sim_type' => $this->simType, 'network_name' => $this->networkName,
-                        'data_gb' => (int) $this->dataGb, 'validity_days' => (int) $this->validityDays,
+                        'data_gb' => (int) $this->dataGb, 'validity_days' => (int) $this->validityDays, 'is_fast' => $this->isFast,
                     ]))->matchingProducts($supplier);
 
                     return count($matches) === 1 ? $matches[0] : null;

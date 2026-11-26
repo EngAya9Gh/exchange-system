@@ -5,8 +5,14 @@
 --}}
 @php
     $isEurope = $package->region === \App\Models\SimPackage::REGION_EUROPE;
+    $isFast = (bool) $package->is_fast; // «⚡ سريع · Hızlı» (kontor86 HIZLI FİZİKSEL): own colors
 
-    $theme = $isEurope ? [
+    $theme = $isFast ? [
+        'header' => 'from-amber-400 via-orange-500 to-orange-700',
+        'selected' => 'border-orange-500 ring-4 ring-orange-100 shadow-soft-xl -translate-y-1',
+        'cta' => 'bg-orange-50 text-orange-700 group-hover:bg-orange-500 group-hover:text-white',
+        'ctaOn' => 'bg-orange-500 text-white shadow-md shadow-orange-500/30',
+    ] : ($isEurope ? [
         'header' => 'from-blue-600 via-indigo-700 to-blue-950',
         'selected' => 'border-blue-500 ring-4 ring-blue-100 shadow-soft-xl -translate-y-1',
         'cta' => 'bg-blue-50 text-blue-700 group-hover:bg-blue-600 group-hover:text-white',
@@ -16,7 +22,7 @@
         'selected' => 'border-primary-500 ring-4 ring-primary-100 shadow-soft-xl -translate-y-1',
         'cta' => 'bg-primary-50 text-primary-700 group-hover:bg-primary-600 group-hover:text-white',
         'ctaOn' => 'bg-primary-600 text-white shadow-md shadow-primary-600/30',
-    ];
+    ]);
 
     // 5-point star polygon (point up by default)
     $starPoints = function (float $cx, float $cy, float $r, float $rotation = -90): string {
@@ -35,15 +41,22 @@
 
 <button type="button" wire:key="sim-pkg-{{ $package->id }}" wire:click="selectPackage({{ $package->id }})"
     aria-pressed="{{ $isSelected ? 'true' : 'false' }}"
-    class="group relative text-start rounded-3xl bg-white border-2 overflow-hidden flex flex-col transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 {{ $isSelected ? $theme['selected'] : 'border-slate-100 shadow-soft hover:-translate-y-1 hover:shadow-soft-xl hover:border-slate-200' }}">
+    class="group relative text-start rounded-3xl bg-white border-2 overflow-hidden flex flex-col transition-all duration-300 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-200 {{ $isSelected ? $theme['selected'] : ($isFast ? 'border-amber-200 shadow-soft shadow-orange-100 hover:-translate-y-1 hover:shadow-soft-xl hover:border-orange-300' : 'border-slate-100 shadow-soft hover:-translate-y-1 hover:shadow-soft-xl hover:border-slate-200') }}">
 
     {{-- Artwork header --}}
     <div class="relative h-40 w-full bg-gradient-to-br {{ $theme['header'] }} overflow-hidden">
         <div class="absolute -top-12 -start-10 w-40 h-40 rounded-full bg-white/10 blur-2xl"></div>
-        <div class="absolute -bottom-20 end-0 w-48 h-48 rounded-full {{ $isEurope ? 'bg-amber-300/20' : 'bg-orange-300/25' }} blur-3xl"></div>
+        <div class="absolute -bottom-20 end-0 w-48 h-48 rounded-full {{ $isFast ? 'bg-yellow-200/30' : ($isEurope ? 'bg-amber-300/20' : 'bg-orange-300/25') }} blur-3xl"></div>
 
-        {{-- Flag motif --}}
-        @if($isEurope)
+        {{-- Flag motif (fast packages: a lightning bolt with speed lines) --}}
+        @if($isFast)
+            <svg class="absolute -start-6 top-1/2 -translate-y-1/2 w-44 h-44 text-white/[0.16]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M13 2L4.09 12.6a.5.5 0 00.38.82H11l-1 8.58L18.91 11.4a.5.5 0 00-.38-.82H13l1-8.58z" />
+            </svg>
+            <svg class="absolute start-1/3 top-7 w-24 h-14 text-white/25" viewBox="0 0 96 56" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="4" aria-hidden="true">
+                <path d="M30 10H92M8 28H80M40 46H90" />
+            </svg>
+        @elseif($isEurope)
             <svg class="absolute -start-12 top-1/2 -translate-y-1/2 w-48 h-48 text-yellow-300/60" viewBox="0 0 120 120" fill="currentColor" aria-hidden="true">
                 @for($i = 0; $i < 12; $i++)
                     <polygon points="{{ $starPoints(60 + 40 * cos(deg2rad($i * 30)), 60 + 40 * sin(deg2rad($i * 30)), 7) }}" />
@@ -77,14 +90,20 @@
 
         {{-- Network & label --}}
         <div class="absolute top-3 inset-x-3 flex items-start justify-between gap-2">
-            @if($package->network_name)
-                <span class="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-sm ring-1 ring-white/25 text-white text-[11px] font-black px-2.5 py-1" title="{{ __('messages.sim_network') }}">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
-                    <span dir="ltr">{{ $package->network_name }}</span>
-                </span>
-            @else
-                <span></span>
-            @endif
+            <div class="flex flex-wrap items-center gap-1.5 min-w-0">
+                @if($isFast)
+                    <span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-slate-900/85 text-amber-300 text-[11px] font-black px-2.5 py-1 shadow-md shadow-black/20 ring-1 ring-amber-300/40">
+                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4.09 12.6a.5.5 0 00.38.82H11l-1 8.58L18.91 11.4a.5.5 0 00-.38-.82H13l1-8.58z"/></svg>
+                        {{ __('messages.sim_fast_ribbon') }}
+                    </span>
+                @endif
+                @if($package->network_name)
+                    <span class="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-sm ring-1 ring-white/25 text-white text-[11px] font-black px-2.5 py-1" title="{{ __('messages.sim_network') }}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
+                        <span dir="ltr">{{ $package->network_name }}</span>
+                    </span>
+                @endif
+            </div>
             @include('livewire.sim.partials.package-badge', ['badge' => $package->badge])
         </div>
 

@@ -68,15 +68,25 @@
         @enderror
 
         {{-- One block per network when a tab holds several (e.g. Tele CARD and Türk Telekom eSIMs) --}}
-        @php $networkGroups = $currentPackages->groupBy(fn ($p) => $p->network_name ?: '—'); @endphp
+        @php $networkGroups = $currentPackages->groupBy(fn ($p) => ($p->is_fast ? 'fast|' : '') . ($p->network_name ?: '—')); @endphp
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             @forelse($networkGroups as $networkName => $networkPackages)
                 @if($networkGroups->count() > 1)
+                    @php $isFastGroup = str_starts_with($networkName, 'fast|'); @endphp
                     <div class="col-span-full flex items-center gap-3 {{ $loop->first ? '' : 'mt-4' }}" wire:key="sim-network-{{ $loop->index }}">
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-800 text-white text-xs font-black px-3 py-1">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
-                            <span dir="ltr">{{ $networkName }}</span>
-                        </span>
+                        @if($isFastGroup)
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-600 text-white text-xs font-black px-3 py-1 shadow-md shadow-orange-500/20">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4.09 12.6a.5.5 0 00.38.82H11l-1 8.58L18.91 11.4a.5.5 0 00-.38-.82H13l1-8.58z"/></svg>
+                                {{ __('messages.sim_fast_ribbon') }}
+                                <span class="opacity-60" aria-hidden="true">·</span>
+                                <span class="opacity-90" dir="ltr">{{ substr($networkName, 5) }}</span>
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-800 text-white text-xs font-black px-3 py-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
+                                <span dir="ltr">{{ $networkName }}</span>
+                            </span>
+                        @endif
                         <span class="text-xs font-bold text-slate-400">{{ __('messages.sim_network_packages_count', ['count' => $networkPackages->count()]) }}</span>
                         <span class="h-px flex-1 bg-slate-100"></span>
                     </div>

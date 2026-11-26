@@ -85,6 +85,9 @@
                                     <td class="px-4 py-3 min-w-[240px]">
                                         <div class="font-bold text-slate-800 flex flex-wrap items-center gap-1.5" dir="rtl">
                                             {{ $package->name_ar }}
+                                            @if($package->is_fast)
+                                                <span class="inline-flex items-center gap-0.5 whitespace-nowrap rounded-full bg-gradient-to-r from-amber-400 to-orange-600 text-white text-[10px] font-black px-2 py-0.5">⚡ {{ __('messages.sim_fast_ribbon') }}</span>
+                                            @endif
                                             @include('livewire.sim.partials.package-badge', ['badge' => $package->badge, 'size' => 'text-[10px] px-2 py-0.5'])
                                         </div>
                                         <div class="text-xs text-slate-500 mt-0.5" dir="ltr">{{ $package->name_tr }}</div>
@@ -252,6 +255,15 @@
                             <span class="text-sm font-bold text-slate-700">{{ __('messages.sim_active_for_sale') }}</span>
                         </label>
                     </div>
+
+                    {{-- «⚡ سريع · Hızlı»: own card colors, linked only to kontor86 HIZLI FİZİKSEL products --}}
+                    <label class="flex items-start gap-3 cursor-pointer select-none rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-3">
+                        <input type="checkbox" wire:model.live="isFast" class="mt-0.5 rounded border-amber-300 text-orange-500 focus:ring-orange-400 w-5 h-5">
+                        <span>
+                            <span class="block text-sm font-black text-orange-800">⚡ {{ __('messages.sim_fast_package') }}</span>
+                            <span class="block text-[11px] text-orange-700/80 mt-0.5 leading-relaxed">{{ __('messages.sim_fast_package_hint') }}</span>
+                        </span>
+                    </label>
 
                     {{-- Colored label on the package card --}}
                     <div>

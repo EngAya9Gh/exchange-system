@@ -218,7 +218,7 @@ class SimOrderGroupNotifier
         return $paused;
     }
 
-    /** "تركيا 10 جيجا - 30 يوم", "تركيا 50 جيجا - 6 أشهر", "أوروبا 5 جيجا - 30 يوم" */
+    /** "تركيا 10 جيجا - 30 يوم", "تركيا 50 جيجا - 6 أشهر", "أوروبا 5 جيجا - 30 يوم", "تركيا 50 جيجا - 30 يوم ⚡ سريعة (HIZLI)" */
     protected function shortPackageName(SimOrder $order): string
     {
         $package = $order->package;
@@ -231,7 +231,7 @@ class SimOrderGroupNotifier
             $order->region === SimPackage::REGION_EUROPE ? 'أوروبا' : 'تركيا',
             $package->data_gb,
             $this->arabicDuration($package->validity_days)
-        );
+        ) . ($package->is_fast ? ' ⚡ سريعة (HIZLI)' : ''); // loaded from the HIZLI tile, not the ordinary one
     }
 
     protected function arabicDuration(int $days): string
