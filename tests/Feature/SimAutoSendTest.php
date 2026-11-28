@@ -376,7 +376,7 @@ class SimAutoSendTest extends TestCase
         $twentyGb = SimPackage::where('supplier_code', 'FİZİKSEL Turkiye_20gb_30gun')->firstOrFail();
 
         Livewire::actingAs($this->admin)->test(PackagesManager::class)
-            ->assertSee('🤖 API callback·telecard·26250')
+            ->assertSee('🤖 kontor86 callback·telecard·26250')
             ->call('edit', $twentyGb->id)
             ->assertSet('apiCode', '26250')
             ->set('apiTip', '')
@@ -404,7 +404,7 @@ class SimAutoSendTest extends TestCase
             ->set('apiCode', ' 26250 ')
             ->call('save')
             ->assertHasNoErrors()
-            ->assertSee('🤖 API Callback·TeleCard·26250');
+            ->assertSee('🤖 kontor86 Callback·TeleCard·26250');
         $this->assertSame(['Callback', 'TeleCard', '26250'], [$twentyGb->fresh()->api_operator, $twentyGb->fresh()->api_tip, $twentyGb->fresh()->api_code]);
     }
 

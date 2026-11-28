@@ -23,7 +23,8 @@ class SimPackage extends Model
      * Tabs on «اختر الباقة» and «إدارة الباقات»: one per region, and eSIM packages in their own tab
      * so they are never mixed with physical SIMs. Region tabs always show; an eSIM tab only when it has packages.
      */
-    public const TABS = ['local', 'local_fast', 'local_esim', 'europe', 'europe_esim'];
+    /** «offers» first: packages put on offer are grouped there (out of their usual category) while the offer lasts */
+    public const TABS = ['offers', 'local', 'local_fast', 'local_esim', 'europe', 'europe_esim'];
 
     /** Categories shown even with no package in them; the others appear once they have packages. */
     public const BASE_TABS = ['local', 'europe'];
@@ -57,6 +58,7 @@ class SimPackage extends Model
         'sort_order',
         'badge',
         'is_fast',
+        'is_offer',
     ];
 
     protected $casts = [
@@ -65,6 +67,7 @@ class SimPackage extends Model
         'validity_days' => 'integer',
         'is_active' => 'boolean',
         'is_fast' => 'boolean',
+        'is_offer' => 'boolean',
         'sort_order' => 'integer',
     ];
 
@@ -99,8 +102,14 @@ class SimPackage extends Model
         return $this->sim_type === self::TYPE_ESIM;
     }
 
-    /** "local", "local_fast" (⚡ HIZLI physical, own category), "local_esim", "europe", "europe_esim" */
+    /** "offers" while the package is on offer, otherwise its usual category (baseTabKey) */
     public function tabKey(): string
+    {
+        return $this->is_offer ? 'offers' : $this->baseTabKey();
+    }
+
+    /** "local", "local_fast" (⚡ HIZLI physical, own category), "local_esim", "europe", "europe_esim" */
+    public function baseTabKey(): string
     {
         if ($this->is_fast && !$this->isEsim() && $this->region === self::REGION_LOCAL) {
             return 'local_fast';

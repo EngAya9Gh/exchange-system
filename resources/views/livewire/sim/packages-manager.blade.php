@@ -65,9 +65,9 @@
         @foreach([$currentCategory] as $regionKey)
             <div class="mb-8 last:mb-0" wire:key="sim-manage-category-{{ $regionKey }}">
                 <h4 class="text-sm font-black text-slate-600 mb-3 flex items-center gap-2">
-                    <span>{{ SimPackage::tabFlag($regionKey) }}</span>
+                    <span>{{ $regionKey === 'offers' ? '🎁' : SimPackage::tabFlag($regionKey) }}</span>
                     <span>{{ __('messages.sim_tab_' . $regionKey) }}</span>
-                    <span class="text-[11px] font-semibold {{ str_ends_with($regionKey, '_esim') ? 'text-indigo-600' : ($regionKey === 'local_fast' ? 'text-orange-600' : 'text-slate-400') }}">· {{ match (true) { $regionKey === 'local_fast' => __('messages.sim_tab_hint_fast'), str_ends_with($regionKey, '_esim') => __('messages.sim_tab_hint_esim'), default => __('messages.sim_tab_hint_physical') } }}</span>
+                    <span class="text-[11px] font-semibold {{ str_ends_with($regionKey, '_esim') ? 'text-indigo-600' : ($regionKey === 'local_fast' ? 'text-orange-600' : 'text-slate-400') }}">· {{ match (true) { $regionKey === 'offers' => __('messages.sim_tab_hint_offers'), $regionKey === 'local_fast' => __('messages.sim_tab_hint_fast'), str_ends_with($regionKey, '_esim') => __('messages.sim_tab_hint_esim'), default => __('messages.sim_tab_hint_physical') } }}</span>
                 </h4>
                 <div class="overflow-x-auto -mx-5 sm:mx-0">
                     <table class="w-full text-sm text-start text-slate-600">
@@ -90,6 +90,9 @@
                                     <td class="px-4 py-3 min-w-[240px]">
                                         <div class="font-bold text-slate-800 flex flex-wrap items-center gap-1.5" dir="rtl">
                                             {{ $package->name_ar }}
+                                            @if($package->is_offer)
+                                                <span class="inline-flex items-center gap-0.5 whitespace-nowrap rounded-full bg-pink-100 text-pink-700 text-[10px] font-black px-2 py-0.5">🎁 {{ __('messages.sim_offer_ribbon') }}</span>
+                                            @endif
                                             @if($package->is_fast)
                                                 <span class="inline-flex items-center gap-0.5 whitespace-nowrap rounded-full bg-gradient-to-r from-amber-400 to-orange-600 text-white text-[10px] font-black px-2 py-0.5">⚡ {{ __('messages.sim_fast_ribbon') }}</span>
                                             @endif
@@ -110,10 +113,10 @@
                                         <div class="font-mono text-slate-500" dir="ltr">{{ $package->supplier_code ?: '—' }}</div>
                                         @if($package->isApiReady())
                                             @if($package->isApiReadyFor('kontor86'))
-                                                <span class="inline-block mt-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700" dir="ltr">🤖 API {{ $package->api_operator }}·{{ $package->api_tip }}·{{ $package->api_code }}</span>
+                                                <span class="block w-fit mt-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700" dir="ltr">🤖 kontor86 {{ $package->api_operator }}·{{ $package->api_tip }}·{{ $package->api_code }}</span>
                                             @endif
                                             @if($package->isApiReadyFor('telekomtl'))
-                                                <span class="inline-block mt-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-teal-100 text-teal-800" dir="ltr">🤖 telekomtl {{ $package->telekomtl_operator }}·{{ $package->telekomtl_tip }}·{{ $package->telekomtl_code }}</span>
+                                                <span class="block w-fit mt-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-teal-100 text-teal-800" dir="ltr">🤖 telekomtl {{ $package->telekomtl_operator }}·{{ $package->telekomtl_tip }}·{{ $package->telekomtl_code }}</span>
                                             @endif
                                             @if($package->preferred_supplier)
                                                 <span class="inline-block mt-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-50 text-amber-800" title="{{ __('messages.sim_preferred_supplier') }}">⭐ <span dir="ltr">{{ $package->preferred_supplier }}</span></span>
@@ -132,6 +135,10 @@
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap" x-data>
                                         <div class="flex gap-2">
+                                            <button type="button" wire:click="toggleOffer({{ $package->id }})"
+                                                title="{{ $package->is_offer ? __('messages.sim_offer_remove') : __('messages.sim_offer_add') }}" aria-label="{{ $package->is_offer ? __('messages.sim_offer_remove') : __('messages.sim_offer_add') }}"
+                                                aria-pressed="{{ $package->is_offer ? 'true' : 'false' }}"
+                                                class="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-sm transition {{ $package->is_offer ? 'bg-pink-500 text-white shadow-sm shadow-pink-500/30 hover:bg-pink-600' : 'bg-white border border-pink-200 grayscale hover:grayscale-0 hover:bg-pink-50' }}">🎁</button>
                                             <button type="button" wire:click="edit({{ $package->id }})"
                                                 class="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
                                                 {{ __('messages.sim_edit') }}
@@ -277,6 +284,15 @@
                         <span>
                             <span class="block text-sm font-black text-orange-800">⚡ {{ __('messages.sim_fast_package') }}</span>
                             <span class="block text-[11px] text-orange-700/80 mt-0.5 leading-relaxed">{{ __('messages.sim_fast_package_hint') }}</span>
+                        </span>
+                    </label>
+
+                    {{-- «🎁 العروض»: grouped in the offers card instead of its usual category --}}
+                    <label class="flex items-start gap-3 cursor-pointer select-none rounded-2xl border border-pink-200 bg-gradient-to-r from-pink-50 to-rose-50 p-3">
+                        <input type="checkbox" wire:model="isOffer" class="mt-0.5 rounded border-pink-300 text-pink-500 focus:ring-pink-400 w-5 h-5">
+                        <span>
+                            <span class="block text-sm font-black text-pink-800">🎁 {{ __('messages.sim_is_offer') }}</span>
+                            <span class="block text-[11px] text-pink-700/80 mt-0.5 leading-relaxed">{{ __('messages.sim_is_offer_hint') }}</span>
                         </span>
                     </label>
 

@@ -55,8 +55,13 @@
             <div class="mb-4 text-sm font-bold text-rose-600">{{ $message }}</div>
         @enderror
 
-        {{-- One block per network when a tab holds several (e.g. Tele CARD and Türk Telekom eSIMs) --}}
-        @php $networkGroups = $currentPackages->groupBy(fn ($p) => ($p->is_fast ? 'fast|' : '') . ($p->network_name ?: '—')); @endphp
+        {{-- One block per network when a tab holds several (e.g. Tele CARD and Türk Telekom eSIMs);
+             «العروض» is one grid ordered by usual category: each card's colors already tell its kind --}}
+        @php
+            $networkGroups = $region === 'offers'
+                ? $currentPackages->sortBy(fn ($p) => array_search($p->baseTabKey(), SimPackage::TABS, true))->values()->groupBy(fn ($p) => 'offers')
+                : $currentPackages->groupBy(fn ($p) => ($p->is_fast ? 'fast|' : '') . ($p->network_name ?: '—'));
+        @endphp
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             @forelse($networkGroups as $networkName => $networkPackages)
                 @if($networkGroups->count() > 1)

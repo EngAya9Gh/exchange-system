@@ -43,6 +43,8 @@ class PackagesManager extends Component
     public string $badge = '';
     // «⚡ سريع · Hızlı»: own card colors, linked only to kontor86 HIZLI FİZİKSEL products
     public bool $isFast = false;
+    // «🎁 العروض»: shown in the offers category card instead of its usual one, until taken off
+    public bool $isOffer = false;
 
     public function mount(): void
     {
@@ -80,6 +82,7 @@ class PackagesManager extends Component
             'sortOrder' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'badge' => ['nullable', 'in:' . implode(',', SimPackage::BADGES)],
             'isFast' => ['boolean'],
+            'isOffer' => ['boolean'],
         ];
     }
 
@@ -167,6 +170,7 @@ class PackagesManager extends Component
         $this->sortOrder = $package->sort_order;
         $this->badge = (string) $package->badge;
         $this->isFast = (bool) $package->is_fast;
+        $this->isOffer = (bool) $package->is_offer;
         $this->showForm = true;
     }
 
@@ -221,6 +225,7 @@ class PackagesManager extends Component
             'sort_order' => (int) ($this->sortOrder ?: 0),
             'badge' => $this->badge ?: null,
             'is_fast' => $this->isFast,
+            'is_offer' => $this->isOffer,
         ];
 
         $linked = [];
@@ -353,6 +358,16 @@ class PackagesManager extends Component
         $this->supplierCode = $product['name'];
     }
 
+    /** Puts a package on offer («🎁 العروض») or takes it back to its usual category, in one click. */
+    public function toggleOffer(int $packageId): void
+    {
+        $this->authorizeManage();
+        $package = SimPackage::findOrFail($packageId);
+        $package->update(['is_offer' => !$package->is_offer]);
+
+        session()->flash('sim_package_success', __($package->is_offer ? 'messages.sim_offer_added' : 'messages.sim_offer_removed', ['name' => $package->name_ar]));
+    }
+
     public function toggleActive(int $packageId): void
     {
         $this->authorizeManage();
@@ -379,7 +394,7 @@ class PackagesManager extends Component
         $this->resetValidation();
         $this->reset([
             'editingId', 'region', 'simType', 'networkName', 'dataGb', 'validityDays', 'price',
-            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'tkOperator', 'tkTip', 'tkCode', 'preferredSupplier', 'pickKontor', 'pickTk', 'isActive', 'sortOrder', 'badge', 'isFast',
+            'nameAr', 'nameTr', 'descriptionAr', 'descriptionTr', 'supplierCode', 'apiOperator', 'apiTip', 'apiCode', 'tkOperator', 'tkTip', 'tkCode', 'preferredSupplier', 'pickKontor', 'pickTk', 'isActive', 'sortOrder', 'badge', 'isFast', 'isOffer',
         ]);
     }
 

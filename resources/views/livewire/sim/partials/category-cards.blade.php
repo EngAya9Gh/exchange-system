@@ -6,6 +6,7 @@
 --}}
 @php
     $categoryThemes = [
+        'offers' => ['icon' => 'from-pink-500 to-rose-600', 'on' => 'border-pink-400 bg-pink-50/70 ring-4 ring-pink-100', 'text' => 'text-pink-700', 'sim' => 'offer'],
         'local' => ['icon' => 'from-red-500 to-rose-700', 'on' => 'border-red-400 bg-red-50/70 ring-4 ring-red-100', 'text' => 'text-red-700', 'sim' => 'physical'],
         'local_fast' => ['icon' => 'from-amber-400 to-orange-600', 'on' => 'border-orange-400 bg-orange-50/70 ring-4 ring-orange-100', 'text' => 'text-orange-700', 'sim' => 'fast'],
         'local_esim' => ['icon' => 'from-violet-500 to-purple-700', 'on' => 'border-violet-400 bg-violet-50/70 ring-4 ring-violet-100', 'text' => 'text-violet-700', 'sim' => 'esim'],
@@ -21,7 +22,8 @@
         2 => 'grid-cols-2',
         3 => 'grid-cols-2 sm:grid-cols-3',
         4 => 'grid-cols-2 lg:grid-cols-4',
-        default => 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5',
+        5 => 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5',
+        default => 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6',
     };
 @endphp
 <div class="grid {{ $categoryGrid }} gap-3" role="tablist">
@@ -31,6 +33,7 @@
             $catPackages = $packagesByTab->get($tab, collect());
             $isOpen = $current === $tab;
             $catHint = match (true) {
+                $tab === 'offers' => __('messages.sim_tab_hint_offers'),
                 $tab === 'local_fast' => __('messages.sim_tab_hint_fast'),
                 str_ends_with($tab, '_esim') => __('messages.sim_tab_hint_esim'),
                 default => __('messages.sim_tab_hint_physical'),
@@ -52,7 +55,9 @@
             <div class="flex items-center gap-3">
                 {{-- Colored tile with a small SIM (chip, QR for eSIM, bolt for fast) and the flag --}}
                 <div class="relative shrink-0 w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br {{ $catTheme['icon'] }} flex items-center justify-center shadow-md">
-                    @if($catTheme['sim'] === 'fast')
+                    @if($catTheme['sim'] === 'offer')
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
+                    @elseif($catTheme['sim'] === 'fast')
                         <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4.09 12.6a.5.5 0 00.38.82H11l-1 8.58L18.91 11.4a.5.5 0 00-.38-.82H13l1-8.58z"/></svg>
                     @else
                         <svg class="w-5 h-6" viewBox="0 0 60 78" aria-hidden="true">
@@ -64,7 +69,9 @@
                             @endif
                         </svg>
                     @endif
-                    <span class="absolute -bottom-1.5 -end-1.5 text-sm leading-none drop-shadow">{{ \App\Models\SimPackage::tabFlag($tab) }}</span>
+                    @if($tab !== 'offers')
+                        <span class="absolute -bottom-1.5 -end-1.5 text-sm leading-none drop-shadow">{{ \App\Models\SimPackage::tabFlag($tab) }}</span>
+                    @endif
                 </div>
                 <div class="min-w-0">
                     <div class="text-sm font-black leading-tight {{ $isOpen ? $catTheme['text'] : 'text-slate-800' }}">{{ __('messages.sim_tab_' . $tab) }}</div>

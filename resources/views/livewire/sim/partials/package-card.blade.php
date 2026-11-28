@@ -125,6 +125,11 @@
         {{-- Network & label --}}
         <div class="absolute top-3 inset-x-3 flex items-start justify-between gap-2">
             <div class="flex flex-wrap items-center gap-1.5 min-w-0">
+                @if($package->is_offer)
+                    <span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-white text-pink-600 text-[11px] font-black px-2.5 py-1 shadow-md shadow-black/15 ring-1 ring-pink-200">
+                        <span aria-hidden="true">🎁</span>{{ __('messages.sim_offer_ribbon') }}
+                    </span>
+                @endif
                 @if($isFast)
                     <span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-slate-900/85 text-amber-300 text-[11px] font-black px-2.5 py-1 shadow-md shadow-black/20 ring-1 ring-amber-300/40">
                         <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4.09 12.6a.5.5 0 00.38.82H11l-1 8.58L18.91 11.4a.5.5 0 00-.38-.82H13l1-8.58z"/></svg>

@@ -999,6 +999,63 @@ class SimTwoSuppliersTest extends TestCase
             ->assertSee('Paketi tedarikçilere bağlama rehberi');
     }
 
+    public function test_packages_put_on_offer_are_grouped_in_the_offers_card(): void
+    {
+        $esim = SimPackage::where('supplier_code', 'E-SİM Turkiye_10gb_30gun')->firstOrFail();
+
+        // No offers yet: no offers card, the buy screen opens on Turkey
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->assertSet('region', 'local')
+            ->assertDontSee(__('messages.sim_tab_offers'));
+
+        // One click in «إدارة الباقات» puts a package on offer
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('toggleOffer', $this->fiveGb->id)
+            ->assertSee(__('messages.sim_offer_added', ['name' => $this->fiveGb->name_ar]))
+            ->assertSee(__('messages.sim_tab_offers'))
+            ->call('selectCategory', 'offers')
+            ->assertSee($this->fiveGb->name_ar)
+            ->assertSee(__('messages.sim_offer_remove'));
+        // … or the form option
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('edit', $esim->id)
+            ->set('isOffer', true)
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSet('category', 'offers');
+
+        $this->assertSame('offers', $this->fiveGb->fresh()->tabKey());
+        $this->assertSame('local', $this->fiveGb->fresh()->baseTabKey());
+
+        // Customers: the offers card opens first, with both packages (each in its own colors), grouped by category
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->assertSet('region', 'offers')
+            ->assertSee(__('messages.sim_tab_offers'))
+            ->assertSee(__('messages.sim_tab_hint_offers'))
+            ->assertSee($this->fiveGb->name_ar)
+            ->assertSee($esim->name_ar)
+            ->assertSee(__('messages.sim_offer_ribbon'))
+            ->assertSeeHtml('from-violet-500 via-purple-600 to-fuchsia-800')   // the eSIM keeps its violet card
+            ->call('selectRegion', 'local')
+            ->assertDontSee($this->fiveGb->name_ar)                          // out of its usual category while on offer
+            ->call('selectPackage', $this->fiveGb->id)
+            ->assertSet('region', 'offers')
+            ->set('phoneNumber', '51234567')
+            ->call('placeOrder')
+            ->assertHasNoErrors();                                           // bought like any package
+        $this->assertSame($this->fiveGb->id, SimOrder::sole()->sim_package_id);
+
+        // Taken off the offers: back in its category
+        Livewire::actingAs($this->admin)->test(PackagesManager::class)
+            ->call('toggleOffer', $this->fiveGb->id)
+            ->assertSee(__('messages.sim_offer_removed', ['name' => $this->fiveGb->name_ar]));
+        $this->assertSame('local', $this->fiveGb->fresh()->tabKey());
+        Livewire::actingAs($this->customer)->test(BuyPackage::class)
+            ->assertSet('region', 'offers')                                  // the eSIM is still on offer
+            ->call('selectRegion', 'local')
+            ->assertSee($this->fiveGb->name_ar);
+    }
+
     public function test_customers_cannot_choose_a_supplier(): void
     {
         KontorApiService::setPrimarySupplier('telekomtl');

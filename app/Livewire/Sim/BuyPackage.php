@@ -37,6 +37,14 @@ class BuyPackage extends Component
     #[Locked]
     public ?int $lastOrderId = null;
 
+    public function mount(): void
+    {
+        // «🎁 العروض» opens first while there are offers
+        if (SimPackage::active()->where('is_offer', true)->exists()) {
+            $this->region = 'offers';
+        }
+    }
+
     protected function canChooseSupplier(): bool
     {
         return (bool) auth()->user()?->can('manage_sims');
